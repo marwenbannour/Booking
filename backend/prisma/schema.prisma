@@ -1,0 +1,546 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum UserStatus {
+  ACTIVE
+  INVITED
+  DISABLED
+}
+
+enum MemberRole {
+  OWNER
+  MANAGER
+  EMPLOYEE
+}
+
+enum EstablishmentStatus {
+  ACTIVE
+  SUSPENDED
+  DISABLED
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  COMPLETED
+  CANCELLED
+  NO_SHOW
+  REJECTED
+}
+
+enum BookingSource {
+  WEB
+  MOBILE
+  STAFF
+}
+
+enum NotificationChannel {
+  WHATSAPP
+  EMAIL
+  PUSH
+}
+
+enum NotificationStatus {
+  PENDING
+  PROCESSING
+  SENT
+  DELIVERED
+  FAILED
+  UNKNOWN
+  CANCELLED
+}
+
+enum SubscriptionStatus {
+  TRIALING
+  ACTIVE
+  PAST_DUE
+  SUSPENDED
+  CANCELLED
+  EXPIRED
+}
+
+enum BillingInterval {
+  MONTH
+  YEAR
+}
+
+enum PaymentStatus {
+  PENDING
+  SUCCEEDED
+  FAILED
+  REFUNDED
+}
+
+model User {
+  id                      String                @id @default(uuid()) @db.Uuid
+  email                   String?               @unique
+  phoneNormalized         String?               @unique @map("phone_normalized")
+  passwordHash            String                @map("password_hash")
+  preferredLocale         String                @default("fr") @map("preferred_locale")
+  status                  UserStatus            @default(ACTIVE)
+  isPlatformAdmin         Boolean               @default(false) @map("is_platform_admin")
+  createdAt               DateTime              @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt               DateTime              @updatedAt @map("updated_at") @db.Timestamptz(6)
+  memberships             EstablishmentMember[]
+  sessions                AuthSession[]
+  passwordResetTokens     PasswordResetToken[]
+  auditLogs               AuditLog[]
+  bookingEvents           BookingEvent[]
+  sentEmployeeInvitations EmployeeInvitation[]  @relation("EmployeeInvitationInviter")
+
+  @@map("users")
+}
+
+model AuthSession {
+  id               String    @id @default(uuid()) @db.Uuid
+  userId           String    @map("user_id") @db.Uuid
+  refreshTokenHash Bytes     @unique @map("refresh_token_hash")
+  familyId         String    @map("family_id") @db.Uuid
+  expiresAt        DateTime  @map("expires_at") @db.Timestamptz(6)
+  rotatedAt        DateTime? @map("rotated_at") @db.Timestamptz(6)
+  revokedAt        DateTime? @map("revoked_at") @db.Timestamptz(6)
+  createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  lastUsedAt       DateTime? @map("last_used_at") @db.Timestamptz(6)
+  user             User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, expiresAt])
+  @@index([familyId])
+  @@map("auth_sessions")
+}
+
+model PasswordResetToken {
+  id        String    @id @default(uuid()) @db.Uuid
+  userId    String    @map("user_id") @db.Uuid
+  tokenHash Bytes     @unique @map("token_hash")
+  expiresAt DateTime  @map("expires_at") @db.Timestamptz(6)
+  usedAt    DateTime? @map("used_at") @db.Timestamptz(6)
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("password_reset_tokens")
+}
+
+model Establishment {
+  id                          String                @id @default(uuid()) @db.Uuid
+  slug                        String                @unique
+  name                        String
+  description                 String?
+  address                     String?
+  timezone                    String                @default("Africa/Tunis")
+  currency                    String                @default("TND") @db.Char(3)
+  locale                      String                @default("fr")
+  minimumBookingNoticeMinutes Int                   @default(60) @map("minimum_booking_notice_minutes")
+  maximumBookingDays          Int                   @default(60) @map("maximum_booking_days")
+  cancellationNoticeHours     Int                   @default(24) @map("cancellation_notice_hours")
+  status                      EstablishmentStatus   @default(ACTIVE)
+  createdAt                   DateTime              @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt                   DateTime              @updatedAt @map("updated_at") @db.Timestamptz(6)
+  memberships                 EstablishmentMember[]
+  employeeInvitations         EmployeeInvitation[]
+  services                    Service[]
+  employees                   Employee[]
+  businessHours               BusinessHour[]
+  timeOffs                    TimeOff[]
+  customers                   Customer[]
+  bookings                    Booking[]
+  outboxEvents                OutboxEvent[]
+  notificationJobs            NotificationJob[]
+  notificationLogs            NotificationLog[]
+  notificationSetting         NotificationSetting?
+  subscription                Subscription?
+  payments                    Payment[]
+  auditLogs                   AuditLog[]
+  bookingEvents               BookingEvent[]
+
+  @@map("establishments")
+}
+
+model EstablishmentMember {
+  id              String        @id @default(uuid()) @db.Uuid
+  establishmentId String        @map("establishment_id") @db.Uuid
+  userId          String        @map("user_id") @db.Uuid
+  role            MemberRole
+  permissions     Json          @default("{}")
+  status          String        @default("ACTIVE")
+  createdAt       DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  establishment   Establishment @relation(fields: [establishmentId], references: [id], onDelete: Cascade)
+  user            User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  employee        Employee?
+
+  @@unique([establishmentId, userId])
+  @@index([userId, status])
+  @@map("establishment_members")
+}
+
+model Employee {
+  id              String              @id @default(uuid()) @db.Uuid
+  establishmentId String              @map("establishment_id") @db.Uuid
+  memberId        String              @unique @map("member_id") @db.Uuid
+  displayName     String              @map("display_name")
+  isActive        Boolean             @default(true) @map("is_active")
+  createdAt       DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
+  establishment   Establishment       @relation(fields: [establishmentId], references: [id], onDelete: Cascade)
+  member          EstablishmentMember @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  services        EmployeeService[]
+  businessHours   BusinessHour[]
+  timeOffs        TimeOff[]
+  bookings        Booking[]
+
+  @@unique([establishmentId, id])
+  @@index([establishmentId, isActive])
+  @@map("employees")
+}
+
+model EmployeeInvitation {
+  id              String        @id @default(uuid()) @db.Uuid
+  establishmentId String        @map("establishment_id") @db.Uuid
+  invitedByUserId String        @map("invited_by_user_id") @db.Uuid
+  email           String
+  displayName     String        @map("display_name")
+  serviceIds      String[]      @default([]) @map("service_ids") @db.Uuid
+  tokenHash       Bytes         @unique @map("token_hash")
+  expiresAt       DateTime      @map("expires_at") @db.Timestamptz(6)
+  acceptedAt      DateTime?     @map("accepted_at") @db.Timestamptz(6)
+  revokedAt       DateTime?     @map("revoked_at") @db.Timestamptz(6)
+  createdAt       DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  establishment   Establishment @relation(fields: [establishmentId], references: [id], onDelete: Cascade)
+  invitedBy       User          @relation("EmployeeInvitationInviter", fields: [invitedByUserId], references: [id], onDelete: Cascade)
+
+  @@index([establishmentId, email])
+  @@index([expiresAt])
+  @@map("employee_invitations")
+}
+
+model Service {
+  id              String            @id @default(uuid()) @db.Uuid
+  establishmentId String            @map("establishment_id") @db.Uuid
+  name            String
+  description     String?
+  durationMinutes Int               @map("duration_minutes")
+  price           Decimal?          @db.Decimal(12, 3)
+  isActive        Boolean           @default(true) @map("is_active")
+  createdAt       DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime          @updatedAt @map("updated_at") @db.Timestamptz(6)
+  establishment   Establishment     @relation(fields: [establishmentId], references: [id], onDelete: Cascade)
+  employees       EmployeeService[]
+  bookings        Booking[]
+
+  @@unique([establishmentId, id])
+  @@index([establishmentId, isActive])
+  @@map("services")
+}
+
+model EmployeeService {
+  employeeId String   @map("employee_id") @db.Uuid
+  serviceId  String   @map("service_id") @db.Uuid
+  employee   Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  service    Service  @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+
+  @@id([employeeId, serviceId])
+  @@map("employee_services")
+}
+
+model BusinessHour {
+  id              String        @id @default(uuid()) @db.Uuid
+  establishmentId String        @map("establishment_id") @db.Uuid
+  employeeId      String?       @map("employee_id") @db.Uuid
+  dayOfWeek       Int           @map("day_of_week")
+  opensAt         DateTime      @map("opens_at") @db.Time(0)
+  closesAt        DateTime      @map("closes_at") @db.Time(0)
+  establishment   Establishment @relation(fields: [establishmentId], references: [id], onDelete: Cascade)
+  employee        Employee?     @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  @@index([establishmentId, dayOfWeek])
+  @@index([employeeId, dayOfWeek])
+  @@map("business_hours")
+}
+
+model TimeOff {
+  id              String        @id @default(uuid()) @db.Uuid
+  establishmentId String        @map("establishment_id") @db.Uuid
+  employeeId      String        @map("employee_id") @db.Uuid
+  startsAt        DateTime      @map("starts_at") @db.Timestamptz(6)
+  endsAt          DateTime      @map("ends_at") @db.Timestamptz(6)
+  reason          String?
+  createdAt       DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  employee        Employee      @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  establishment   Establishment @relation(fields: [establishmentId], references: [id], onDelete: Cascade)
+
+  @@index([establishmentId, employeeId, startsAt])
+  @@map("time_offs")
+}
+
+model Customer {
+  id              String        @id @default(uuid()) @db.Uuid
+  establishmentId String        @map("establishment_id") @db.Uuid
+  name            String
+  phoneNormalized String?       @map("phone_normalized")
+  email           String?
+  notes           String?
+  createdAt       DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime      @updatedAt @map("updated_at") @db.Timestamptz(6)
+  establishment   Establishment @relation(fields: [establishmentId], references: [id], onDelete: Cascade)
+  bookings        Booking[]
+
+  @@unique([establishmentId, id])
+  @@index([establishmentId, phoneNormalized])
+  @@index([establishmentId, name])
+  @@map("customers")
+}
+
+model Booking {
+  id                      String            @id @default(uuid()) @db.Uuid
+  establishmentId         String            @map("establishment_id") @db.Uuid
+  publicReference         String            @map("public_reference")
+  customerId              String            @map("customer_id") @db.Uuid
+  serviceId               String            @map("service_id") @db.Uuid
+  employeeId              String            @map("employee_id") @db.Uuid
+  startsAt                DateTime          @map("starts_at") @db.Timestamptz(6)
+  endsAt                  DateTime          @map("ends_at") @db.Timestamptz(6)
+  status                  BookingStatus     @default(CONFIRMED)
+  source                  BookingSource
+  customerNameSnapshot    String            @map("customer_name_snapshot")
+  customerPhoneSnapshot   String?           @map("customer_phone_snapshot")
+  customerEmailSnapshot   String?           @map("customer_email_snapshot")
+  serviceNameSnapshot     String            @map("service_name_snapshot")
+  durationMinutesSnapshot Int               @map("duration_minutes_snapshot")
+  priceSnapshot           Decimal?          @map("price_snapshot") @db.Decimal(12, 3)
+  currency                String            @default("TND") @db.Char(3)
+  remindersConsent        Boolean           @default(false) @map("reminders_consent")
+  cancellationReason      String?           @map("cancellation_reason")
+  version                 Int               @default(1)
+  createdAt               DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt               DateTime          @updatedAt @map("updated_at") @db.Timestamptz(6)
+  establishment           Establishment     @relation(fields: [establishmentId], references: [id], onDelete: Restrict)
+  customer                Customer          @relation(fields: [customerId], references: [id], onDelete: Restrict)
+  service                 Service           @relation(fields: [serviceId], references: [id], onDelete: Restrict)
+  employee                Employee          @relation(fields: [employeeId], references: [id], onDelete: Restrict)
+  notificationJobs        NotificationJob[]
+  bookingEvents           BookingEvent[]
+
+  @@unique([establishmentId, id])
+  @@unique([establishmentId, publicReference])
+  @@index([establishmentId, startsAt])
+  @@index([establishmentId, employeeId, startsAt])
+  @@index([establishmentId, customerId, startsAt])
+  @@index([establishmentId, status, startsAt])
+  @@map("bookings")
+}
+
+model BookingAccessToken {
+  id              String    @id @default(uuid()) @db.Uuid
+  establishmentId String    @map("establishment_id") @db.Uuid
+  bookingId       String    @map("booking_id") @db.Uuid
+  tokenHash       Bytes     @unique @map("token_hash")
+  scopes          String[]  @default(["booking:read", "booking:cancel"])
+  expiresAt       DateTime  @map("expires_at") @db.Timestamptz(6)
+  revokedAt       DateTime? @map("revoked_at") @db.Timestamptz(6)
+  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([establishmentId, bookingId])
+  @@map("booking_access_tokens")
+}
+
+model BookingEvent {
+  id              String        @id @default(uuid()) @db.Uuid
+  establishmentId String        @map("establishment_id") @db.Uuid
+  bookingId       String        @map("booking_id") @db.Uuid
+  eventType       String        @map("event_type")
+  actorUserId     String?       @map("actor_user_id") @db.Uuid
+  data            Json          @default("{}")
+  createdAt       DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  establishment   Establishment @relation(fields: [establishmentId], references: [id], onDelete: Cascade)
+  booking         Booking       @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  actor           User?         @relation(fields: [actorUserId], references: [id], onDelete: SetNull)
+
+  @@index([establishmentId, bookingId, createdAt])
+  @@map("booking_events")
+}
+
+model NotificationJob {
+  id                String              @id @default(uuid()) @db.Uuid
+  establishmentId   String              @map("establishment_id") @db.Uuid
+  bookingId         String              @map("booking_id") @db.Uuid
+  channel           NotificationChannel
+  eventType         String              @map("event_type")
+  scheduledAt       DateTime            @map("scheduled_at") @db.Timestamptz(6)
+  status            NotificationStatus  @default(PENDING)
+  attempts          Int                 @default(0)
+  availableAt       DateTime            @default(now()) @map("available_at") @db.Timestamptz(6)
+  leaseUntil        DateTime?           @map("lease_until") @db.Timestamptz(6)
+  idempotencyKey    String              @unique @map("idempotency_key")
+  providerMessageId String?             @map("provider_message_id")
+  errorCode         String?             @map("error_code")
+  createdAt         DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime            @updatedAt @map("updated_at") @db.Timestamptz(6)
+  establishment     Establishment       @relation(fields: [establishmentId], references: [id], onDelete: Cascade)
+  booking           Booking             @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  outboxEvents      OutboxEvent[]
+  logs              NotificationLog[]
+
+  @@index([availableAt, scheduledAt, status])
+  @@index([bookingId, eventType, status])
+  @@index([providerMessageId])
+  @@map("notification_jobs")
+}
+
+model NotificationLog {
+  id                String              @id @default(uuid()) @db.Uuid
+  establishmentId   String              @map("establishment_id") @db.Uuid
+  notificationJobId String              @map("notification_job_id") @db.Uuid
+  channel           NotificationChannel
+  provider          String
+  eventType         String              @map("event_type")
+  status            NotificationStatus
+  recipient         String?
+  providerMessageId String?             @map("provider_message_id")
+  errorCode         String?             @map("error_code")
+  errorMessage      String?             @map("error_message")
+  detail            Json                @default("{}")
+  createdAt         DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
+  establishment     Establishment       @relation(fields: [establishmentId], references: [id], onDelete: Cascade)
+  notificationJob   NotificationJob     @relation(fields: [notificationJobId], references: [id], onDelete: Cascade)
+
+  @@index([establishmentId, createdAt])
+  @@index([notificationJobId, createdAt])
+  @@index([providerMessageId])
+  @@map("notification_logs")
+}
+
+model NotificationSetting {
+  establishmentId             String        @id @map("establishment_id") @db.Uuid
+  whatsappEnabled             Boolean       @default(true) @map("whatsapp_enabled")
+  confirmationEnabled         Boolean       @default(true) @map("confirmation_enabled")
+  cancellationEnabled         Boolean       @default(true) @map("cancellation_enabled")
+  firstReminderMinutesBefore  Int?          @default(1440) @map("first_reminder_minutes_before")
+  secondReminderMinutesBefore Int?          @default(120) @map("second_reminder_minutes_before")
+  createdAt                   DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt                   DateTime      @updatedAt @map("updated_at") @db.Timestamptz(6)
+  establishment               Establishment @relation(fields: [establishmentId], references: [id], onDelete: Cascade)
+
+  @@map("notification_settings")
+}
+
+model OutboxEvent {
+  id                String          @id @default(uuid()) @db.Uuid
+  establishmentId   String          @map("establishment_id") @db.Uuid
+  notificationJobId String          @map("notification_job_id") @db.Uuid
+  eventType         String          @map("event_type")
+  createdAt         DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
+  publishedAt       DateTime?       @map("published_at") @db.Timestamptz(6)
+  publishAttempts   Int             @default(0) @map("publish_attempts")
+  leaseUntil        DateTime?       @map("lease_until") @db.Timestamptz(6)
+  lastErrorCode     String?         @map("last_error_code")
+  establishment     Establishment   @relation(fields: [establishmentId], references: [id], onDelete: Cascade)
+  notificationJob   NotificationJob @relation(fields: [notificationJobId], references: [id], onDelete: Cascade)
+
+  @@index([createdAt, publishedAt])
+  @@map("outbox_events")
+}
+
+model AuditLog {
+  id              String         @id @default(uuid()) @db.Uuid
+  establishmentId String?        @map("establishment_id") @db.Uuid
+  actorUserId     String?        @map("actor_user_id") @db.Uuid
+  action          String
+  targetType      String         @map("target_type")
+  targetId        String?        @map("target_id") @db.Uuid
+  correlationId   String?        @map("correlation_id")
+  metadata        Json           @default("{}")
+  createdAt       DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+  establishment   Establishment? @relation(fields: [establishmentId], references: [id], onDelete: SetNull)
+  actor           User?          @relation(fields: [actorUserId], references: [id], onDelete: SetNull)
+
+  @@index([establishmentId, createdAt])
+  @@map("audit_logs")
+}
+
+model IdempotencyRecord {
+  id             String   @id @default(uuid()) @db.Uuid
+  scope          String
+  idempotencyKey String   @map("idempotency_key")
+  requestHash    String   @map("request_hash")
+  responseStatus Int?     @map("response_status")
+  responseBody   Json?    @map("response_body")
+  resourceId     String?  @map("resource_id") @db.Uuid
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  expiresAt      DateTime @map("expires_at") @db.Timestamptz(6)
+
+  @@unique([scope, idempotencyKey])
+  @@index([expiresAt])
+  @@map("idempotency_records")
+}
+
+model SubscriptionPlan {
+  id                       String          @id @default(uuid()) @db.Uuid
+  code                     String          @unique
+  name                     String
+  description              String?
+  priceAmount              Decimal         @default(0) @map("price_amount") @db.Decimal(12, 3)
+  currency                 String          @default("TND") @db.Char(3)
+  interval                 BillingInterval @default(MONTH)
+  trialDays                Int             @default(0) @map("trial_days")
+  maxEmployees             Int?            @map("max_employees")
+  maxBookingsPerMonth      Int?            @map("max_bookings_per_month")
+  maxNotificationsPerMonth Int?            @map("max_notifications_per_month")
+  maxEstablishments        Int?            @map("max_establishments")
+  isActive                 Boolean         @default(true) @map("is_active")
+  isPublic                 Boolean         @default(true) @map("is_public")
+  sortOrder                Int             @default(0) @map("sort_order")
+  createdAt                DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt                DateTime        @updatedAt @map("updated_at") @db.Timestamptz(6)
+  subscriptions            Subscription[]
+
+  @@map("subscription_plans")
+}
+
+model Subscription {
+  id                 String             @id @default(uuid()) @db.Uuid
+  establishmentId    String             @unique @map("establishment_id") @db.Uuid
+  planId             String             @map("plan_id") @db.Uuid
+  status             SubscriptionStatus @default(TRIALING)
+  currentPeriodStart DateTime           @map("current_period_start") @db.Timestamptz(6)
+  currentPeriodEnd   DateTime           @map("current_period_end") @db.Timestamptz(6)
+  trialEndsAt        DateTime?          @map("trial_ends_at") @db.Timestamptz(6)
+  cancelAtPeriodEnd  Boolean            @default(false) @map("cancel_at_period_end")
+  canceledAt         DateTime?          @map("canceled_at") @db.Timestamptz(6)
+  createdAt          DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt          DateTime           @updatedAt @map("updated_at") @db.Timestamptz(6)
+  establishment      Establishment      @relation(fields: [establishmentId], references: [id], onDelete: Cascade)
+  plan               SubscriptionPlan   @relation(fields: [planId], references: [id], onDelete: Restrict)
+  payments           Payment[]
+
+  @@index([status])
+  @@map("subscriptions")
+}
+
+model Payment {
+  id                String        @id @default(uuid()) @db.Uuid
+  establishmentId   String        @map("establishment_id") @db.Uuid
+  subscriptionId    String?       @map("subscription_id") @db.Uuid
+  provider          String        @default("manual")
+  providerReference String?       @map("provider_reference")
+  amount            Decimal       @db.Decimal(12, 3)
+  currency          String        @default("TND") @db.Char(3)
+  status            PaymentStatus @default(PENDING)
+  periodStart       DateTime?     @map("period_start") @db.Timestamptz(6)
+  periodEnd         DateTime?     @map("period_end") @db.Timestamptz(6)
+  paidAt            DateTime?     @map("paid_at") @db.Timestamptz(6)
+  metadata          Json          @default("{}")
+  createdAt         DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime      @updatedAt @map("updated_at") @db.Timestamptz(6)
+  establishment     Establishment @relation(fields: [establishmentId], references: [id], onDelete: Cascade)
+  subscription      Subscription? @relation(fields: [subscriptionId], references: [id], onDelete: SetNull)
+
+  @@unique([provider, providerReference])
+  @@index([establishmentId, createdAt])
+  @@map("payments")
+}
