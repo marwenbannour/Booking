@@ -13,12 +13,16 @@ import { SubscriptionsModule } from './subscriptions/subscriptions.module.js';
 import { DashboardModule } from './dashboard/dashboard.module.js';
 import { AdminModule } from './admin/admin.module.js';
 
+// En serverless (Vercel), aucun worker/relais ne peut tourner : on n'initialise
+// pas la connexion BullMQ/Redis. Mettre WORKERS_ENABLED=false pour ce mode.
+const workersEnabled = process.env.WORKERS_ENABLED !== 'false';
+
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
     PrismaModule,
     AuthModule,
-    QueuesModule,
+    ...(workersEnabled ? [QueuesModule] : []),
     HealthModule,
     EstablishmentsModule,
     BookingsModule,
