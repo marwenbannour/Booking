@@ -1,0 +1,140 @@
+/* Charte UI Booking — tokens générés depuis le design system (tokens.json).
+   Source de vérité : https://claude.ai/artifact/4o5rjg6eKzqrKiJXXpeTpW
+   Thème clair sur :root ; thème sombre via prefers-color-scheme et [data-theme]. */
+
+:root {
+  color-scheme: light;
+
+  /* Surfaces & texte */
+  --canvas: #f5f7fb;
+  --surface: #ffffff;
+  --surface-sunken: #f7f9ff;
+  --line: #e9edf3;
+  --ink: #17243b;
+  --muted: #8490a4;
+
+  /* Marque */
+  --brand: #4169e1;
+  --brand-strong: #3156c9;
+  --brand-soft: #eef2ff;
+  --on-brand: #ffffff;
+
+  /* Accents catégoriels */
+  --teal: #18a999;
+  --teal-soft: #e8f8f4;
+  --orange: #e69b45;
+  --orange-soft: #fff5e8;
+  --rose: #de6d7f;
+  --rose-soft: #fff0f2;
+
+  /* Statuts de rendez-vous */
+  --success: #188a76;
+  --success-soft: #e9f8f4;
+  --warning: #c27d24;
+  --warning-soft: #fff4e5;
+  --info: #617087;
+  --info-soft: #eff2f6;
+  --danger: #cb596a;
+  --danger-soft: #fff0f2;
+
+  /* Espacement */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+
+  /* Rayons */
+  --radius-xs: 6px;
+  --radius-sm: 8px;
+  --radius-md: 10px;
+  --radius-lg: 13px;
+  --radius-pill: 999px;
+
+  /* Ombres */
+  --shadow-sm: 0 2px 6px rgba(35, 51, 80, 0.04);
+  --shadow-card: 0 14px 40px rgba(27, 44, 80, 0.06);
+  --shadow-pop: 0 25px 80px rgba(16, 32, 64, 0.19);
+
+  /* Typographie */
+  --font-display: "Manrope", "Segoe UI", system-ui, sans-serif;
+  --font-body: "DM Sans", "Segoe UI", system-ui, sans-serif;
+  --font-arabic: "Noto Sans Arabic", "DM Sans", system-ui, sans-serif;
+}
+
+/* ---- Thème sombre (valeurs de tokens.json) ---- */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+
+    --canvas: #0f1421;
+    --surface: #171d2b;
+    --surface-sunken: #1d2536;
+    --line: #2a3346;
+    --ink: #eaeef6;
+    --muted: #99a4b8;
+
+    --brand: #8aa4ff;
+    --brand-strong: #7390f5;
+    --brand-soft: #243154;
+    --on-brand: #0f1421;
+
+    --teal: #4ccdbb;
+    --teal-soft: #113b36;
+    --orange: #eab45f;
+    --orange-soft: #3a2e1b;
+    --rose: #ec8a9a;
+    --rose-soft: #3b2127;
+
+    --success: #4ccdbb;
+    --success-soft: #113b36;
+    --warning: #eab45f;
+    --warning-soft: #3a2e1b;
+    --info: #9aa6bb;
+    --info-soft: #232c3d;
+    --danger: #ec8a9a;
+    --danger-soft: #3b2127;
+
+    --shadow-sm: 0 2px 6px rgba(0, 0, 0, 0.4);
+    --shadow-card: 0 14px 40px rgba(0, 0, 0, 0.5);
+    --shadow-pop: 0 25px 80px rgba(0, 0, 0, 0.6);
+  }
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+
+  --canvas: #0f1421;
+  --surface: #171d2b;
+  --surface-sunken: #1d2536;
+  --line: #2a3346;
+  --ink: #eaeef6;
+  --muted: #99a4b8;
+
+  --brand: #8aa4ff;
+  --brand-strong: #7390f5;
+  --brand-soft: #243154;
+  --on-brand: #0f1421;
+
+  --teal: #4ccdbb;
+  --teal-soft: #113b36;
+  --orange: #eab45f;
+  --orange-soft: #3a2e1b;
+  --rose: #ec8a9a;
+  --rose-soft: #3b2127;
+
+  --success: #4ccdbb;
+  --success-soft: #113b36;
+  --warning: #eab45f;
+  --warning-soft: #3a2e1b;
+  --info: #9aa6bb;
+  --info-soft: #232c3d;
+  --danger: #ec8a9a;
+  --danger-soft: #3b2127;
+
+  --shadow-sm: 0 2px 6px rgba(0, 0, 0, 0.4);
+  --shadow-card: 0 14px 40px rgba(0, 0, 0, 0.5);
+  --shadow-pop: 0 25px 80px rgba(0, 0, 0, 0.6);
+}
