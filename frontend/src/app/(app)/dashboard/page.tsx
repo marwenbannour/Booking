@@ -8,6 +8,7 @@ import { AppShell } from "@/components/shell/AppShell";
 import { MetricCard } from "@/components/ui/MetricCard";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { Button } from "@/components/ui/Button";
+import { ShareLink } from "@/components/ShareLink";
 import { formatTime } from "@/lib/format";
 
 const EXAMPLE: BookingListItem[] = [
@@ -19,7 +20,7 @@ const EXAMPLE: BookingListItem[] = [
 const ACCENTS = ["", "teal", "orange", "rose"] as const;
 
 export default function DashboardPage() {
-  const { establishmentId } = useAuth();
+  const { establishmentId, establishmentSlug } = useAuth();
   const [items, setItems] = useState<BookingListItem[]>([]);
   const [isExample, setIsExample] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -129,6 +130,10 @@ export default function DashboardPage() {
             ))}
           </div>
         )}
+      </div>
+
+      <div style={{ marginTop: 16 }}>
+        <ShareLink slug={establishmentSlug} />
       </div>
     </AppShell>
   );

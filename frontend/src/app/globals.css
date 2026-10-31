@@ -13,6 +13,15 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 a { color: inherit; text-decoration: none; }
+
+/* ====== RTL (arabe) ====== */
+html[dir="rtl"] body { font-family: var(--font-arabic); }
+html[dir="rtl"] .t-h1,
+html[dir="rtl"] .t-h2,
+html[dir="rtl"] .t-h3,
+html[dir="rtl"] .t-title,
+html[dir="rtl"] .t-metric,
+html[dir="rtl"] .brand-name { font-family: var(--font-arabic); letter-spacing: 0; }
 button, input, select { font: inherit; }
 button { cursor: pointer; }
 :focus-visible { outline: 3px solid color-mix(in srgb, var(--brand) 24%, transparent); outline-offset: 2px; }
@@ -205,6 +214,13 @@ h1, h2, h3, p { margin: 0; }
 .confirmation { padding: 35px 20px; text-align: center; }
 .confirm-icon { display: grid; place-items: center; width: 55px; height: 55px; margin: 0 auto 15px; border-radius: 50%; color: var(--success); background: var(--success-soft); font-size: 26px; }
 .booking-ref { display: inline-flex; margin: 8px 0 18px; padding: 9px 13px; border-radius: var(--radius-xs); background: var(--surface-sunken); color: var(--ink); font-size: 11px; font-weight: 700; letter-spacing: 0.7px; }
+
+/* ====== Calendar events ====== */
+.cal-event { border-inline-start-color: var(--brand); }
+.cal-event.confirmed { border-inline-start-color: var(--success); }
+.cal-event.pending { border-inline-start-color: var(--warning); }
+.cal-event.completed { border-inline-start-color: var(--info); }
+.cal-event.cancelled { border-inline-start-color: var(--danger); }
 
 /* ====== Utilities ====== */
 .stack { display: grid; gap: var(--space-3); }

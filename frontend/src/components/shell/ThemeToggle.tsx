@@ -1,11 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useI18n } from "@/lib/i18n";
 
 const KEY = "booking.theme";
 type Theme = "light" | "dark";
 
 export function ThemeToggle() {
+  const { t } = useI18n();
   const [theme, setTheme] = useState<Theme | null>(null);
 
   useEffect(() => {
@@ -38,8 +40,8 @@ export function ThemeToggle() {
   }
 
   return (
-    <button className="btn-quiet" onClick={toggle} aria-label="Changer de thème">
-      {theme === "dark" ? "☀︎ Clair" : "☾ Sombre"}
+    <button className="btn-quiet" onClick={toggle} aria-label="Theme">
+      {theme === "dark" ? t("common.theme.light") : t("common.theme.dark")}
     </button>
   );
 }

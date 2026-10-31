@@ -9,6 +9,7 @@ interface AuthState {
   me: Me | null;
   establishmentId: string | null;
   establishmentName: string | null;
+  establishmentSlug: string | null;
   signIn: (identifier: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
   refreshMe: () => Promise<void>;
@@ -60,6 +61,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     me,
     establishmentId: primary?.establishment.id ?? null,
     establishmentName: primary?.establishment.name ?? null,
+    establishmentSlug: primary?.establishment.slug ?? null,
     signIn,
     signOut,
     refreshMe,

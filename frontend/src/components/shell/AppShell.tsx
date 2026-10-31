@@ -4,12 +4,18 @@ import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { useAuth } from "@/lib/auth";
+import { useI18n, LanguageToggle } from "@/lib/i18n";
 import { Button } from "@/components/ui/Button";
 import { ThemeToggle } from "./ThemeToggle";
 
 const NAV = [
-  { href: "/dashboard", label: "Tableau de bord" },
-  { href: "/bookings", label: "Rendez-vous" },
+  { href: "/dashboard", key: "nav.dashboard" },
+  { href: "/calendar", key: "nav.calendar" },
+  { href: "/bookings", key: "nav.bookings" },
+  { href: "/customers", key: "nav.customers" },
+  { href: "/services", key: "nav.services" },
+  { href: "/employees", key: "nav.employees" },
+  { href: "/subscriptions", key: "nav.subscriptions" },
 ];
 
 export function AppShell({ title, subtitle, actions, children }: {
@@ -21,6 +27,7 @@ export function AppShell({ title, subtitle, actions, children }: {
   const pathname = usePathname();
   const router = useRouter();
   const { me, establishmentName, signOut } = useAuth();
+  const { t } = useI18n();
 
   const initials = (establishmentName ?? "Booking")
     .split(" ")
@@ -43,7 +50,7 @@ export function AppShell({ title, subtitle, actions, children }: {
             Hair<span>Book</span>
           </span>
         </div>
-        <p className="workspace-label">{establishmentName ?? "Espace de travail"}</p>
+        <p className="workspace-label">{establishmentName ?? t("common.workspace")}</p>
         <nav className="nav-list">
           {NAV.map((item) => (
             <Link
@@ -51,7 +58,7 @@ export function AppShell({ title, subtitle, actions, children }: {
               href={item.href}
               className={`nav-item ${pathname === item.href ? "active" : ""}`}
             >
-              {item.label}
+              {t(item.key)}
             </Link>
           ))}
         </nav>
@@ -72,9 +79,10 @@ export function AppShell({ title, subtitle, actions, children }: {
             Espace pro · <strong>{title}</strong>
           </div>
           <div className="top-actions">
+            <LanguageToggle />
             <ThemeToggle />
             <Button variant="quiet" onClick={handleSignOut}>
-              Déconnexion
+              {t("common.logout")}
             </Button>
           </div>
         </header>

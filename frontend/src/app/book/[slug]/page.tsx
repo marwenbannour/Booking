@@ -12,9 +12,8 @@ import {
 import { Button } from "@/components/ui/Button";
 import { Field } from "@/components/ui/Field";
 import { ThemeToggle } from "@/components/shell/ThemeToggle";
+import { useI18n, LanguageToggle } from "@/lib/i18n";
 import { formatPrice, formatTime } from "@/lib/format";
-
-const STEPS = ["Service", "Créneau", "Vos coordonnées", "Confirmation"];
 
 function toDateKey(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
@@ -41,6 +40,8 @@ function newIdempotencyKey(): string {
 
 export default function BookPage({ params }: { params: { slug: string } }) {
   const { slug } = params;
+  const { t } = useI18n();
+  const STEPS = [t("book.step.service"), t("book.step.slot"), t("book.step.details"), t("book.step.confirm")];
 
   const [establishment, setEstablishment] = useState<PublicEstablishment | null>(null);
   const [currency, setCurrency] = useState("TND");
@@ -174,13 +175,16 @@ export default function BookPage({ params }: { params: { slug: string } }) {
             {establishment?.name ?? "Réservation"}
           </strong>
         </div>
-        <ThemeToggle />
+        <div className="row" style={{ gap: 8 }}>
+          <LanguageToggle />
+          <ThemeToggle />
+        </div>
       </header>
 
       <div className="public-body">
         <div className="shop-banner">
           <div>
-            <div className="shop-kicker">Réservation en ligne</div>
+            <div className="shop-kicker">{t("book.kicker")}</div>
             <h1>{establishment?.name ?? slug}</h1>
             <p style={{ margin: 0, fontSize: 11, opacity: 0.9 }}>
               {establishment?.address ?? "Prenez rendez-vous en quelques clics."}
@@ -208,7 +212,7 @@ export default function BookPage({ params }: { params: { slug: string } }) {
             {/* Étape 1 — Service */}
             {step === 0 && (
               <>
-                <h2 className="t-h3">Choisissez un service</h2>
+                <h2 className="t-h3">{t("book.chooseService")}</h2>
                 <p className="t-muted" style={{ fontSize: 10, margin: "4px 0 16px" }}>
                   Sélectionnez la prestation souhaitée.
                 </p>
@@ -234,15 +238,15 @@ export default function BookPage({ params }: { params: { slug: string } }) {
             {/* Étape 2 — Créneau */}
             {step === 1 && service && (
               <>
-                <h2 className="t-h3">Employé &amp; créneau</h2>
-                <p className="t-label" style={{ margin: "14px 0 9px" }}>Employé</p>
+                <h2 className="t-h3">{t("book.staffAndSlot")}</h2>
+                <p className="t-label" style={{ margin: "14px 0 9px" }}>{t("book.employee")}</p>
                 <div className="chip-row">
                   <button
                     className={`option-tile ${employeeId === "" ? "selected" : ""}`}
                     style={{ width: "auto" }}
                     onClick={() => setEmployeeId("")}
                   >
-                    Sans préférence
+                    {t("book.anyEmployee")}
                   </button>
                   {employees.map((e) => (
                     <button
@@ -256,7 +260,7 @@ export default function BookPage({ params }: { params: { slug: string } }) {
                   ))}
                 </div>
 
-                <p className="t-label" style={{ margin: "18px 0 9px" }}>Date</p>
+                <p className="t-label" style={{ margin: "18px 0 9px" }}>{t("book.date")}</p>
                 <div className="date-strip">
                   {days.map((d) => {
                     const key = toDateKey(d);
@@ -276,13 +280,13 @@ export default function BookPage({ params }: { params: { slug: string } }) {
                   })}
                 </div>
 
-                <p className="t-label" style={{ margin: "18px 0 9px" }}>Créneau</p>
+                <p className="t-label" style={{ margin: "18px 0 9px" }}>{t("book.slot")}</p>
                 {loadingSlots ? (
                   <div className="row" style={{ justifyContent: "center", padding: 18 }}>
                     <div className="spin" />
                   </div>
                 ) : uniqueSlots.length === 0 ? (
-                  <p className="t-muted" style={{ fontSize: 10 }}>Aucun créneau disponible ce jour.</p>
+                  <p className="t-muted" style={{ fontSize: 10 }}>{t("book.noSlots")}</p>
                 ) : (
                   <div className="time-grid">
                     {uniqueSlots.map((s) => (
@@ -298,8 +302,8 @@ export default function BookPage({ params }: { params: { slug: string } }) {
                 )}
 
                 <div className="booking-footer">
-                  <Button variant="quiet" onClick={() => setStep(0)}>Retour</Button>
-                  <Button disabled={!slotStart} onClick={() => setStep(2)}>Continuer</Button>
+                  <Button variant="quiet" onClick={() => setStep(0)}>{t("common.back")}</Button>
+                  <Button disabled={!slotStart} onClick={() => setStep(2)}>{t("common.continue")}</Button>
                 </div>
               </>
             )}
@@ -307,23 +311,23 @@ export default function BookPage({ params }: { params: { slug: string } }) {
             {/* Étape 3 — Coordonnées */}
             {step === 2 && (
               <>
-                <h2 className="t-h3">Vos coordonnées</h2>
+                <h2 className="t-h3">{t("book.details")}</h2>
                 <p className="t-muted" style={{ fontSize: 10, margin: "4px 0 16px" }}>
                   Pour confirmer le rendez-vous et vous envoyer un rappel.
                 </p>
                 <div className="form-grid">
-                  <Field label="Nom complet" name="name" value={name} onChange={(e) => setName(e.target.value)} />
-                  <Field label="Téléphone" name="phone" value={phone} onChange={(e) => setPhone(e.target.value)} />
-                  <Field label="Email (optionnel)" name="email" type="email" full value={email} onChange={(e) => setEmail(e.target.value)} />
+                  <Field label={t("book.name")} name="name" value={name} onChange={(e) => setName(e.target.value)} />
+                  <Field label={t("book.phone")} name="phone" value={phone} onChange={(e) => setPhone(e.target.value)} />
+                  <Field label={t("book.email")} name="email" type="email" full value={email} onChange={(e) => setEmail(e.target.value)} />
                 </div>
                 <label className="consent-row">
                   <input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} />
-                  <span>J&apos;accepte de recevoir les rappels de rendez-vous par WhatsApp.</span>
+                  <span>{t("book.consent")}</span>
                 </label>
                 <div className="booking-footer">
-                  <Button variant="quiet" onClick={() => setStep(1)}>Retour</Button>
+                  <Button variant="quiet" onClick={() => setStep(1)}>{t("common.back")}</Button>
                   <Button disabled={submitting} onClick={submit}>
-                    {submitting ? "Réservation…" : "Confirmer la réservation"}
+                    {submitting ? t("book.booking") : t("book.confirm")}
                   </Button>
                 </div>
               </>
@@ -333,9 +337,9 @@ export default function BookPage({ params }: { params: { slug: string } }) {
             {step === 3 && result && (
               <div className="confirmation">
                 <div className="confirm-icon">✓</div>
-                <h2 className="t-h2">Réservation confirmée</h2>
+                <h2 className="t-h2">{t("book.confirmed")}</h2>
                 <p className="t-muted" style={{ fontSize: 11, margin: "8px 0" }}>
-                  Un rappel WhatsApp vous sera envoyé avant le rendez-vous.
+                  {t("book.confirmedHint")}
                 </p>
                 <div className="booking-ref">{result.booking.publicReference}</div>
                 <p className="t-muted" style={{ fontSize: 11 }}>
@@ -349,25 +353,25 @@ export default function BookPage({ params }: { params: { slug: string } }) {
           {/* Résumé */}
           {step > 0 && step < 3 && service && (
             <aside className="summary-card">
-              <h3 className="t-title" style={{ marginBottom: 12 }}>Récapitulatif</h3>
+              <h3 className="t-title" style={{ marginBottom: 12 }}>{t("book.summary")}</h3>
               <div className="summary-row">
-                <span>Service</span>
+                <span>{t("book.step.service")}</span>
                 <strong>{service.name}</strong>
               </div>
               <div className="summary-row">
-                <span>Durée</span>
+                <span>{t("book.duration")}</span>
                 <strong>{service.durationMinutes} min</strong>
               </div>
               <div className="summary-row">
-                <span>Employé</span>
+                <span>{t("book.employee")}</span>
                 <strong>{employeeName}</strong>
               </div>
               <div className="summary-row">
-                <span>Créneau</span>
+                <span>{t("book.slot")}</span>
                 <strong>{selectedSlot ? formatTime(selectedSlot.start, establishment?.timezone) : "—"}</strong>
               </div>
               <div className="summary-row" style={{ borderBottom: 0 }}>
-                <span>Prix</span>
+                <span>{t("book.price")}</span>
                 <strong>{formatPrice(service.price, currency)}</strong>
               </div>
             </aside>

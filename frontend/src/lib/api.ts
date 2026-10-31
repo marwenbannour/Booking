@@ -197,6 +197,57 @@ export const api = {
     });
   },
 
+  /* Services */
+  listServices(establishmentId: string) {
+    return authed<ManagedService[]>(`/establishments/${establishmentId}/services`);
+  },
+  createService(
+    establishmentId: string,
+    body: { name: string; durationMinutes: number; description?: string; price?: number },
+  ) {
+    return authed<ManagedService>(`/establishments/${establishmentId}/services`, {
+      method: "POST",
+      body: JSON.stringify(body),
+    });
+  },
+  deactivateService(establishmentId: string, serviceId: string) {
+    return authed(`/establishments/${establishmentId}/services/${serviceId}`, { method: "DELETE" });
+  },
+
+  /* Employés */
+  listEmployees(establishmentId: string) {
+    return authed<ManagedEmployee[]>(`/establishments/${establishmentId}/employees`);
+  },
+
+  /* Clients */
+  listCustomers(establishmentId: string, opts: { q?: string; cursor?: string; limit?: number } = {}) {
+    const q = new URLSearchParams();
+    if (opts.q) q.set("q", opts.q);
+    if (opts.cursor) q.set("cursor", opts.cursor);
+    if (opts.limit) q.set("limit", String(opts.limit));
+    const qs = q.toString();
+    return authed<CustomersPage>(
+      `/establishments/${establishmentId}/customers${qs ? `?${qs}` : ""}`,
+    );
+  },
+
+  /* Abonnements */
+  subscriptionPlans() {
+    return authed<{ items: SubscriptionPlan[] }>("/subscription-plans");
+  },
+  currentSubscription(establishmentId: string) {
+    const q = new URLSearchParams({ establishmentId });
+    return authed<CurrentSubscription>(`/subscriptions/current?${q}`);
+  },
+  subscribe(establishmentId: string, planCode: string) {
+    const q = new URLSearchParams({ establishmentId });
+    return authed(`/subscriptions?${q}`, { method: "POST", body: JSON.stringify({ planCode }) });
+  },
+  changePlan(establishmentId: string, planCode: string) {
+    const q = new URLSearchParams({ establishmentId });
+    return authed(`/subscriptions/change-plan?${q}`, { method: "POST", body: JSON.stringify({ planCode }) });
+  },
+
   /* Public */
   establishment(slug: string) {
     return request<PublicEstablishment>(`/public/establishments/${encodeURIComponent(slug)}`);
@@ -266,4 +317,77 @@ export interface CreateBookingResult {
     employee?: { displayName: string };
   };
   establishment: { name: string };
+}
+
+export interface ManagedService {
+  id: string;
+  name: string;
+  description?: string | null;
+  durationMinutes: number;
+  price?: string | null;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ManagedEmployee {
+  id: string;
+  memberId: string;
+  displayName: string;
+  isActive: boolean;
+  services: Array<{ serviceId: string }>;
+  createdAt: string;
+}
+
+export interface CustomerRow {
+  id: string;
+  name: string;
+  phoneNormalized?: string | null;
+  email?: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CustomersPage {
+  items: CustomerRow[];
+  nextCursor: string | null;
+}
+
+export interface SubscriptionPlan {
+  id: string;
+  code: string;
+  name: string;
+  description?: string | null;
+  priceAmount: string;
+  currency: string;
+  interval: "MONTH" | "YEAR";
+  trialDays: number;
+  maxEmployees?: number | null;
+  maxBookingsPerMonth?: number | null;
+  maxNotificationsPerMonth?: number | null;
+  maxEstablishments?: number | null;
+}
+
+export interface UsageMetric {
+  used: number;
+  limit: number | null;
+}
+
+export interface CurrentSubscription {
+  subscription: {
+    id: string;
+    status: string;
+    currentPeriodStart: string;
+    currentPeriodEnd: string;
+    trialEndsAt: string | null;
+    cancelAtPeriodEnd: boolean;
+  } | null;
+  plan: { code: string; name: string; isImplicitFree?: boolean } | null;
+  usage: {
+    periodStart: string;
+    periodEnd: string;
+    employees: UsageMetric;
+    bookings: UsageMetric;
+    notifications: UsageMetric;
+  };
 }
