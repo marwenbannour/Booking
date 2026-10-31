@@ -46,9 +46,9 @@ export function AppShell({ title, subtitle, actions, children }: {
     <div className="app-shell">
       <aside className="sidebar">
         <div className="brand">
-          <span className="brand-mark">HB</span>
+          <span className="brand-mark">B&amp;W</span>
           <span className="brand-name">
-            Hair<span>Book</span>
+            Book<span>&amp;Whats</span>
           </span>
         </div>
         <p className="workspace-label">{establishmentName ?? t("common.workspace")}</p>
@@ -77,8 +77,8 @@ export function AppShell({ title, subtitle, actions, children }: {
       <div className="main-panel">
         <header className="topbar">
           <div className="topbar-brand">
-            <span className="brand-mark">HB</span>
-            <span>Hair<span style={{ color: "var(--brand)" }}>Book</span></span>
+            <span className="brand-mark">B&amp;W</span>
+            <span>Book<span style={{ color: "var(--teal)" }}>&amp;Whats</span></span>
           </div>
           <div className="breadcrumb">
             {t("common.workspace")} · <strong>{title}</strong>

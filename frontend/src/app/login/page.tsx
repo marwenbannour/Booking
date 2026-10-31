@@ -36,9 +36,9 @@ export default function LoginPage() {
     <div className="center-screen">
       <form className="auth-card stack" onSubmit={onSubmit}>
         <div className="row" style={{ gap: 11, marginBottom: 6 }}>
-          <span className="brand-mark">HB</span>
+          <span className="brand-mark">B&amp;W</span>
           <span className="brand-name">
-            Hair<span>Book</span>
+            Book<span>&amp;Whats</span>
           </span>
         </div>
         <div>

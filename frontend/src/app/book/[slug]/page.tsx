@@ -170,7 +170,7 @@ export default function BookPage({ params }: { params: { slug: string } }) {
     <>
       <header className="public-topbar">
         <div className="row" style={{ gap: 10 }}>
-          <span className="brand-mark">HB</span>
+          <span className="brand-mark">B&amp;W</span>
           <strong style={{ fontFamily: "var(--font-display)" }}>
             {establishment?.name ?? "Réservation"}
           </strong>

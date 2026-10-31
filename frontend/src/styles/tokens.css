@@ -1,41 +1,41 @@
-/* Charte UI Booking — tokens générés depuis le design system (tokens.json).
-   Source de vérité : https://claude.ai/artifact/4o5rjg6eKzqrKiJXXpeTpW
+/* Charte graphique Book&Whats — « Réservez. Organisez. Ne ratez plus. »
+   Couleurs, typographie (Inter) et états tels que définis dans la charte.
    Thème clair sur :root ; thème sombre via prefers-color-scheme et [data-theme]. */
 
 :root {
   color-scheme: light;
 
   /* Surfaces & texte */
-  --canvas: #f5f7fb;
+  --canvas: #f8fafc;          /* Fond */
   --surface: #ffffff;
-  --surface-sunken: #f7f9ff;
-  --line: #e9edf3;
-  --ink: #17243b;
-  --muted: #8490a4;
+  --surface-sunken: #f1f5f9;
+  --line: #e2e8f0;
+  --ink: #0f172a;
+  --muted: #64748b;           /* Texte secondaire */
 
   /* Marque */
-  --brand: #4169e1;
-  --brand-strong: #3156c9;
-  --brand-soft: #eef2ff;
+  --brand: #2563eb;           /* Bleu principal */
+  --brand-strong: #1d4ed8;
+  --brand-soft: #e7effd;
   --on-brand: #ffffff;
 
-  /* Accents catégoriels */
-  --teal: #18a999;
-  --teal-soft: #e8f8f4;
-  --orange: #e69b45;
-  --orange-soft: #fff5e8;
-  --rose: #de6d7f;
-  --rose-soft: #fff0f2;
+  /* Accents */
+  --teal: #0d9488;            /* Turquoise */
+  --teal-soft: #e3f4f2;
+  --orange: #f59e0b;          /* repris de l'état Avertissement */
+  --orange-soft: #fef3c7;
+  --rose: #6366f1;            /* Violet (accent catégoriel) */
+  --rose-soft: #ececfe;
 
-  /* Statuts de rendez-vous */
-  --success: #188a76;
-  --success-soft: #e9f8f4;
-  --warning: #c27d24;
-  --warning-soft: #fff4e5;
-  --info: #617087;
-  --info-soft: #eff2f6;
-  --danger: #cb596a;
-  --danger-soft: #fff0f2;
+  /* États */
+  --success: #22c55e;
+  --success-soft: #dcfce7;
+  --warning: #f59e0b;
+  --warning-soft: #fef3c7;
+  --info: #64748b;
+  --info-soft: #f1f5f9;
+  --danger: #ef4444;
+  --danger-soft: #fee2e2;
 
   /* Espacement */
   --space-1: 4px;
@@ -50,91 +50,91 @@
   --radius-xs: 6px;
   --radius-sm: 8px;
   --radius-md: 10px;
-  --radius-lg: 13px;
+  --radius-lg: 14px;
   --radius-pill: 999px;
 
   /* Ombres */
-  --shadow-sm: 0 2px 6px rgba(35, 51, 80, 0.04);
-  --shadow-card: 0 14px 40px rgba(27, 44, 80, 0.06);
-  --shadow-pop: 0 25px 80px rgba(16, 32, 64, 0.19);
+  --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.06);
+  --shadow-card: 0 12px 32px rgba(15, 23, 42, 0.08);
+  --shadow-pop: 0 24px 64px rgba(15, 23, 42, 0.18);
 
-  /* Typographie */
-  --font-display: "Manrope", "Segoe UI", system-ui, sans-serif;
-  --font-body: "DM Sans", "Segoe UI", system-ui, sans-serif;
-  --font-arabic: "Noto Sans Arabic", "DM Sans", system-ui, sans-serif;
+  /* Typographie — Inter */
+  --font-display: "Inter", "Segoe UI", system-ui, sans-serif;
+  --font-body: "Inter", "Segoe UI", system-ui, sans-serif;
+  --font-arabic: "Noto Sans Arabic", "Inter", system-ui, sans-serif;
 }
 
-/* ---- Thème sombre (valeurs de tokens.json) ---- */
+/* ---- Thème sombre ---- */
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     color-scheme: dark;
 
-    --canvas: #0f1421;
-    --surface: #171d2b;
-    --surface-sunken: #1d2536;
-    --line: #2a3346;
-    --ink: #eaeef6;
-    --muted: #99a4b8;
+    --canvas: #0b1120;
+    --surface: #111a2e;
+    --surface-sunken: #1a2439;
+    --line: #253044;
+    --ink: #e2e8f0;
+    --muted: #94a3b8;
 
-    --brand: #8aa4ff;
-    --brand-strong: #7390f5;
-    --brand-soft: #243154;
-    --on-brand: #0f1421;
+    --brand: #60a5fa;
+    --brand-strong: #3b82f6;
+    --brand-soft: #1e2a4d;
+    --on-brand: #0b1120;
 
-    --teal: #4ccdbb;
-    --teal-soft: #113b36;
-    --orange: #eab45f;
-    --orange-soft: #3a2e1b;
-    --rose: #ec8a9a;
-    --rose-soft: #3b2127;
+    --teal: #2dd4bf;
+    --teal-soft: #0f3b38;
+    --orange: #fbbf24;
+    --orange-soft: #3a2e12;
+    --rose: #a5b4fc;
+    --rose-soft: #272a5a;
 
-    --success: #4ccdbb;
-    --success-soft: #113b36;
-    --warning: #eab45f;
-    --warning-soft: #3a2e1b;
-    --info: #9aa6bb;
-    --info-soft: #232c3d;
-    --danger: #ec8a9a;
-    --danger-soft: #3b2127;
+    --success: #4ade80;
+    --success-soft: #0f3d2a;
+    --warning: #fbbf24;
+    --warning-soft: #3a2e12;
+    --info: #94a3b8;
+    --info-soft: #1a2439;
+    --danger: #f87171;
+    --danger-soft: #3a1e1e;
 
-    --shadow-sm: 0 2px 6px rgba(0, 0, 0, 0.4);
-    --shadow-card: 0 14px 40px rgba(0, 0, 0, 0.5);
-    --shadow-pop: 0 25px 80px rgba(0, 0, 0, 0.6);
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+    --shadow-card: 0 12px 32px rgba(0, 0, 0, 0.5);
+    --shadow-pop: 0 24px 64px rgba(0, 0, 0, 0.6);
   }
 }
 
 :root[data-theme="dark"] {
   color-scheme: dark;
 
-  --canvas: #0f1421;
-  --surface: #171d2b;
-  --surface-sunken: #1d2536;
-  --line: #2a3346;
-  --ink: #eaeef6;
-  --muted: #99a4b8;
+  --canvas: #0b1120;
+  --surface: #111a2e;
+  --surface-sunken: #1a2439;
+  --line: #253044;
+  --ink: #e2e8f0;
+  --muted: #94a3b8;
 
-  --brand: #8aa4ff;
-  --brand-strong: #7390f5;
-  --brand-soft: #243154;
-  --on-brand: #0f1421;
+  --brand: #60a5fa;
+  --brand-strong: #3b82f6;
+  --brand-soft: #1e2a4d;
+  --on-brand: #0b1120;
 
-  --teal: #4ccdbb;
-  --teal-soft: #113b36;
-  --orange: #eab45f;
-  --orange-soft: #3a2e1b;
-  --rose: #ec8a9a;
-  --rose-soft: #3b2127;
+  --teal: #2dd4bf;
+  --teal-soft: #0f3b38;
+  --orange: #fbbf24;
+  --orange-soft: #3a2e12;
+  --rose: #a5b4fc;
+  --rose-soft: #272a5a;
 
-  --success: #4ccdbb;
-  --success-soft: #113b36;
-  --warning: #eab45f;
-  --warning-soft: #3a2e1b;
-  --info: #9aa6bb;
-  --info-soft: #232c3d;
-  --danger: #ec8a9a;
-  --danger-soft: #3b2127;
+  --success: #4ade80;
+  --success-soft: #0f3d2a;
+  --warning: #fbbf24;
+  --warning-soft: #3a2e12;
+  --info: #94a3b8;
+  --info-soft: #1a2439;
+  --danger: #f87171;
+  --danger-soft: #3a1e1e;
 
-  --shadow-sm: 0 2px 6px rgba(0, 0, 0, 0.4);
-  --shadow-card: 0 14px 40px rgba(0, 0, 0, 0.5);
-  --shadow-pop: 0 25px 80px rgba(0, 0, 0, 0.6);
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-card: 0 12px 32px rgba(0, 0, 0, 0.5);
+  --shadow-pop: 0 24px 64px rgba(0, 0, 0, 0.6);
 }
