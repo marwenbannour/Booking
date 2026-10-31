@@ -34,7 +34,8 @@ export default function LoginPage() {
 
   return (
     <div className="center-screen">
-      <form className="auth-card stack" onSubmit={onSubmit}>
+      <div className="auth-split">
+        <form className="auth-pane stack" onSubmit={onSubmit}>
         <div className="row" style={{ gap: 11, marginBottom: 6 }}>
           <span className="brand-mark">B&amp;W</span>
           <span className="brand-name">
@@ -72,7 +73,21 @@ export default function LoginPage() {
         <Button type="submit" disabled={busy} style={{ width: "100%", padding: "12px 14px" }}>
           {busy ? "Connexion…" : "Se connecter"}
         </Button>
-      </form>
+        </form>
+
+        <aside className="auth-visual">
+          <div className="auth-visual-brand">
+            <span className="brand-mark" style={{ background: "rgba(255,255,255,.18)", boxShadow: "none" }}>B&amp;W</span>
+            <strong style={{ fontFamily: "var(--font-display)", fontSize: 16 }}>Book&amp;Whats</strong>
+          </div>
+          <div style={{ marginTop: "auto" }}>
+            <h2 style={{ fontFamily: "var(--font-display)", fontWeight: 700, fontSize: 22, lineHeight: 1.25, margin: 0 }}>
+              Gérez vos rendez-vous en toute simplicité
+            </h2>
+            <p style={{ opacity: 0.92, fontSize: 13, marginTop: 8 }}>Réservez. Organisez. Ne ratez plus.</p>
+          </div>
+        </aside>
+      </div>
     </div>
   );
 }

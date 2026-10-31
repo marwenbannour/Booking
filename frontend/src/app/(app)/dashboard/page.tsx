@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useAuth } from "@/lib/auth";
 import { api, ApiError, type BookingListItem } from "@/lib/api";
 import { AppShell } from "@/components/shell/AppShell";
+import { CalendarCheck, Clock, Hourglass, CheckCircle2 } from "lucide-react";
 import { MetricCard } from "@/components/ui/MetricCard";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { Button } from "@/components/ui/Button";
@@ -86,14 +87,14 @@ export default function DashboardPage() {
       )}
 
       <div className="metrics-grid">
-        <MetricCard label="Rendez-vous (total)" value={metrics.total} tone="brand" icon="▤" />
-        <MetricCard label="Aujourd'hui" value={metrics.todayCount} tone="teal" icon="◷" />
-        <MetricCard label="En attente" value={metrics.pending} tone="orange" icon="◔" />
+        <MetricCard label="Rendez-vous (total)" value={metrics.total} tone="brand" icon={<CalendarCheck size={16} />} />
+        <MetricCard label="Aujourd'hui" value={metrics.todayCount} tone="teal" icon={<Clock size={16} />} />
+        <MetricCard label="En attente" value={metrics.pending} tone="orange" icon={<Hourglass size={16} />} />
         <MetricCard
           label="Taux de confirmation"
           value={`${metrics.rate} %`}
           tone="rose"
-          icon="✓"
+          icon={<CheckCircle2 size={16} />}
           trend={{ direction: "up", value: `${metrics.rate} %`, caption: "des rendez-vous" }}
         />
       </div>

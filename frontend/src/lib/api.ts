@@ -248,6 +248,37 @@ export const api = {
     return authed(`/subscriptions/change-plan?${q}`, { method: "POST", body: JSON.stringify({ planCode }) });
   },
 
+  /* Notifications */
+  listNotifications(establishmentId: string, opts: { status?: string; limit?: number; offset?: number } = {}) {
+    const q = new URLSearchParams({ establishmentId });
+    if (opts.status) q.set("status", opts.status);
+    q.set("limit", String(opts.limit ?? 50));
+    q.set("offset", String(opts.offset ?? 0));
+    return authed<Paginated<NotificationJobRow>>(`/notifications?${q}`);
+  },
+  notificationSettings(establishmentId: string) {
+    const q = new URLSearchParams({ establishmentId });
+    return authed<NotificationSettings>(`/notification-settings?${q}`);
+  },
+  updateNotificationSettings(establishmentId: string, body: Partial<NotificationSettings>) {
+    const q = new URLSearchParams({ establishmentId });
+    return authed<NotificationSettings>(`/notification-settings?${q}`, {
+      method: "PATCH",
+      body: JSON.stringify(body),
+    });
+  },
+
+  /* Établissement */
+  establishmentProfile(establishmentId: string) {
+    return authed<EstablishmentProfile>(`/establishments/${establishmentId}`);
+  },
+  updateEstablishment(establishmentId: string, body: Partial<EstablishmentProfile>) {
+    return authed<EstablishmentProfile>(`/establishments/${establishmentId}`, {
+      method: "PATCH",
+      body: JSON.stringify(body),
+    });
+  },
+
   /* Public */
   establishment(slug: string) {
     return request<PublicEstablishment>(`/public/establishments/${encodeURIComponent(slug)}`);
@@ -371,6 +402,44 @@ export interface SubscriptionPlan {
 export interface UsageMetric {
   used: number;
   limit: number | null;
+}
+
+export interface NotificationJobRow {
+  id: string;
+  bookingId: string;
+  channel: string;
+  eventType: string;
+  status: string;
+  scheduledAt: string;
+  attempts: number;
+  providerMessageId?: string | null;
+  errorCode?: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface NotificationSettings {
+  establishmentId: string;
+  whatsappEnabled: boolean;
+  confirmationEnabled: boolean;
+  cancellationEnabled: boolean;
+  firstReminderMinutesBefore: number | null;
+  secondReminderMinutesBefore: number | null;
+}
+
+export interface EstablishmentProfile {
+  id: string;
+  slug: string;
+  name: string;
+  description?: string | null;
+  address?: string | null;
+  timezone: string;
+  currency: string;
+  locale: string;
+  minimumBookingNoticeMinutes: number;
+  maximumBookingDays: number;
+  cancellationNoticeHours: number;
+  status?: string;
 }
 
 export interface CurrentSubscription {

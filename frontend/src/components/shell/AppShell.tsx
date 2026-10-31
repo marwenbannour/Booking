@@ -5,18 +5,31 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { useAuth } from "@/lib/auth";
 import { useI18n, LanguageToggle } from "@/lib/i18n";
+import {
+  LayoutDashboard,
+  CalendarDays,
+  CalendarCheck,
+  Users,
+  Scissors,
+  UserCog,
+  CreditCard,
+  Bell,
+  Settings,
+} from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { ThemeToggle } from "./ThemeToggle";
 import { MobileNav } from "./MobileNav";
 
 const NAV = [
-  { href: "/dashboard", key: "nav.dashboard" },
-  { href: "/calendar", key: "nav.calendar" },
-  { href: "/bookings", key: "nav.bookings" },
-  { href: "/customers", key: "nav.customers" },
-  { href: "/services", key: "nav.services" },
-  { href: "/employees", key: "nav.employees" },
-  { href: "/subscriptions", key: "nav.subscriptions" },
+  { href: "/dashboard", key: "nav.dashboard", Icon: LayoutDashboard },
+  { href: "/calendar", key: "nav.calendar", Icon: CalendarDays },
+  { href: "/bookings", key: "nav.bookings", Icon: CalendarCheck },
+  { href: "/customers", key: "nav.customers", Icon: Users },
+  { href: "/services", key: "nav.services", Icon: Scissors },
+  { href: "/employees", key: "nav.employees", Icon: UserCog },
+  { href: "/subscriptions", key: "nav.subscriptions", Icon: CreditCard },
+  { href: "/notifications", key: "nav.notifications", Icon: Bell },
+  { href: "/settings", key: "nav.settings", Icon: Settings },
 ];
 
 export function AppShell({ title, subtitle, actions, children }: {
@@ -59,6 +72,7 @@ export function AppShell({ title, subtitle, actions, children }: {
               href={item.href}
               className={`nav-item ${pathname === item.href ? "active" : ""}`}
             >
+              <item.Icon size={17} strokeWidth={1.8} />
               {t(item.key)}
             </Link>
           ))}
