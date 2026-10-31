@@ -7,6 +7,7 @@ import { useAuth } from "@/lib/auth";
 import { useI18n, LanguageToggle } from "@/lib/i18n";
 import { Button } from "@/components/ui/Button";
 import { ThemeToggle } from "./ThemeToggle";
+import { MobileNav } from "./MobileNav";
 
 const NAV = [
   { href: "/dashboard", key: "nav.dashboard" },
@@ -75,8 +76,12 @@ export function AppShell({ title, subtitle, actions, children }: {
 
       <div className="main-panel">
         <header className="topbar">
+          <div className="topbar-brand">
+            <span className="brand-mark">HB</span>
+            <span>Hair<span style={{ color: "var(--brand)" }}>Book</span></span>
+          </div>
           <div className="breadcrumb">
-            Espace pro · <strong>{title}</strong>
+            {t("common.workspace")} · <strong>{title}</strong>
           </div>
           <div className="top-actions">
             <LanguageToggle />
@@ -98,6 +103,7 @@ export function AppShell({ title, subtitle, actions, children }: {
           {children}
         </main>
       </div>
+      <MobileNav />
     </div>
   );
 }

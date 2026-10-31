@@ -9,6 +9,7 @@ import { MetricCard } from "@/components/ui/MetricCard";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { Button } from "@/components/ui/Button";
 import { ShareLink } from "@/components/ShareLink";
+import { DashboardChart } from "@/components/DashboardChart";
 import { formatTime } from "@/lib/format";
 
 const EXAMPLE: BookingListItem[] = [
@@ -97,6 +98,17 @@ export default function DashboardPage() {
         />
       </div>
 
+      <div className="dashboard-grid">
+        <div className="panel">
+          <div className="panel-head">
+            <div>
+              <h2 className="t-title">Réservations cette semaine</h2>
+              <p className="panel-subtitle">Par jour</p>
+            </div>
+          </div>
+          <DashboardChart items={items} />
+        </div>
+
       <div className="panel">
         <div className="panel-head">
           <div>
@@ -130,6 +142,7 @@ export default function DashboardPage() {
             ))}
           </div>
         )}
+      </div>
       </div>
 
       <div style={{ marginTop: 16 }}>

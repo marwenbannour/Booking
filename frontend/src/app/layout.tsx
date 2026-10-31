@@ -1,12 +1,23 @@
 import "./globals.css";
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
 import { AuthProvider } from "@/lib/auth";
 import { I18nProvider } from "@/lib/i18n";
+import { PwaRegister } from "@/components/PwaRegister";
 
 export const metadata: Metadata = {
   title: "Booking — Espace pro",
-  description: "Réservation en ligne et rappels WhatsApp.",
+  description: "Réservation en ligne, gestion des rendez-vous et rappels WhatsApp.",
+  applicationName: "Booking",
+  appleWebApp: { capable: true, title: "Booking", statusBarStyle: "default" },
+  icons: { icon: "/icon.svg", apple: "/icon.svg" },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#4169e1",
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
@@ -24,6 +35,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         <I18nProvider>
           <AuthProvider>{children}</AuthProvider>
         </I18nProvider>
+        <PwaRegister />
       </body>
     </html>
   );
