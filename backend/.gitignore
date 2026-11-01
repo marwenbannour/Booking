@@ -4,3 +4,8 @@ coverage
 .env
 src/generated/prisma
 *.log
+.vercel
+.env*
+
+# Vercel serverless bundle (build artifact)
+backend/serverless/bundle.mjs
