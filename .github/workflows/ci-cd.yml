@@ -185,13 +185,18 @@ jobs:
           npm ci
           npm run prisma:generate
 
-      - name: Build and deploy preview
+      - name: Build API preview
         working-directory: backend
         env:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
-        run: |
-          npx --yes vercel@65.9.0 build --token="$VERCEL_TOKEN"
-          npx --yes vercel@65.9.0 deploy --prebuilt --token="$VERCEL_TOKEN"
+          DATABASE_URL: postgresql://booking:booking@localhost:5432/booking
+        run: npx --yes vercel@65.9.0 build --token="$VERCEL_TOKEN"
+
+      - name: Deploy API preview
+        working-directory: backend
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: npx --yes vercel@65.9.0 deploy --prebuilt --token="$VERCEL_TOKEN"
 
   deploy-frontend-production:
     name: Deploy frontend production
@@ -269,10 +274,15 @@ jobs:
           npm ci
           npm run prisma:generate
 
-      - name: Build and deploy production
+      - name: Build API production
         working-directory: backend
         env:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
-        run: |
-          npx --yes vercel@65.9.0 build --prod --token="$VERCEL_TOKEN"
-          npx --yes vercel@65.9.0 deploy --prebuilt --prod --token="$VERCEL_TOKEN"
+          DATABASE_URL: postgresql://booking:booking@localhost:5432/booking
+        run: npx --yes vercel@65.9.0 build --prod --token="$VERCEL_TOKEN"
+
+      - name: Deploy API production
+        working-directory: backend
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: npx --yes vercel@65.9.0 deploy --prebuilt --prod --token="$VERCEL_TOKEN"
