@@ -29,6 +29,8 @@ const external = [
   'pg-native',
   'bufferutil',
   'utf-8-validate',
+  // NB : ne PAS externaliser 'class-transformer/storage' — cela scinde le
+  // metadata storage et casse les DTO mapped-types (@nestjs/swagger PartialType).
 ];
 
 await build({
