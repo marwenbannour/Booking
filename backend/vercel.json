@@ -1,11 +1,10 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "buildCommand": "prisma generate && nest build",
+  "buildCommand": "prisma generate && nest build && node scripts/build-serverless.mjs",
   "framework": null,
   "functions": {
     "api/index.ts": {
-      "maxDuration": 30,
-      "includeFiles": "dist/**"
+      "maxDuration": 30
     }
   },
   "rewrites": [{ "source": "/(.*)", "destination": "/api/index" }]
