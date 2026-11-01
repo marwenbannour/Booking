@@ -40,12 +40,13 @@ function newIdempotencyKey(): string {
 
 export default function BookPage({ params }: { params: { slug: string } }) {
   const { slug } = params;
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
   const STEPS = [t("book.step.service"), t("book.step.slot"), t("book.step.details"), t("book.step.confirm")];
 
   const [establishment, setEstablishment] = useState<PublicEstablishment | null>(null);
   const [currency, setCurrency] = useState("TND");
   const [services, setServices] = useState<PublicService[]>([]);
+  const [loadingServices, setLoadingServices] = useState(true);
   const [employees, setEmployees] = useState<Array<{ id: string; displayName: string }>>([]);
   const [slots, setSlots] = useState<AvailabilitySlot[]>([]);
 
@@ -58,7 +59,7 @@ export default function BookPage({ params }: { params: { slug: string } }) {
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
-  const [consent, setConsent] = useState(true);
+  const [consent, setConsent] = useState(false);
 
   const [result, setResult] = useState<CreateBookingResult | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -77,7 +78,8 @@ export default function BookPage({ params }: { params: { slug: string } }) {
         setServices(svc.services);
         setCurrency(svc.currency || est.currency);
       })
-      .catch((err) => active && setError(err instanceof ApiError ? err.message : "Chargement impossible."));
+      .catch((err) => active && setError(err instanceof ApiError ? err.message : "Chargement impossible."))
+      .finally(() => active && setLoadingServices(false));
     return () => {
       active = false;
     };
@@ -164,7 +166,7 @@ export default function BookPage({ params }: { params: { slug: string } }) {
   }
 
   const employeeName =
-    employeeId ? employees.find((e) => e.id === employeeId)?.displayName ?? "—" : "Sans préférence";
+    employeeId ? employees.find((e) => e.id === employeeId)?.displayName ?? "—" : t("book.anyEmployee");
 
   return (
     <>
@@ -181,7 +183,7 @@ export default function BookPage({ params }: { params: { slug: string } }) {
         </div>
       </header>
 
-      <div className="public-body">
+      <main className="public-body">
         <div className="shop-banner">
           <div>
             <div className="shop-kicker">{t("book.kicker")}</div>
@@ -195,19 +197,29 @@ export default function BookPage({ params }: { params: { slug: string } }) {
         <div className="booking-layout">
           <div className="booking-card">
             {/* Stepper */}
-            <div className="steps">
+            <div
+              className="steps"
+              role="progressbar"
+              aria-label={`${STEPS[step]} — ${t("book.stepProgress").replace("{current}", String(step + 1)).replace("{total}", String(STEPS.length))}`}
+              aria-valuemin={1}
+              aria-valuemax={STEPS.length}
+              aria-valuenow={step + 1}
+            >
               {STEPS.map((label, i) => (
                 <div key={label} style={{ display: "contents" }}>
-                  <div className={`step ${i === step ? "active" : i < step ? "done" : ""}`}>
-                    <span className="step-circle">{i < step ? "✓" : i + 1}</span>
-                    {label}
+                  <div
+                    className={`step ${i === step ? "active" : i < step ? "done" : ""}`}
+                    aria-current={i === step ? "step" : undefined}
+                  >
+                    <span className="step-circle" aria-hidden="true">{i < step ? "✓" : i + 1}</span>
+                    <span className="step-label">{label}</span>
                   </div>
                   {i < STEPS.length - 1 && <span className="step-line" />}
                 </div>
               ))}
             </div>
 
-            {error && <p className="api-error" style={{ marginBottom: 15 }}>{error}</p>}
+            {error && <p className="api-error" role="alert" style={{ marginBottom: 15 }}>{error}</p>}
 
             {/* Étape 1 — Service */}
             {step === 0 && (
@@ -217,19 +229,28 @@ export default function BookPage({ params }: { params: { slug: string } }) {
                   Sélectionnez la prestation souhaitée.
                 </p>
                 <div className="service-grid">
-                  {services.map((s) => (
-                    <button key={s.id} className="option-tile" onClick={() => pickService(s)}>
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <strong style={{ fontSize: 11 }}>{s.name}</strong>
-                        <small>{s.durationMinutes} min</small>
-                      </div>
-                      <span style={{ fontSize: 10, fontWeight: 700 }}>{formatPrice(s.price, currency)}</span>
-                    </button>
-                  ))}
-                  {services.length === 0 && !error && (
+                  {loadingServices ? (
                     <div className="row" style={{ justifyContent: "center", padding: 24 }}>
-                      <div className="spin" />
+                      <div className="spin" role="status" aria-label={t("common.loading")} />
                     </div>
+                  ) : services.length === 0 ? (
+                    <p className="t-muted booking-empty">{t("book.noServices")}</p>
+                  ) : (
+                    services.map((s) => (
+                      <button
+                        key={s.id}
+                        type="button"
+                        className={`option-tile ${service?.id === s.id ? "selected" : ""}`}
+                        aria-pressed={service?.id === s.id}
+                        onClick={() => pickService(s)}
+                      >
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <strong style={{ fontSize: 11 }}>{s.name}</strong>
+                          <small>{s.durationMinutes} min</small>
+                        </div>
+                        <span style={{ fontSize: 10, fontWeight: 700 }}>{formatPrice(s.price, currency)}</span>
+                      </button>
+                    ))
                   )}
                 </div>
               </>
@@ -242,8 +263,10 @@ export default function BookPage({ params }: { params: { slug: string } }) {
                 <p className="t-label" style={{ margin: "14px 0 9px" }}>{t("book.employee")}</p>
                 <div className="chip-row">
                   <button
+                    type="button"
                     className={`option-tile ${employeeId === "" ? "selected" : ""}`}
                     style={{ width: "auto" }}
+                    aria-pressed={employeeId === ""}
                     onClick={() => setEmployeeId("")}
                   >
                     {t("book.anyEmployee")}
@@ -251,8 +274,10 @@ export default function BookPage({ params }: { params: { slug: string } }) {
                   {employees.map((e) => (
                     <button
                       key={e.id}
+                      type="button"
                       className={`option-tile ${employeeId === e.id ? "selected" : ""}`}
                       style={{ width: "auto" }}
+                      aria-pressed={employeeId === e.id}
                       onClick={() => setEmployeeId(e.id)}
                     >
                       {e.displayName}
@@ -267,13 +292,15 @@ export default function BookPage({ params }: { params: { slug: string } }) {
                     return (
                       <button
                         key={key}
+                        type="button"
                         className={`date-option ${dateKey === key ? "selected" : ""}`}
+                        aria-pressed={dateKey === key}
                         onClick={() => {
                           setDateKey(key);
                           setSlotStart("");
                         }}
                       >
-                        {new Intl.DateTimeFormat("fr-FR", { weekday: "short" }).format(d)}
+                        {new Intl.DateTimeFormat(lang === "ar" ? "ar-TN" : "fr-FR", { weekday: "short" }).format(d)}
                         <strong>{d.getDate()}</strong>
                       </button>
                     );
@@ -292,7 +319,9 @@ export default function BookPage({ params }: { params: { slug: string } }) {
                     {uniqueSlots.map((s) => (
                       <button
                         key={s.start}
+                        type="button"
                         className={`time-option ${slotStart === s.start ? "selected" : ""}`}
+                        aria-pressed={slotStart === s.start}
                         onClick={() => setSlotStart(s.start)}
                       >
                         {formatTime(s.start, establishment?.timezone)}
@@ -316,9 +345,9 @@ export default function BookPage({ params }: { params: { slug: string } }) {
                   Pour confirmer le rendez-vous et vous envoyer un rappel.
                 </p>
                 <div className="form-grid">
-                  <Field label={t("book.name")} name="name" value={name} onChange={(e) => setName(e.target.value)} />
-                  <Field label={t("book.phone")} name="phone" value={phone} onChange={(e) => setPhone(e.target.value)} />
-                  <Field label={t("book.email")} name="email" type="email" full value={email} onChange={(e) => setEmail(e.target.value)} />
+                  <Field label={t("book.name")} name="name" autoComplete="name" required value={name} onChange={(e) => setName(e.target.value)} />
+                  <Field label={t("book.phone")} name="phone" type="tel" inputMode="tel" autoComplete="tel" required value={phone} onChange={(e) => setPhone(e.target.value)} />
+                  <Field label={t("book.email")} name="email" type="email" autoComplete="email" full value={email} onChange={(e) => setEmail(e.target.value)} />
                 </div>
                 <label className="consent-row">
                   <input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} />
@@ -377,7 +406,7 @@ export default function BookPage({ params }: { params: { slug: string } }) {
             </aside>
           )}
         </div>
-      </div>
+      </main>
     </>
   );
 }

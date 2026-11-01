@@ -6,14 +6,15 @@ export const API_BASE = (
   process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000/api/v1"
 ).replace(/\/+$/, "");
 
-const TOKENS_KEY = "booking.tokens";
-
 export interface Tokens {
   accessToken: string;
-  refreshToken: string;
+  refreshToken?: string;
   tokenType?: string;
   expiresIn?: number;
 }
+
+let accessToken: string | null = null;
+let refreshPromise: Promise<Tokens> | null = null;
 
 export class ApiError extends Error {
   status?: number;
@@ -26,23 +27,13 @@ export class ApiError extends Error {
   }
 }
 
-/* ---------- Stockage des tokens (par navigateur) ---------- */
+/* ---------- Access token en mémoire; le refresh token reste HttpOnly ---------- */
 export function loadTokens(): Tokens | null {
-  try {
-    const raw = localStorage.getItem(TOKENS_KEY);
-    return raw ? (JSON.parse(raw) as Tokens) : null;
-  } catch {
-    return null;
-  }
+  return accessToken ? { accessToken } : null;
 }
 
 export function saveTokens(tokens: Tokens | null): void {
-  try {
-    if (tokens) localStorage.setItem(TOKENS_KEY, JSON.stringify(tokens));
-    else localStorage.removeItem(TOKENS_KEY);
-  } catch {
-    /* indisponible (mode privé) : on ignore */
-  }
+  accessToken = tokens?.accessToken ?? null;
 }
 
 /* ---------- Requête de base ---------- */
@@ -54,6 +45,7 @@ async function request<T = unknown>(
   try {
     response = await fetch(`${API_BASE}${path}`, {
       ...options,
+      credentials: "include",
       headers: {
         Accept: "application/json",
         ...(options.body ? { "Content-Type": "application/json" } : {}),
@@ -77,6 +69,23 @@ async function request<T = unknown>(
   return body as T;
 }
 
+async function refreshSession(): Promise<Tokens> {
+  if (!refreshPromise) {
+    refreshPromise = request<Tokens>("/auth/refresh", {
+      method: "POST",
+      body: JSON.stringify({}),
+    })
+      .then((tokens) => {
+        saveTokens(tokens);
+        return tokens;
+      })
+      .finally(() => {
+        refreshPromise = null;
+      });
+  }
+  return refreshPromise;
+}
+
 /* ---------- Requête authentifiée (refresh sur 401) ---------- */
 async function authed<T = unknown>(
   path: string,
@@ -95,11 +104,11 @@ async function authed<T = unknown>(
   } catch (error) {
     if (!(error instanceof ApiError) || error.status !== 401) throw error;
     // Tentative de rafraîchissement.
-    const refreshed = await request<Tokens>("/auth/refresh", {
-      method: "POST",
-      body: JSON.stringify({ refreshToken: tokens.refreshToken }),
-    });
-    saveTokens(refreshed);
+    const latest = loadTokens();
+    const refreshed =
+      latest && latest.accessToken !== tokens.accessToken
+        ? latest
+        : await refreshSession();
     return request<T>(path, withBearer(refreshed.accessToken));
   }
 }
@@ -156,6 +165,74 @@ export const api = {
     return request<Tokens & { userId?: string }>("/auth/login", {
       method: "POST",
       body: JSON.stringify({ identifier, password }),
+    });
+  },
+  register(body: {
+    email?: string;
+    phone?: string;
+    password: string;
+    establishmentName: string;
+    establishmentSlug: string;
+    locale?: "fr" | "ar";
+  }) {
+    return request<Tokens & { userId: string }>("/auth/register", {
+      method: "POST",
+      body: JSON.stringify(body),
+    });
+  },
+  acceptEmployeeInvitation(token: string, password: string) {
+    return request<Tokens & { userId: string }>("/auth/invitations/accept", {
+      method: "POST",
+      body: JSON.stringify({ token, password }),
+    });
+  },
+  acceptExistingEmployeeInvitation(token: string) {
+    return authed<{ userId: string; employeeId: string; membershipId: string }>(
+      "/auth/invitations/accept-existing",
+      { method: "POST", body: JSON.stringify({ token }) },
+    );
+  },
+  refreshSession,
+  requestPasswordReset(email: string) {
+    return request<{ message: string }>("/auth/forgot-password", {
+      method: "POST",
+      body: JSON.stringify({ email }),
+    });
+  },
+  resetPassword(token: string, newPassword: string) {
+    return request<{ message: string }>("/auth/reset-password", {
+      method: "POST",
+      body: JSON.stringify({ token, newPassword }),
+    });
+  },
+  verifyEmail(token: string) {
+    return request<{ message: string }>("/auth/verify-email", {
+      method: "POST",
+      body: JSON.stringify({ token }),
+    });
+  },
+  updateAccount(body: {
+    email?: string | null;
+    phone?: string | null;
+    preferredLocale?: "fr" | "ar";
+    currentPassword: string;
+  }) {
+    return authed<{
+      profile: Me;
+      emailVerificationRequired: boolean;
+      message: string;
+    }>("/auth/me", { method: "PATCH", body: JSON.stringify(body) });
+  },
+  changePassword(currentPassword: string, newPassword: string) {
+    return authed<{ message: string }>("/auth/password", {
+      method: "PATCH",
+      body: JSON.stringify({ currentPassword, newPassword }),
+    });
+  },
+  closeAccount(currentPassword: string) {
+    return authed<{ message: string }>("/auth/me", {
+      method: "DELETE",
+      body: JSON.stringify({ currentPassword }),
     });
   },
   me() {
@@ -217,6 +294,30 @@ export const api = {
   /* Employés */
   listEmployees(establishmentId: string) {
     return authed<ManagedEmployee[]>(`/establishments/${establishmentId}/employees`);
+  },
+  inviteEmployee(
+    establishmentId: string,
+    body: { email: string; displayName: string; serviceIds?: string[] },
+  ) {
+    return authed<{
+      id: string;
+      email: string;
+      expiresAt: string;
+      invitationToken: string;
+    }>(`/establishments/${establishmentId}/employees/invitations`, {
+      method: "POST",
+      body: JSON.stringify(body),
+    });
+  },
+  transferOwnership(establishmentId: string, targetMembershipId: string) {
+    return authed<{
+      establishmentId: string;
+      previousOwnerUserId: string;
+      newOwnerUserId: string;
+    }>(`/establishments/${establishmentId}/ownership/transfer`, {
+      method: "POST",
+      body: JSON.stringify({ targetMembershipId }),
+    });
   },
 
   /* Clients */

@@ -15,6 +15,7 @@ import {
   CreditCard,
   Bell,
   Settings,
+  UserRound,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { ThemeToggle } from "./ThemeToggle";
@@ -30,6 +31,7 @@ const NAV = [
   { href: "/subscriptions", key: "nav.subscriptions", Icon: CreditCard },
   { href: "/notifications", key: "nav.notifications", Icon: Bell },
   { href: "/settings", key: "nav.settings", Icon: Settings },
+  { href: "/account", key: "Mon compte", Icon: UserRound },
 ];
 
 export function AppShell({ title, subtitle, actions, children }: {
@@ -40,7 +42,13 @@ export function AppShell({ title, subtitle, actions, children }: {
 }) {
   const pathname = usePathname();
   const router = useRouter();
-  const { me, establishmentName, signOut } = useAuth();
+  const {
+    me,
+    establishmentId,
+    establishmentName,
+    selectEstablishment,
+    signOut,
+  } = useAuth();
   const { t } = useI18n();
 
   const initials = (establishmentName ?? "Booking")
@@ -98,6 +106,22 @@ export function AppShell({ title, subtitle, actions, children }: {
             {t("common.workspace")} · <strong>{title}</strong>
           </div>
           <div className="top-actions">
+            {(me?.memberships.length ?? 0) > 1 && (
+              <select
+                aria-label="Établissement actif"
+                value={establishmentId ?? ""}
+                onChange={(event) => selectEstablishment(event.target.value)}
+              >
+                {me?.memberships.map((membership) => (
+                  <option
+                    key={membership.establishment.id}
+                    value={membership.establishment.id}
+                  >
+                    {membership.establishment.name}
+                  </option>
+                ))}
+              </select>
+            )}
             <LanguageToggle />
             <ThemeToggle />
             <Button variant="quiet" onClick={handleSignOut}>

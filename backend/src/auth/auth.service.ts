@@ -15,10 +15,12 @@ import {
   timingSafeEqual,
 } from 'node:crypto';
 import { PrismaService } from '../database/prisma.service.js';
+import { EmailService } from '../email/email.service.js';
 import { Prisma } from '../generated/prisma/client.js';
 import type { AuthenticatedActor } from '../common/current-actor.decorator.js';
 import type { AcceptEmployeeInvitationDto } from './dto/accept-employee-invitation.dto.js';
 import type { RegisterDto } from './dto/register.dto.js';
+import type { UpdateProfileDto } from './dto/update-profile.dto.js';
 
 const ACCESS_TOKEN_ISSUER = 'booking-api';
 const ACCESS_TOKEN_AUDIENCE = 'booking-clients';
@@ -49,12 +51,14 @@ export class AuthService {
   private readonly accessTokenTtlSeconds: number;
   private readonly refreshTokenTtlSeconds: number;
   private readonly passwordResetTtlSeconds: number;
+  private readonly emailChangeTtlSeconds: number;
   private readonly logger = new Logger(AuthService.name);
 
   constructor(
     private readonly prisma: PrismaService,
     private readonly jwt: JwtService,
     config: ConfigService,
+    private readonly email: EmailService,
   ) {
     this.accessTokenTtlSeconds = this.readPositiveInteger(
       config.get<string>('JWT_ACCESS_TTL_SECONDS') ?? '600',
@@ -67,6 +71,10 @@ export class AuthService {
     this.passwordResetTtlSeconds = this.readPositiveInteger(
       config.get<string>('PASSWORD_RESET_TTL_SECONDS') ?? '1800',
       'PASSWORD_RESET_TTL_SECONDS',
+    );
+    this.emailChangeTtlSeconds = this.readPositiveInteger(
+      config.get<string>('EMAIL_CHANGE_TTL_SECONDS') ?? '3600',
+      'EMAIL_CHANGE_TTL_SECONDS',
     );
   }
 
@@ -437,6 +445,287 @@ export class AuthService {
     return user;
   }
 
+  async updateProfile(userId: string, input: UpdateProfileDto) {
+    try {
+      return await this.performProfileUpdate(userId, input);
+    } catch (error) {
+      if (this.isUniqueConstraintError(error)) {
+        throw new ConflictException(
+          'This email address or phone number is already in use',
+        );
+      }
+      throw error;
+    }
+  }
+
+  private async performProfileUpdate(userId: string, input: UpdateProfileDto) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        email: true,
+        phoneNormalized: true,
+        preferredLocale: true,
+        passwordHash: true,
+      },
+    });
+    if (!user || !(await this.verifyPassword(input.currentPassword, user.passwordHash))) {
+      throw new UnauthorizedException('Current password is incorrect');
+    }
+
+    const email =
+      input.email === undefined
+        ? user.email
+        : input.email?.trim().toLowerCase() || null;
+    const phone =
+      input.phone === undefined ? user.phoneNormalized : input.phone?.trim() || null;
+    if (!email && !phone) {
+      throw new BadRequestException(
+        'At least an email address or phone number must remain on the account',
+      );
+    }
+
+    let emailVerificationRequired = false;
+    if (email !== user.email && email) {
+      const existing = await this.prisma.user.findUnique({
+        where: { email },
+        select: { id: true },
+      });
+      if (existing && existing.id !== userId) {
+        throw new ConflictException('This email address is already in use');
+      }
+
+      const rawToken = randomBytes(32).toString('base64url');
+      const expiresAt = new Date(
+        Date.now() + this.emailChangeTtlSeconds * 1000,
+      );
+      await this.prisma.$transaction(async (tx) => {
+        await tx.emailChangeToken.updateMany({
+          where: { userId, usedAt: null },
+          data: { usedAt: new Date() },
+        });
+        await tx.emailChangeToken.create({
+          data: {
+            userId,
+            email,
+            tokenHash: this.hashResetToken(rawToken),
+            expiresAt,
+          },
+        });
+        await tx.user.update({
+          where: { id: userId },
+          data: {
+            phoneNormalized: phone,
+            preferredLocale: input.preferredLocale,
+          },
+        });
+      });
+      await this.email.sendEmailChangeVerification(email, rawToken);
+      emailVerificationRequired = true;
+    } else {
+      await this.prisma.user.update({
+        where: { id: userId },
+        data: {
+          email,
+          phoneNormalized: phone,
+          preferredLocale: input.preferredLocale,
+        },
+      });
+    }
+
+    return {
+      profile: await this.getMe(userId),
+      emailVerificationRequired,
+      message: emailVerificationRequired
+        ? 'A verification link was sent to the new email address.'
+        : 'Account details updated.',
+    };
+  }
+
+  async confirmEmailChange(token: string): Promise<{ message: string }> {
+    const tokenHash = this.hashResetToken(token);
+    try {
+      await this.prisma.$transaction(async (tx) => {
+        const record = await tx.emailChangeToken.findUnique({
+          where: { tokenHash },
+          select: {
+            id: true,
+            userId: true,
+            email: true,
+            usedAt: true,
+            expiresAt: true,
+          },
+        });
+        if (!record || record.usedAt || record.expiresAt <= new Date()) {
+          throw new BadRequestException('Invalid or expired email verification token');
+        }
+
+        const claimed = await tx.emailChangeToken.updateMany({
+          where: {
+            id: record.id,
+            usedAt: null,
+            expiresAt: { gt: new Date() },
+          },
+          data: { usedAt: new Date() },
+        });
+        if (claimed.count !== 1) {
+          throw new BadRequestException('Invalid or expired email verification token');
+        }
+        const updatedUser = await tx.user.updateMany({
+          where: { id: record.userId, status: 'ACTIVE' },
+          data: { email: record.email },
+        });
+        if (updatedUser.count !== 1) {
+          throw new BadRequestException(
+            'Email verification is not available for this account',
+          );
+        }
+        await tx.emailChangeToken.updateMany({
+          where: { userId: record.userId, usedAt: null },
+          data: { usedAt: new Date() },
+        });
+      });
+    } catch (error) {
+      if (this.isUniqueConstraintError(error)) {
+        throw new ConflictException('This email address is already in use');
+      }
+      throw error;
+    }
+    return { message: 'Email address verified and updated.' };
+  }
+
+  async changePassword(
+    userId: string,
+    currentPassword: string,
+    newPassword: string,
+  ): Promise<{ message: string }> {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { passwordHash: true, status: true },
+    });
+    if (
+      !user ||
+      user.status !== 'ACTIVE' ||
+      !(await this.verifyPassword(currentPassword, user.passwordHash))
+    ) {
+      throw new UnauthorizedException('Current password is incorrect');
+    }
+
+    const passwordHash = await this.hashPassword(newPassword);
+    await this.prisma.$transaction(async (tx) => {
+      await tx.user.update({ where: { id: userId }, data: { passwordHash } });
+      await tx.authSession.updateMany({
+        where: { userId, revokedAt: null },
+        data: { revokedAt: new Date() },
+      });
+    });
+    return { message: 'Password changed. Please sign in again.' };
+  }
+
+  async closeAccount(
+    userId: string,
+    currentPassword: string,
+  ): Promise<{ message: string }> {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { passwordHash: true, status: true },
+    });
+    if (
+      !user ||
+      user.status !== 'ACTIVE' ||
+      !(await this.verifyPassword(currentPassword, user.passwordHash))
+    ) {
+      throw new UnauthorizedException('Current password is incorrect');
+    }
+
+    await this.prisma.$transaction(async (tx) => {
+      const membershipEstablishments =
+        await tx.establishmentMember.findMany({
+          where: { userId, status: 'ACTIVE' },
+          select: { establishmentId: true },
+        });
+      const establishmentIds = [
+        ...new Set(
+          membershipEstablishments.map(({ establishmentId }) => establishmentId),
+        ),
+      ].sort();
+      for (const establishmentId of establishmentIds) {
+        await tx.$queryRaw`
+          SELECT id
+          FROM establishments
+          WHERE id = ${establishmentId}::uuid
+          FOR UPDATE
+        `;
+      }
+
+      const memberships = await tx.establishmentMember.findMany({
+        where: { userId, status: 'ACTIVE' },
+        select: {
+          id: true,
+          establishmentId: true,
+          role: true,
+          establishment: { select: { status: true } },
+        },
+      });
+      for (const membership of memberships) {
+        if (membership.role !== 'OWNER' || membership.establishment.status !== 'ACTIVE') {
+          continue;
+        }
+        const otherOwners = await tx.establishmentMember.count({
+          where: {
+            establishmentId: membership.establishmentId,
+            userId: { not: userId },
+            role: 'OWNER',
+            status: 'ACTIVE',
+          },
+        });
+        if (otherOwners === 0) {
+          throw new ConflictException(
+            'Transfer ownership of each active establishment before closing this account',
+          );
+        }
+      }
+
+      const memberIds = memberships.map(({ id }) => id);
+      await tx.establishmentMember.updateMany({
+        where: { userId, status: 'ACTIVE' },
+        data: { status: 'INACTIVE' },
+      });
+      if (memberIds.length > 0) {
+        await tx.employee.updateMany({
+          where: { memberId: { in: memberIds } },
+          data: { isActive: false },
+        });
+      }
+      if (memberships.length > 0) {
+        await tx.auditLog.createMany({
+          data: memberships.map(({ establishmentId }) => ({
+            actorUserId: userId,
+            establishmentId,
+            action: 'account.disabled',
+            targetType: 'USER',
+            targetId: userId,
+            metadata: { reason: 'self_service_account_closure' },
+          })),
+        });
+      }
+      const disabledUser = await tx.user.updateMany({
+        where: { id: userId, status: 'ACTIVE' },
+        data: { status: 'DISABLED' },
+      });
+      if (disabledUser.count !== 1) {
+        throw new ConflictException('Account is already closed');
+      }
+      await tx.authSession.updateMany({
+        where: { userId, revokedAt: null },
+        data: { revokedAt: new Date() },
+      });
+    });
+
+    return {
+      message: 'Account closed. Business records are retained for audit purposes.',
+    };
+  }
+
   private hashResetToken(token: string): Uint8Array<ArrayBuffer> {
     return Uint8Array.from(createHash('sha256').update(token, 'utf8').digest());
   }
@@ -444,8 +733,7 @@ export class AuthService {
   /**
    * Issues a single-use, hashed password-reset token for the account with this
    * email. Always returns the same generic response so the endpoint does not
-   * reveal whether an account exists. Email delivery is not wired yet: the raw
-   * token is logged at debug level in non-production environments.
+   * reveal whether an account exists.
    */
   async requestPasswordReset(email?: string): Promise<{ message: string }> {
     const generic = {
@@ -482,9 +770,12 @@ export class AuthService {
       });
     });
 
-    if (process.env.NODE_ENV !== 'production') {
-      this.logger.debug(
-        `Password reset token for ${normalized}: ${rawToken} (expires ${expiresAt.toISOString()})`,
+    try {
+      await this.email.sendPasswordReset(normalized, rawToken);
+    } catch (error) {
+      this.logger.error(
+        'Password reset email delivery failed',
+        error instanceof Error ? error.stack : undefined,
       );
     }
 
@@ -512,14 +803,27 @@ export class AuthService {
         throw new BadRequestException('Invalid or expired reset token');
       }
 
-      await tx.passwordResetToken.update({
-        where: { id: record.id },
+      const claimed = await tx.passwordResetToken.updateMany({
+        where: {
+          id: record.id,
+          usedAt: null,
+          expiresAt: { gt: new Date() },
+        },
         data: { usedAt: new Date() },
       });
-      await tx.user.update({
-        where: { id: record.userId },
+      if (claimed.count !== 1) {
+        throw new BadRequestException('Invalid or expired reset token');
+      }
+      const updatedUser = await tx.user.updateMany({
+        where: {
+          id: record.userId,
+          status: { in: ['ACTIVE', 'INVITED'] },
+        },
         data: { passwordHash },
       });
+      if (updatedUser.count !== 1) {
+        throw new BadRequestException('Invalid or expired reset token');
+      }
       await tx.authSession.updateMany({
         where: { userId: record.userId, revokedAt: null },
         data: { revokedAt: new Date() },

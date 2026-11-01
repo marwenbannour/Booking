@@ -98,6 +98,76 @@ export class EstablishmentsManagementService {
     this.assertPermission(membership, permission);
   }
 
+  async transferOwnership(
+    userId: string,
+    establishmentId: string,
+    targetMembershipId: string,
+  ) {
+    const current = await this.requireMembership(userId, establishmentId);
+    if (current.role !== 'OWNER') {
+      throw new ForbiddenException('Only an owner can transfer ownership');
+    }
+
+    return this.prisma.$transaction(async (tx) => {
+      await tx.$queryRaw`
+        SELECT id
+        FROM establishments
+        WHERE id = ${establishmentId}::uuid
+        FOR UPDATE
+      `;
+      const target = await tx.establishmentMember.findFirst({
+        where: {
+          id: targetMembershipId,
+          establishmentId,
+          status: 'ACTIVE',
+          role: { in: ['MANAGER', 'EMPLOYEE'] },
+        },
+        select: { id: true, userId: true },
+      });
+      if (!target) {
+        throw new NotFoundException(
+          'The new owner must be an active member of this establishment',
+        );
+      }
+
+      const currentMembership = await tx.establishmentMember.findFirst({
+        where: {
+          establishmentId,
+          userId,
+          status: 'ACTIVE',
+          role: 'OWNER',
+        },
+        select: { id: true },
+      });
+      if (!currentMembership) {
+        throw new ForbiddenException('Only an active owner can transfer ownership');
+      }
+
+      await tx.establishmentMember.update({
+        where: { id: target.id },
+        data: { role: 'OWNER' },
+      });
+      await tx.establishmentMember.update({
+        where: { id: currentMembership.id },
+        data: { role: 'MANAGER' },
+      });
+      await this.recordAudit(
+        userId,
+        establishmentId,
+        'ownership.transferred',
+        'ESTABLISHMENT_MEMBER',
+        target.id,
+        { previousOwnerUserId: userId, newOwnerUserId: target.userId },
+        tx,
+      );
+      return {
+        establishmentId,
+        previousOwnerUserId: userId,
+        newOwnerUserId: target.userId,
+      };
+    });
+  }
+
   private async recordAudit(
     userId: string,
     establishmentId: string,

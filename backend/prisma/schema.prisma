@@ -90,6 +90,7 @@ model User {
   memberships             EstablishmentMember[]
   sessions                AuthSession[]
   passwordResetTokens     PasswordResetToken[]
+  emailChangeTokens       EmailChangeToken[]
   auditLogs               AuditLog[]
   bookingEvents           BookingEvent[]
   sentEmployeeInvitations EmployeeInvitation[]  @relation("EmployeeInvitationInviter")
@@ -126,6 +127,21 @@ model PasswordResetToken {
   @@index([userId])
   @@index([expiresAt])
   @@map("password_reset_tokens")
+}
+
+model EmailChangeToken {
+  id        String    @id @default(uuid()) @db.Uuid
+  userId    String    @map("user_id") @db.Uuid
+  email     String
+  tokenHash Bytes     @unique @map("token_hash")
+  expiresAt DateTime  @map("expires_at") @db.Timestamptz(6)
+  usedAt    DateTime? @map("used_at") @db.Timestamptz(6)
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("email_change_tokens")
 }
 
 model Establishment {

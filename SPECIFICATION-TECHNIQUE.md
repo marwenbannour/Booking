@@ -16,7 +16,7 @@
 | Runtime | Version LTS de Node.js supportée au démarrage |
 | Base de données | PostgreSQL, UUID, migrations versionnées |
 | Accès aux données | Prisma ORM et Prisma Migrate pour le schéma et les migrations usuelles ; SQL de migration explicite pour les extensions et contraintes PostgreSQL spécifiques (notamment `btree_gist` et l’exclusion de chevauchement). Requêtes brutes uniquement paramétrées. |
-| Authentification | JWT + Passport (`@nestjs/passport`, stratégie JWT) pour les professionnels ; access token court et refresh token rotatif révocable. Les clients n’ont pas à créer de compte ; leur jeton limité à une réservation est aléatoire, à durée limitée et stocké sous forme hachée. |
+| Authentification | JWT + Passport (`@nestjs/passport`, stratégie JWT) pour les professionnels ; access token court gardé en mémoire dans le Web, refresh token rotatif révocable dans un cookie `HttpOnly`, `Secure` en production, `SameSite=Lax`. Les clients n’ont pas à créer de compte ; leur jeton limité à une réservation est aléatoire, à durée limitée et stocké sous forme hachée. |
 | Web professionnel et réservation publique | React + TypeScript + Vite, réutilisation progressive du prototype |
 | Application mobile | React Native + Expo + TypeScript, mêmes API et règles métier |
 | Tâches asynchrones | Redis + BullMQ (`@nestjs/bullmq`) pour les files, rappels différés, reprises et workers. Outbox PostgreSQL transactionnelle comme relais fiable entre réservation et enfilement Redis. |
@@ -723,8 +723,13 @@ Codes partagés : `400 VALIDATION_FAILED`, `401 UNAUTHENTICATED`, `403 FORBIDDEN
 | `POST /api/v1/auth/refresh` | Refresh token | Rotation atomique, révocation de la famille en cas de réutilisation |
 | `POST /api/v1/auth/logout` | Authentifié | Révoque la session/refresh token |
 | `POST /api/v1/auth/forgot-password` | Public | Réponse générique pour éviter l’énumération des comptes |
-| `POST /api/v1/auth/reset-password` | Jeton à usage unique | Réinitialisation avec invalidation des sessions selon politique |
-| `GET /api/v1/me` | Authentifié | Profil, locale et adhésions autorisées |
+| `POST /api/v1/auth/reset-password` | Jeton à usage unique | Réinitialise le mot de passe et révoque toutes les sessions |
+| `POST /api/v1/auth/verify-email` | Jeton à usage unique | Confirme la nouvelle adresse e-mail |
+| `POST /api/v1/auth/invitations/accept` | Public, jeton à usage unique | Crée un compte employé et accepte l’invitation |
+| `POST /api/v1/auth/invitations/accept-existing` | Authentifié | Accepte l’invitation pour le compte e-mail correspondant |
+| `GET/PATCH/DELETE /api/v1/auth/me` | Authentifié | Profil, coordonnées, locale et fermeture réversible du compte |
+| `PATCH /api/v1/auth/password` | Authentifié, mot de passe courant requis | Change le mot de passe et révoque toutes les sessions |
+| `POST /api/v1/establishments/{id}/ownership/transfer` | Propriétaire | Transfère la propriété à un membre actif, journalisé |
 | `GET /api/v1/establishments/{slug}` | Public | Informations publiques nécessaires à la réservation |
 | `POST /api/v1/establishments` | Authentifié | Création tenant si le parcours d’inscription est séparé |
 | `PATCH /api/v1/establishments/{establishmentId}` | Propriétaire/permission | Modification des paramètres avec contrôle de tenant |
@@ -739,28 +744,17 @@ Exemple `POST /api/v1/auth/login` :
 }
 ```
 
-Réponse `200` (mobile ; le Web reçoit le refresh token dans un cookie sécurisé) :
+Réponse `200` pour le Web (le refresh token est émis dans le cookie `booking_refresh`) :
 
 ```json
 {
   "accessToken": "<JWT court>",
-  "expiresIn": 600,
-  "refreshToken": "<opaque, rotation à chaque utilisation>",
-  "user": {
-    "id": "41e5a84c-3a4b-4ae3-943a-27414c914fac",
-    "preferredLocale": "fr"
-  },
-  "establishments": [
-    {
-      "id": "b75f1af2-1097-459a-aacb-6e9a1f2eb5a8",
-      "name": "Atelier 17",
-      "role": "OWNER"
-    }
-  ]
+  "tokenType": "Bearer",
+  "expiresIn": 600
 }
 ```
 
-Passport `JwtStrategy` traite l’access token Bearer ; un mécanisme distinct valide et fait tourner les refresh tokens opaques, révoque les familles de sessions compromises et ne les journalise jamais. En production Web, le refresh token est émis dans un cookie `HttpOnly`, `Secure`, `SameSite` correctement configuré avec protection CSRF adaptée ; ne pas conserver un refresh token durable dans `localStorage`. Pour mobile, utiliser le stockage sécurisé fourni par le système. La route `/auth/refresh` lit ce cookie pour le Web et accepte le jeton du stockage sécurisé dans le corps pour le client mobile.
+Passport `JwtStrategy` traite l’access token Bearer ; un mécanisme distinct valide et fait tourner les refresh tokens opaques, révoque les familles de sessions compromises et ne les journalise jamais. En production Web, le refresh token est émis dans un cookie `HttpOnly`, `Secure`, `SameSite=Lax` ; ne pas conserver un refresh token durable dans `localStorage`. Pour mobile, `X-Session-Transport: body` sélectionne le retour du refresh token dans le JSON, à conserver dans le stockage sécurisé du système. La route `/auth/refresh` lit le cookie pour le Web et accepte le jeton du stockage sécurisé dans le corps pour mobile.
 
 Swagger est monté sur une route protégée en environnement non public (par exemple `/docs`) et expose le document OpenAPI JSON (`/openapi.json`). Décrire les schémas Bearer, paramètres de tenant, clés d’idempotence, pagination, erreurs Problem Details et exemples ; ne jamais inclure de tokens/secrets réels dans les exemples ou spécimens.
 
@@ -934,6 +928,9 @@ L’occupation doit documenter son dénominateur (minutes ouvertes et personnel 
 - Passport avec `JwtStrategy` valide l’access token ; un `JwtAuthGuard` global protège les routes par défaut, et des décorateurs explicites déclarent les routes publiques. Des guards/policies distincts contrôlent rôles, permissions et contexte d’établissement. Un jeton client de gestion de réservation utilise un guard dédié et n’est pas assimilé à une identité professionnelle.
 - Le contexte tenant est dérivé de la route puis validé contre l’adhésion de l’utilisateur. Le service métier reçoit un contexte `ActorContext { userId, establishmentId, role, permissions, correlationId }`.
 - Rôles de base : `OWNER`, `MANAGER`, `EMPLOYEE`, `PLATFORM_ADMIN`. Les permissions d’employé peuvent restreindre lecture/écriture de calendrier, clients et rapports. Les règles sont vérifiées côté serveur.
+- L’inscription crée le propriétaire, l’établissement et l’adhésion dans une transaction. Le changement d’e-mail exige le mot de passe courant et un jeton à usage unique envoyé à la nouvelle adresse ; les changements de mot de passe révoquent toutes les sessions. Les demandes de réinitialisation envoient un lien SMTP générique, sans révéler l’existence du compte.
+- Pour le Web, le refresh token est un cookie `HttpOnly`, `SameSite=Lax` et `Secure` en production ; l’access token reste en mémoire. Les requêtes simultanées en `401` partagent une seule opération de rotation. Les clients mobiles peuvent demander un transport de tokens dans le corps avec `X-Session-Transport: body` et doivent utiliser le stockage sécurisé système.
+- La fermeture de compte est une désactivation réversible : adhésions désactivées, sessions révoquées, historiques métier et audit conservés. Un propriétaire unique doit transférer la propriété à un membre actif avant fermeture ; le transfert est audité.
 - Les routes publiques utilisent le `slug` public, mais ne permettent que les opérations de lecture publique et de création/récupération autorisée de réservation.
 - CORS autorise uniquement les origines configurées ; limites de débit distinctes pour authentification, recherche publique, réservation et webhooks.
 - Tous les identifiants de tenant présents dans URL et payload sont autorisés et recoupés en base ; l’UUID non devinable n’est pas une autorisation.
@@ -995,9 +992,9 @@ COMPLETED, NO_SHOW, REJECTED, CANCELLED -> terminaux
 - Les cibles fonctionnelles initiales du cahier des charges (<500 ms p95 hors dépendances externes, 99,5 % mensuel) sont des objectifs à vérifier par tests de charge et observabilité, pas des garanties architecturales.
 - Alerter sur l’âge du plus ancien job prêt, les échecs répétés par fournisseur, erreurs de webhook, capacité DB et échec de backup.
 
-## 11. Décisions à confirmer avant l’implémentation
+## 11. Décisions et questions de lancement
 
-1. Confirmer le transport du refresh token : cookie `HttpOnly` sécurisé pour le Web et stockage sécurisé système pour mobile (proposé). Les access tokens restent des JWT Bearer courts.
+1. Session décidée : cookie `HttpOnly` pour le refresh Web, access token en mémoire et stockage système sécurisé pour mobile. La fermeture de compte est une désactivation réversible ; un propriétaire unique doit transférer la propriété avant fermeture. La nouvelle adresse e-mail n’est activée qu’après vérification.
 2. Les réservations sont-elles toujours confirmées immédiatement au MVP, ou certains établissements exigent-ils une validation manuelle (`PENDING`) ?
 3. Quels canaux et consentements sont requis au MVP (WhatsApp, e-mail, les deux) et quel fournisseur officiel sera utilisé ?
 4. Quelle politique de conservation/suppression et quel mécanisme d’export des données personnelles ?

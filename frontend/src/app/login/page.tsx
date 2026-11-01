@@ -8,7 +8,7 @@ import { Field } from "@/components/ui/Field";
 
 export default function LoginPage() {
   const router = useRouter();
-  const { ready, me, signIn } = useAuth();
+  const { ready, me, authError, signIn } = useAuth();
   const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -49,7 +49,7 @@ export default function LoginPage() {
           </p>
         </div>
 
-        {error && <p className="api-error">{error}</p>}
+        {(error || authError) && <p className="api-error">{error ?? authError}</p>}
 
         <Field
           label="Email ou téléphone"
@@ -73,6 +73,10 @@ export default function LoginPage() {
         <Button type="submit" disabled={busy} style={{ width: "100%", padding: "12px 14px" }}>
           {busy ? "Connexion…" : "Se connecter"}
         </Button>
+        <div className="row" style={{ justifyContent: "space-between", fontSize: 11 }}>
+          <a href="/forgot-password">Mot de passe oublié ?</a>
+          <a href="/register">Créer un compte professionnel</a>
+        </div>
         </form>
 
         <aside className="auth-visual">

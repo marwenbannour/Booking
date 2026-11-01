@@ -1,4 +1,4 @@
-import { UnauthorizedException } from '@nestjs/common';
+import { ConflictException, UnauthorizedException } from '@nestjs/common';
 import { jest } from '@jest/globals';
 import { randomBytes, scryptSync } from 'node:crypto';
 import { AuthService } from './auth.service.js';
@@ -17,6 +17,10 @@ function makePasswordHash(password: string): string {
 describe('AuthService', () => {
   const config = {
     get: (key: string) => (key === 'JWT_ACCESS_TTL_SECONDS' ? '600' : '604800'),
+  };
+  const email = {
+    sendPasswordReset: jest.fn().mockResolvedValue(undefined),
+    sendEmailChangeVerification: jest.fn().mockResolvedValue(undefined),
   };
 
   it('creates an owner account and establishment as one registration operation', async () => {
@@ -43,6 +47,7 @@ describe('AuthService', () => {
       prisma as any,
       { signAsync: jest.fn().mockResolvedValue('signed-token') } as any,
       config as any,
+      email as any,
     );
 
     const result = await service.register({
@@ -103,6 +108,7 @@ describe('AuthService', () => {
       prisma as any,
       { signAsync } as any,
       config as any,
+      email as any,
     );
 
     const result = await service.login(
@@ -155,6 +161,7 @@ describe('AuthService', () => {
       prisma as any,
       { signAsync: jest.fn() } as any,
       config as any,
+      email as any,
     );
 
     await expect(
@@ -203,6 +210,7 @@ describe('AuthService', () => {
       prisma as any,
       { signAsync: jest.fn().mockResolvedValue('signed-token') } as any,
       config as any,
+      email as any,
     );
 
     const result = await service.acceptEmployeeInvitation({
@@ -297,6 +305,7 @@ describe('AuthService', () => {
       prisma as any,
       { signAsync: jest.fn() } as any,
       config as any,
+      email as any,
     );
 
     await expect(
@@ -340,6 +349,7 @@ describe('AuthService', () => {
       prisma as any,
       { signAsync } as any,
       config as any,
+      email as any,
     );
 
     const result = await service.refresh('a'.repeat(64));
@@ -396,6 +406,7 @@ describe('AuthService', () => {
       prisma as any,
       { signAsync: jest.fn() } as any,
       config as any,
+      email as any,
     );
 
     await expect(service.refresh('a'.repeat(64))).rejects.toThrow(
@@ -424,6 +435,7 @@ describe('AuthService', () => {
       prisma as any,
       { signAsync: jest.fn() } as any,
       config as any,
+      email as any,
     );
 
     const result = await service.requestPasswordReset('OWNER@example.com ');
@@ -443,6 +455,10 @@ describe('AuthService', () => {
         }),
       }),
     );
+    expect(email.sendPasswordReset).toHaveBeenCalledWith(
+      'owner@example.com',
+      expect.any(String),
+    );
   });
 
   it('returns the same response and does nothing for an unknown email', async () => {
@@ -455,6 +471,7 @@ describe('AuthService', () => {
       prisma as any,
       { signAsync: jest.fn() } as any,
       config as any,
+      email as any,
     );
 
     const result = await service.requestPasswordReset('nobody@example.com');
@@ -472,9 +489,9 @@ describe('AuthService', () => {
           usedAt: null,
           expiresAt: new Date(Date.now() + 60_000),
         }),
-        update: jest.fn().mockResolvedValue({}),
+        updateMany: jest.fn().mockResolvedValue({ count: 1 }),
       },
-      user: { update: jest.fn().mockResolvedValue({}) },
+      user: { updateMany: jest.fn().mockResolvedValue({ count: 1 }) },
       authSession: { updateMany: jest.fn().mockResolvedValue({ count: 2 }) },
     };
     const prisma = {
@@ -484,20 +501,30 @@ describe('AuthService', () => {
       prisma as any,
       { signAsync: jest.fn() } as any,
       config as any,
+      email as any,
     );
 
     await service.resetPassword('a'.repeat(43), 'brand-new-password-123');
 
-    expect(tx.user.update).toHaveBeenCalledWith(
+    expect(tx.user.updateMany).toHaveBeenCalledWith(
       expect.objectContaining({
-        where: { id: 'user-1' },
+        where: {
+          id: 'user-1',
+          status: { in: ['ACTIVE', 'INVITED'] },
+        },
         data: {
           passwordHash: expect.stringMatching(/^scrypt\$16384\$8\$1\$/),
         },
       }),
     );
-    expect(tx.passwordResetToken.update).toHaveBeenCalledWith(
-      expect.objectContaining({ data: { usedAt: expect.any(Date) } }),
+    expect(tx.passwordResetToken.updateMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          id: 'reset-1',
+          usedAt: null,
+        }),
+        data: { usedAt: expect.any(Date) },
+      }),
     );
     expect(tx.authSession.updateMany).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -511,9 +538,9 @@ describe('AuthService', () => {
     const tx = {
       passwordResetToken: {
         findUnique: jest.fn().mockResolvedValue(null),
-        update: jest.fn(),
+        updateMany: jest.fn(),
       },
-      user: { update: jest.fn() },
+      user: { updateMany: jest.fn() },
       authSession: { updateMany: jest.fn() },
     };
     const prisma = {
@@ -523,11 +550,122 @@ describe('AuthService', () => {
       prisma as any,
       { signAsync: jest.fn() } as any,
       config as any,
+      email as any,
     );
 
     await expect(
       service.resetPassword('b'.repeat(43), 'brand-new-password-123'),
     ).rejects.toThrow('Invalid or expired reset token');
-    expect(tx.user.update).not.toHaveBeenCalled();
+    expect(tx.user.updateMany).not.toHaveBeenCalled();
+  });
+
+  it('requires an email change to be verified before it takes effect', async () => {
+    const user = {
+      email: 'old@example.com',
+      phoneNormalized: '+21620123456',
+      preferredLocale: 'fr',
+      passwordHash: makePasswordHash('secure-password-123'),
+    };
+    const tx = {
+      emailChangeToken: {
+        updateMany: jest.fn().mockResolvedValue({ count: 0 }),
+        create: jest.fn().mockResolvedValue({}),
+      },
+      user: { update: jest.fn().mockResolvedValue({}) },
+    };
+    const prisma = {
+      user: {
+        findUnique: jest
+          .fn()
+          .mockResolvedValueOnce(user)
+          .mockResolvedValueOnce(null)
+          .mockResolvedValueOnce({
+            id: 'user-1',
+            email: 'old@example.com',
+            phoneNormalized: '+21620123456',
+            preferredLocale: 'fr',
+            memberships: [],
+          }),
+      },
+      $transaction: jest.fn(async (callback: any) => callback(tx)),
+    };
+    const service = new AuthService(
+      prisma as any,
+      { signAsync: jest.fn() } as any,
+      config as any,
+      email as any,
+    );
+
+    const result = await service.updateProfile('user-1', {
+      email: 'NEW@example.com',
+      currentPassword: 'secure-password-123',
+    });
+
+    expect(result.emailVerificationRequired).toBe(true);
+    expect(result.profile.email).toBe('old@example.com');
+    expect(tx.emailChangeToken.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          email: 'new@example.com',
+          tokenHash: expect.any(Uint8Array),
+        }),
+      }),
+    );
+    expect(email.sendEmailChangeVerification).toHaveBeenCalledWith(
+      'new@example.com',
+      expect.any(String),
+    );
+    expect(tx.user.update).not.toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ email: 'new@example.com' }),
+      }),
+    );
+  });
+
+  it('prevents closing the only active owner of an establishment', async () => {
+    const tx = {
+      establishmentMember: {
+        findMany: jest.fn().mockResolvedValue([
+          {
+            id: 'member-1',
+            establishmentId: 'establishment-1',
+            role: 'OWNER',
+            establishment: { status: 'ACTIVE' },
+          },
+        ]),
+        count: jest.fn().mockResolvedValue(0),
+        updateMany: jest.fn(),
+      },
+      employee: { updateMany: jest.fn() },
+      auditLog: { createMany: jest.fn() },
+      user: { updateMany: jest.fn().mockResolvedValue({ count: 1 }) },
+      authSession: { updateMany: jest.fn() },
+      $queryRaw: jest.fn().mockResolvedValue([]),
+    };
+    const prisma = {
+      user: {
+        findUnique: jest.fn().mockResolvedValue({
+          status: 'ACTIVE',
+          passwordHash: makePasswordHash('secure-password-123'),
+        }),
+      },
+      $transaction: jest.fn(async (callback: any) => callback(tx)),
+    };
+    const service = new AuthService(
+      prisma as any,
+      { signAsync: jest.fn() } as any,
+      config as any,
+      email as any,
+    );
+
+    await expect(
+      service.closeAccount('user-1', 'secure-password-123'),
+    ).rejects.toThrow(
+      new ConflictException(
+        'Transfer ownership of each active establishment before closing this account',
+      ),
+    );
+    expect(tx.user.updateMany).not.toHaveBeenCalled();
+    expect(tx.authSession.updateMany).not.toHaveBeenCalled();
   });
 });
