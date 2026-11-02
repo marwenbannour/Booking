@@ -12,6 +12,7 @@ import { StatusBadge } from "@/components/ui/StatusBadge";
 import { Button } from "@/components/ui/Button";
 import { ShareLink } from "@/components/ShareLink";
 import { DashboardChart } from "@/components/DashboardChart";
+import { DashboardInsights } from "@/components/DashboardInsights";
 import { formatTime } from "@/lib/format";
 
 const EXAMPLE: BookingListItem[] = [
@@ -147,6 +148,8 @@ export default function DashboardPage() {
         )}
       </div>
       </div>
+
+      <DashboardInsights items={items} />
 
       <div style={{ marginTop: 16 }}>
         <ShareLink slug={establishmentSlug} />
