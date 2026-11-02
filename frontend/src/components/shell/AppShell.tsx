@@ -31,7 +31,7 @@ const NAV = [
   { href: "/subscriptions", key: "nav.subscriptions", Icon: CreditCard },
   { href: "/notifications", key: "nav.notifications", Icon: Bell },
   { href: "/settings", key: "nav.settings", Icon: Settings },
-  { href: "/account", key: "Mon compte", Icon: UserRound },
+  { href: "/account", key: "nav.account", Icon: UserRound },
 ];
 
 export function AppShell({ title, subtitle, actions, children }: {
@@ -67,9 +67,9 @@ export function AppShell({ title, subtitle, actions, children }: {
     <div className="app-shell">
       <aside className="sidebar">
         <div className="brand">
-          <span className="brand-mark">B&amp;W</span>
+          <span className="brand-mark">B+</span>
           <span className="brand-name">
-            Book<span>&amp;Whats</span>
+            Booking<span>+</span>
           </span>
         </div>
         <p className="workspace-label">{establishmentName ?? t("common.workspace")}</p>
@@ -90,7 +90,7 @@ export function AppShell({ title, subtitle, actions, children }: {
             <span className="avatar">{initials}</span>
             <div className="profile-copy">
               <strong>{me?.email ?? "Utilisateur"}</strong>
-              <small>{me?.memberships?.[0]?.role ?? "—"}</small>
+              <small>{me?.memberships?.[0]?.role ? t(`role.${me.memberships[0].role}`) : "—"}</small>
             </div>
           </div>
         </div>
@@ -99,8 +99,8 @@ export function AppShell({ title, subtitle, actions, children }: {
       <div className="main-panel">
         <header className="topbar">
           <div className="topbar-brand">
-            <span className="brand-mark">B&amp;W</span>
-            <span>Book<span style={{ color: "var(--teal)" }}>&amp;Whats</span></span>
+            <span className="brand-mark">B+</span>
+            <span>Booking<span style={{ color: "var(--teal)" }}>+</span></span>
           </div>
           <div className="breadcrumb">
             {t("common.workspace")} · <strong>{title}</strong>
@@ -108,7 +108,7 @@ export function AppShell({ title, subtitle, actions, children }: {
           <div className="top-actions">
             {(me?.memberships.length ?? 0) > 1 && (
               <select
-                aria-label="Établissement actif"
+                aria-label={t("common.activeEstablishment")}
                 value={establishmentId ?? ""}
                 onChange={(event) => selectEstablishment(event.target.value)}
               >

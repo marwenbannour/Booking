@@ -2,15 +2,15 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "Book&Whats — Réservez. Organisez. Ne ratez plus.",
-    short_name: "Book&Whats",
+    name: "Booking+ — Vos rendez-vous, gérés tout seuls.",
+    short_name: "Booking+",
     description: "Réservation en ligne, gestion des rendez-vous et rappels WhatsApp.",
     start_url: "/dashboard",
     scope: "/",
     display: "standalone",
     orientation: "portrait",
-    background_color: "#f8fafc",
-    theme_color: "#2563eb",
+    background_color: "#f4f7fb",
+    theme_color: "#0a1b2e",
     lang: "fr",
     dir: "auto",
     icons: [

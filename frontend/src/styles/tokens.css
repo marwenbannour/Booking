@@ -1,38 +1,44 @@
-/* Charte graphique Book&Whats — « Réservez. Organisez. Ne ratez plus. »
-   Couleurs, typographie (Inter) et états tels que définis dans la charte.
+/* Charte graphique Booking+ — « Vos rendez-vous, gérés tout seuls. »
+   Identité visuelle V1.0 : bleu nuit / turquoise / vert, typographie Sora.
    Thème clair sur :root ; thème sombre via prefers-color-scheme et [data-theme]. */
 
 :root {
   color-scheme: light;
 
   /* Surfaces & texte */
-  --canvas: #f8fafc;          /* Fond */
+  --canvas: #f4f7fb;          /* Fond */
   --surface: #ffffff;
-  --surface-sunken: #f1f5f9;
-  --line: #e2e8f0;
-  --ink: #0f172a;
-  --muted: #64748b;           /* Texte secondaire */
+  --surface-sunken: #f1f5f9;  /* Gris clair */
+  --line: #e3eaf2;
+  --ink: #0a1b2e;             /* Bleu nuit */
+  --muted: #5a6b82;           /* Texte secondaire */
 
-  /* Marque */
-  --brand: #2563eb;           /* Bleu principal */
-  --brand-strong: #1d4ed8;
-  --brand-soft: #e7effd;
-  --on-brand: #ffffff;
+  /* Marque — turquoise comme couleur d'action */
+  --brand: #14b8a6;           /* Turquoise */
+  --brand-strong: #0e9488;
+  --brand-soft: #d8f3ee;
+  --on-brand: #04231d;        /* Texte foncé sur turquoise/vert */
+
+  /* Bleu nuit profond & dégradés signature */
+  --navy: #0a1b2e;
+  --navy-2: #102a43;          /* Bleu foncé */
+  --grad: linear-gradient(135deg, #14b8a6, #22c55e);
+  --grad-ink: linear-gradient(160deg, #102a43, #0a1b2e);
 
   /* Accents */
-  --teal: #0d9488;            /* Turquoise */
-  --teal-soft: #e3f4f2;
-  --orange: #f59e0b;          /* repris de l'état Avertissement */
+  --teal: #14b8a6;            /* Turquoise */
+  --teal-soft: #d8f3ee;
+  --orange: #f59e0b;
   --orange-soft: #fef3c7;
-  --rose: #6366f1;            /* Violet (accent catégoriel) */
-  --rose-soft: #ececfe;
+  --rose: #8b5cf6;            /* Violet (accent catégoriel) */
+  --rose-soft: #ede7fe;
 
   /* États */
-  --success: #22c55e;
+  --success: #22c55e;         /* Vert succès */
   --success-soft: #dcfce7;
   --warning: #f59e0b;
   --warning-soft: #fef3c7;
-  --info: #64748b;
+  --info: #5a6b82;
   --info-soft: #f1f5f9;
   --danger: #ef4444;
   --danger-soft: #fee2e2;
@@ -54,14 +60,14 @@
   --radius-pill: 999px;
 
   /* Ombres */
-  --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.06);
-  --shadow-card: 0 12px 32px rgba(15, 23, 42, 0.08);
-  --shadow-pop: 0 24px 64px rgba(15, 23, 42, 0.18);
+  --shadow-sm: 0 1px 2px rgba(10, 27, 46, 0.05);
+  --shadow-card: 0 12px 32px rgba(10, 27, 46, 0.09);
+  --shadow-pop: 0 24px 64px rgba(10, 27, 46, 0.18);
 
-  /* Typographie — Inter */
-  --font-display: "Inter", "Segoe UI", system-ui, sans-serif;
-  --font-body: "Inter", "Segoe UI", system-ui, sans-serif;
-  --font-arabic: "Noto Sans Arabic", "Inter", system-ui, sans-serif;
+  /* Typographie — Sora */
+  --font-display: "Sora", "Segoe UI", system-ui, sans-serif;
+  --font-body: "Sora", "Segoe UI", system-ui, sans-serif;
+  --font-arabic: "Noto Sans Arabic", "Sora", system-ui, sans-serif;
 }
 
 /* ---- Thème sombre ---- */
@@ -69,31 +75,36 @@
   :root:not([data-theme="light"]) {
     color-scheme: dark;
 
-    --canvas: #0b1120;
-    --surface: #111a2e;
-    --surface-sunken: #1a2439;
-    --line: #253044;
-    --ink: #e2e8f0;
-    --muted: #94a3b8;
+    --canvas: #071020;
+    --surface: #0e1f33;
+    --surface-sunken: #122338;
+    --line: #1c3550;
+    --ink: #e7eff8;
+    --muted: #9baec6;
 
-    --brand: #60a5fa;
-    --brand-strong: #3b82f6;
-    --brand-soft: #1e2a4d;
-    --on-brand: #0b1120;
+    --brand: #2dd4bf;
+    --brand-strong: #14b8a6;
+    --brand-soft: #0f3b38;
+    --on-brand: #042018;
+
+    --navy: #0a1b2e;
+    --navy-2: #102a43;
+    --grad: linear-gradient(135deg, #2dd4bf, #22c55e);
+    --grad-ink: linear-gradient(160deg, #102a43, #060f1c);
 
     --teal: #2dd4bf;
     --teal-soft: #0f3b38;
     --orange: #fbbf24;
     --orange-soft: #3a2e12;
-    --rose: #a5b4fc;
+    --rose: #a78bfa;
     --rose-soft: #272a5a;
 
     --success: #4ade80;
     --success-soft: #0f3d2a;
     --warning: #fbbf24;
     --warning-soft: #3a2e12;
-    --info: #94a3b8;
-    --info-soft: #1a2439;
+    --info: #9baec6;
+    --info-soft: #122338;
     --danger: #f87171;
     --danger-soft: #3a1e1e;
 
@@ -106,31 +117,36 @@
 :root[data-theme="dark"] {
   color-scheme: dark;
 
-  --canvas: #0b1120;
-  --surface: #111a2e;
-  --surface-sunken: #1a2439;
-  --line: #253044;
-  --ink: #e2e8f0;
-  --muted: #94a3b8;
+  --canvas: #071020;
+  --surface: #0e1f33;
+  --surface-sunken: #122338;
+  --line: #1c3550;
+  --ink: #e7eff8;
+  --muted: #9baec6;
 
-  --brand: #60a5fa;
-  --brand-strong: #3b82f6;
-  --brand-soft: #1e2a4d;
-  --on-brand: #0b1120;
+  --brand: #2dd4bf;
+  --brand-strong: #14b8a6;
+  --brand-soft: #0f3b38;
+  --on-brand: #042018;
+
+  --navy: #0a1b2e;
+  --navy-2: #102a43;
+  --grad: linear-gradient(135deg, #2dd4bf, #22c55e);
+  --grad-ink: linear-gradient(160deg, #102a43, #060f1c);
 
   --teal: #2dd4bf;
   --teal-soft: #0f3b38;
   --orange: #fbbf24;
   --orange-soft: #3a2e12;
-  --rose: #a5b4fc;
+  --rose: #a78bfa;
   --rose-soft: #272a5a;
 
   --success: #4ade80;
   --success-soft: #0f3d2a;
   --warning: #fbbf24;
   --warning-soft: #3a2e12;
-  --info: #94a3b8;
-  --info-soft: #1a2439;
+  --info: #9baec6;
+  --info-soft: #122338;
   --danger: #f87171;
   --danger-soft: #3a1e1e;
 

@@ -44,12 +44,12 @@ h1, h2, h3, p { margin: 0; }
 .btn-primary {
   display: inline-flex; align-items: center; justify-content: center; gap: var(--space-2);
   border: 0; border-radius: var(--radius-sm);
-  background: var(--brand); color: var(--on-brand);
+  background: var(--grad); color: var(--on-brand);
   padding: 10px 14px; font-size: 11px; font-weight: 700;
-  box-shadow: 0 5px 13px color-mix(in srgb, var(--brand) 22%, transparent);
+  box-shadow: 0 5px 13px color-mix(in srgb, var(--brand) 32%, transparent);
   transition: 0.18s ease;
 }
-.btn-primary:hover { background: var(--brand-strong); transform: translateY(-1px); }
+.btn-primary:hover { filter: brightness(1.05) saturate(1.05); transform: translateY(-1px); }
 .btn-primary:disabled { opacity: 0.55; cursor: not-allowed; transform: none; }
 .btn-quiet {
   display: inline-flex; align-items: center; justify-content: center; gap: var(--space-2);
@@ -70,8 +70,8 @@ h1, h2, h3, p { margin: 0; }
 .brand { display: flex; align-items: center; gap: 11px; padding: 0 12px; margin-bottom: 36px; }
 .brand-mark {
   width: 37px; height: 37px; display: grid; place-items: center; border-radius: var(--radius-lg);
-  color: var(--on-brand); background: var(--brand); font-family: var(--font-display); font-weight: 800; font-size: 14px;
-  box-shadow: 0 7px 16px color-mix(in srgb, var(--brand) 28%, transparent);
+  color: var(--on-brand); background: var(--grad); font-family: var(--font-display); font-weight: 800; font-size: 14px;
+  box-shadow: 0 7px 16px color-mix(in srgb, var(--brand) 32%, transparent);
 }
 .brand-name { font-family: var(--font-display); font-weight: 800; font-size: 17px; letter-spacing: -0.7px; }
 .brand-name span { color: var(--teal); }
@@ -175,7 +175,7 @@ h1, h2, h3, p { margin: 0; }
 .auth-card { width: min(420px, 100%); padding: 28px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-lg); box-shadow: var(--shadow-card); }
 .auth-split { width: min(840px, 100%); display: grid; grid-template-columns: 1fr 1fr; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-lg); box-shadow: var(--shadow-card); overflow: hidden; }
 .auth-pane { padding: 34px; }
-.auth-visual { position: relative; display: flex; flex-direction: column; padding: 34px; color: #fff; background: linear-gradient(150deg, var(--brand-strong) 0%, var(--brand) 52%, var(--teal) 130%); }
+.auth-visual { position: relative; display: flex; flex-direction: column; padding: 34px; color: #fff; background: linear-gradient(150deg, var(--navy-2) 0%, var(--navy) 50%, var(--teal) 135%); }
 .auth-visual-brand { display: flex; align-items: center; gap: 10px; }
 @media (max-width: 720px) {
   .auth-split { grid-template-columns: 1fr; width: min(420px, 100%); }
@@ -188,7 +188,7 @@ h1, h2, h3, p { margin: 0; }
 .shop-banner {
   position: relative; min-height: 150px; overflow: hidden; display: flex; align-items: flex-end;
   padding: 23px 25px; border-radius: var(--radius-lg); color: #fff;
-  background: linear-gradient(112deg, var(--brand-strong) 0%, var(--brand) 48%, var(--teal) 130%);
+  background: linear-gradient(112deg, var(--navy-2) 0%, var(--navy) 46%, var(--teal) 128%);
 }
 .shop-banner h1 { font-family: var(--font-display); font-weight: 800; font-size: 25px; letter-spacing: -0.7px; margin-top: 6px; }
 .shop-kicker { color: #c2eee6; font-size: 9px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; }
@@ -251,8 +251,8 @@ h1, h2, h3, p { margin: 0; }
 .mobile-nav-item.active { color: var(--brand); }
 .mobile-nav-fab {
   display: grid; place-items: center; width: 46px; height: 46px; margin-top: -22px;
-  border-radius: 50%; background: var(--brand); color: var(--on-brand);
-  box-shadow: 0 8px 18px color-mix(in srgb, var(--brand) 38%, transparent);
+  border-radius: 50%; background: var(--grad); color: var(--on-brand);
+  box-shadow: 0 8px 18px color-mix(in srgb, var(--brand) 42%, transparent);
   flex: 0 0 auto;
 }
 
