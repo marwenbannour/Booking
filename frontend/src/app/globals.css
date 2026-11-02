@@ -199,7 +199,7 @@ h1, h2, h3, p { margin: 0; }
 .auth-card { width: min(420px, 100%); padding: 28px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-lg); box-shadow: var(--shadow-card); }
 .auth-split { width: min(840px, 100%); display: grid; grid-template-columns: 1fr 1fr; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-lg); box-shadow: var(--shadow-card); overflow: hidden; }
 .auth-pane { padding: 34px; }
-.auth-visual { position: relative; display: flex; flex-direction: column; padding: 34px; color: #fff; background: linear-gradient(150deg, var(--navy-2) 0%, var(--navy) 50%, var(--teal) 135%); }
+.auth-visual { position: relative; display: flex; flex-direction: column; min-height: 460px; padding: 34px; color: #fff; background: linear-gradient(150deg, var(--navy-2) 0%, var(--navy) 50%, var(--teal) 135%); }
 .auth-visual-brand { display: flex; align-items: center; gap: 10px; }
 @media (max-width: 720px) {
   .auth-split { grid-template-columns: 1fr; width: min(420px, 100%); }

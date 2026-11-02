@@ -8,6 +8,7 @@ import { ApiError } from "@/lib/api";
 import { Button } from "@/components/ui/Button";
 import { Field } from "@/components/ui/Field";
 import { LanguageToggle, useI18n } from "@/lib/i18n";
+import { AuthVisual } from "@/components/auth/AuthVisual";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -58,6 +59,7 @@ export default function RegisterPage() {
 
   return (
     <div className="center-screen">
+      <div className="auth-split">
       <form className="auth-pane stack" onSubmit={onSubmit}>
         <div className="row" style={{ justifyContent: "flex-end" }}><LanguageToggle /></div>
         <div>
@@ -79,6 +81,8 @@ export default function RegisterPage() {
           {t("auth.alreadyRegistered")} <Link href="/login">{t("auth.login")}</Link>
         </p>
       </form>
+        <AuthVisual />
+      </div>
     </div>
   );
 }

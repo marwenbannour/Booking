@@ -6,6 +6,7 @@ import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/Button";
 import { Field } from "@/components/ui/Field";
 import { LanguageToggle, useI18n } from "@/lib/i18n";
+import { AuthVisual } from "@/components/auth/AuthVisual";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -82,18 +83,7 @@ export default function LoginPage() {
         </div>
         </form>
 
-        <aside className="auth-visual">
-          <div className="auth-visual-brand">
-            <span className="brand-mark" style={{ background: "rgba(255,255,255,.18)", boxShadow: "none" }}>B+</span>
-            <strong style={{ fontFamily: "var(--font-display)", fontSize: 16 }}>Booking+</strong>
-          </div>
-          <div style={{ marginTop: "auto" }}>
-            <h2 style={{ fontFamily: "var(--font-display)", fontWeight: 700, fontSize: 22, lineHeight: 1.25, margin: 0 }}>
-              {t("auth.brandHeadline")}
-            </h2>
-            <p style={{ opacity: 0.92, fontSize: 13, marginTop: 8 }}>{t("auth.brandTagline")}</p>
-          </div>
-        </aside>
+        <AuthVisual />
       </div>
     </div>
   );

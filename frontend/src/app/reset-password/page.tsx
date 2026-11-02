@@ -6,6 +6,7 @@ import { api, ApiError } from "@/lib/api";
 import { Button } from "@/components/ui/Button";
 import { Field } from "@/components/ui/Field";
 import { LanguageToggle, useI18n } from "@/lib/i18n";
+import { AuthVisual } from "@/components/auth/AuthVisual";
 
 export default function ResetPasswordPage() {
   const { t } = useI18n();
@@ -44,6 +45,7 @@ export default function ResetPasswordPage() {
 
   return (
     <div className="center-screen">
+      <div className="auth-split">
       <form className="auth-pane stack" onSubmit={onSubmit}>
         <div className="row" style={{ justifyContent: "flex-end" }}><LanguageToggle /></div>
         <h1 className="t-h2">{t("auth.newPasswordTitle")}</h1>
@@ -60,6 +62,8 @@ export default function ResetPasswordPage() {
           </>
         )}
       </form>
+        <AuthVisual />
+      </div>
     </div>
   );
 }

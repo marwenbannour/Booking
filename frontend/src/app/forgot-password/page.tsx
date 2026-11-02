@@ -6,6 +6,7 @@ import { api, ApiError } from "@/lib/api";
 import { Button } from "@/components/ui/Button";
 import { Field } from "@/components/ui/Field";
 import { LanguageToggle, useI18n } from "@/lib/i18n";
+import { AuthVisual } from "@/components/auth/AuthVisual";
 
 export default function ForgotPasswordPage() {
   const { t } = useI18n();
@@ -35,6 +36,7 @@ export default function ForgotPasswordPage() {
 
   return (
     <div className="center-screen">
+      <div className="auth-split">
       <form className="auth-pane stack" onSubmit={onSubmit}>
         <div className="row" style={{ justifyContent: "flex-end" }}><LanguageToggle /></div>
         <div>
@@ -51,6 +53,8 @@ export default function ForgotPasswordPage() {
         </Button>
         <Link href="/login">{t("auth.backToLogin")}</Link>
       </form>
+        <AuthVisual />
+      </div>
     </div>
   );
 }
