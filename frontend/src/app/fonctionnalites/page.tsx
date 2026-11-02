@@ -149,7 +149,7 @@ function VisualDashboard() {
           <small className="up">+12% ce mois</small>
         </div>
         <div className="mk-mini-stat">
-          <small>Chiffre d'affaires</small>
+          <small>Chiffre d&apos;affaires</small>
           <div className="v">4 580 DT</div>
           <small className="up">+8% ce mois</small>
         </div>
