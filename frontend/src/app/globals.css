@@ -65,9 +65,24 @@ h1, h2, h3, p { margin: 0; }
 .app-shell { display: flex; min-height: 100vh; }
 .sidebar {
   width: 246px; flex: 0 0 246px; padding: 27px 17px 20px;
-  background: var(--surface); border-inline-end: 1px solid var(--line);
+  background: linear-gradient(185deg, #102a43 0%, #0a1b2e 72%);
+  border-inline-end: 1px solid rgba(255, 255, 255, 0.07);
   display: flex; flex-direction: column;
 }
+/* ---- Sidebar bleu nuit (identité Booking+) ---- */
+.sidebar .brand-name { color: #fff; }
+.sidebar .workspace-label { color: #6e85a1; }
+.sidebar .nav-item { color: #9fb2c9; }
+.sidebar .nav-item:hover { background: rgba(255, 255, 255, 0.06); color: #fff; }
+.sidebar .nav-item.active { position: relative; color: #fff; background: rgba(20, 184, 166, 0.16); }
+.sidebar .nav-item.active::before {
+  content: ""; position: absolute; inset-inline-start: 0; top: 9px; bottom: 9px;
+  width: 3px; border-radius: 3px; background: var(--grad);
+}
+.sidebar .profile-mini { border-top-color: rgba(255, 255, 255, 0.08); }
+.sidebar .profile-copy strong { color: #fff; }
+.sidebar .profile-copy small { color: #8da2bc; }
+.sidebar .avatar { background: var(--grad); color: var(--on-brand); }
 .brand { display: flex; align-items: center; gap: 11px; padding: 0 12px; margin-bottom: 36px; }
 .brand-mark {
   width: 37px; height: 37px; display: grid; place-items: center; border-radius: var(--radius-lg);
@@ -116,12 +131,16 @@ h1, h2, h3, p { margin: 0; }
   background: var(--surface); border: 1px solid var(--line);
   border-radius: var(--radius-lg); box-shadow: var(--shadow-sm);
 }
-.metric-card { padding: 17px 18px 14px; min-height: 122px; }
+.metric-card { position: relative; overflow: hidden; padding: 17px 18px 14px; min-height: 122px; }
+.metric-card::before { content: ""; position: absolute; top: 0; inset-inline: 0; height: 3px; background: var(--grad); opacity: 0.9; }
 .metric-head { display: flex; align-items: center; justify-content: space-between; color: var(--muted); font-size: 10px; font-weight: 600; }
-.metric-icon { display: grid; place-items: center; width: 30px; height: 30px; border-radius: var(--radius-md); background: var(--brand-soft); color: var(--brand); font-size: 14px; }
-.metric-icon.teal { background: var(--teal-soft); color: var(--teal); }
-.metric-icon.orange { background: var(--orange-soft); color: var(--orange); }
-.metric-icon.rose { background: var(--rose-soft); color: var(--rose); }
+/* Tuiles KPI en dégradé — un ton distinct par métrique */
+.metric-icon { display: grid; place-items: center; width: 34px; height: 34px; border-radius: var(--radius-md);
+  background: linear-gradient(135deg, #14b8a6, #22c55e); color: #fff; font-size: 14px;
+  box-shadow: 0 6px 14px -6px color-mix(in srgb, var(--teal) 60%, transparent); }
+.metric-icon.teal { background: linear-gradient(135deg, #3b82f6, #14b8a6); box-shadow: 0 6px 14px -6px rgba(59, 130, 246, 0.5); }
+.metric-icon.orange { background: linear-gradient(135deg, #f59e0b, #fb923c); box-shadow: 0 6px 14px -6px rgba(245, 158, 11, 0.5); }
+.metric-icon.rose { background: linear-gradient(135deg, #8b5cf6, #a78bfa); box-shadow: 0 6px 14px -6px rgba(139, 92, 246, 0.5); }
 .metric-value { margin: 12px 0 7px; }
 .metric-foot { display: flex; align-items: center; gap: 5px; color: var(--muted); font-size: 9px; }
 .trend-up { color: var(--success); font-weight: 700; }
