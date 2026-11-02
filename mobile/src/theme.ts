@@ -13,6 +13,7 @@ export const colors = {
   blue: '#14B8A6',
   blueStrong: '#0E9488',
   blueSoft: '#D8F3EE',
+  onBrand: '#04231D',
   teal: '#14B8A6',
   tealSoft: '#D8F3EE',
   violet: '#8B5CF6',

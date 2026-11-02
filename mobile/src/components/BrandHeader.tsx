@@ -1,4 +1,5 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useLocale } from '../context/LocaleContext';
@@ -6,12 +7,17 @@ import { colors, spacing } from '../theme';
 
 export function BrandMark({ size = 38 }: { size?: number }) {
   return (
-    <View style={[styles.brandMark, { width: size, height: size, borderRadius: size * 0.3 }]}>
+    <LinearGradient
+      colors={[colors.teal, colors.success]}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 1 }}
+      style={[styles.brandMark, { width: size, height: size, borderRadius: size * 0.3 }]}
+    >
       <Ionicons name="calendar" size={size * 0.54} color={colors.white} />
       <View style={styles.brandDot}>
         <Ionicons name="logo-whatsapp" size={size * 0.3} color={colors.white} />
       </View>
-    </View>
+    </LinearGradient>
   );
 }
 
@@ -51,7 +57,6 @@ const styles = StyleSheet.create({
   },
   brandRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   brandMark: {
-    backgroundColor: colors.blue,
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: colors.blue,

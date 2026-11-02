@@ -1,4 +1,5 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { useMemo, useState } from 'react';
 import {
@@ -86,10 +87,17 @@ function AppButton({
       accessibilityState={{ disabled }}
       disabled={disabled}
       onPress={onPress}
-      style={({ pressed }) => [styles.button, rtlRow(isRtl), disabled && styles.buttonDisabled, pressed && !disabled && styles.buttonPressed]}
+      style={({ pressed }) => [styles.button, disabled && styles.buttonDisabled, pressed && !disabled && styles.buttonPressed]}
     >
-      {icon ? <Ionicons name={icon} size={19} color={colors.white} /> : null}
-      <Text style={styles.buttonText}>{title}</Text>
+      <LinearGradient
+        colors={[colors.teal, colors.success]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={[styles.buttonInner, rtlRow(isRtl)]}
+      >
+        {icon ? <Ionicons name={icon} size={19} color={colors.onBrand} /> : null}
+        <Text style={styles.buttonText}>{title}</Text>
+      </LinearGradient>
     </Pressable>
   );
 }
@@ -762,10 +770,11 @@ const styles = StyleSheet.create({
   heroCopy: { maxWidth: 290, fontFamily: 'Sora_400Regular', color: '#D5E2F8', fontSize: 12, lineHeight: 19, marginTop: spacing.xs, marginBottom: spacing.md },
   heroDecoration: { position: 'absolute', width: 170, height: 170, borderRadius: 85, borderWidth: 25, borderColor: 'rgba(37,99,235,0.22)', right: -78, top: -73 },
   heroDecorationSmall: { position: 'absolute', width: 70, height: 70, borderRadius: 35, borderWidth: 12, borderColor: 'rgba(13,148,136,0.24)', right: 3, top: 76 },
-  button: { minHeight: 50, borderRadius: radius.md, paddingHorizontal: spacing.md, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: spacing.sm, backgroundColor: colors.blue, ...shadow.brand },
+  button: { minHeight: 50, borderRadius: radius.md, overflow: 'hidden', ...shadow.brand },
+  buttonInner: { flex: 1, minHeight: 50, paddingHorizontal: spacing.md, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: spacing.sm },
   buttonDisabled: { opacity: 0.48 },
   buttonPressed: { opacity: 0.82, transform: [{ scale: 0.99 }] },
-  buttonText: { fontFamily: 'Sora_600SemiBold', fontSize: 14, color: colors.white },
+  buttonText: { fontFamily: 'Sora_600SemiBold', fontSize: 14, color: colors.onBrand },
   upcomingCard: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, padding: spacing.md, marginBottom: spacing.md, backgroundColor: colors.white, borderWidth: 1, borderColor: colors.line, borderRadius: radius.lg },
   upcomingIcon: { width: 41, height: 41, borderRadius: 14, backgroundColor: colors.tealSoft, alignItems: 'center', justifyContent: 'center' },
   smallLabel: { fontFamily: 'Sora_600SemiBold', fontSize: 9, letterSpacing: 0.7, color: colors.muted, marginBottom: 3 },
