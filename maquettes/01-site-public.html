@@ -1,0 +1,1249 @@
+<title>Booking+ Site Public</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Noto+Sans+Arabic:wght@400;500;600;700&display=swap">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/lucide/0.344.0/lucide.min.js"></script>
+<style>
+/* Layout concept: marketing site + public booking flow, full-width bands on a white canvas,
+   one deep-navy brand ink, teal→green as the single accent, screens swapped by hash route. */
+:root{
+  --ink:#0A1B2E;        /* bleu nuit */
+  --ink-2:#102A43;      /* bleu foncé */
+  --teal:#14B8A6;       /* turquoise */
+  --green:#22C55E;      /* vert succès */
+  --mist:#F1F5F9;       /* gris clair */
+  --white:#FFFFFF;
+
+  --bg:var(--white);
+  --band:#F6F9FC;
+  --card:#FFFFFF;
+  --fg:#0A1B2E;
+  --muted:#5A6B82;
+  --faint:#8294AC;
+  --border:#E3EAF2;
+  --ring:rgba(20,184,166,.28);
+  --shadow:0 1px 2px rgba(10,27,46,.04), 0 12px 30px -12px rgba(10,27,46,.14);
+  --shadow-lg:0 30px 60px -24px rgba(10,27,46,.28);
+  --grad:linear-gradient(135deg,var(--teal),var(--green));
+  --grad-ink:linear-gradient(160deg,#0C2138,#0A1B2E 60%);
+  --r:16px; --r-lg:22px; --r-sm:10px;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#081425; --band:#0C1F33; --card:#0E2236; --fg:#EAF1F8; --muted:#9DB0C6;
+  --faint:#7389A4; --border:#1C3550; --ring:rgba(45,212,191,.32);
+  --shadow:0 1px 2px rgba(0,0,0,.3), 0 14px 34px -14px rgba(0,0,0,.6);
+  --shadow-lg:0 30px 60px -22px rgba(0,0,0,.7);
+  --grad-ink:linear-gradient(160deg,#102A43,#081425 70%);
+  color-scheme:dark;
+}}
+:root[data-theme="dark"]{
+  --bg:#081425; --band:#0C1F33; --card:#0E2236; --fg:#EAF1F8; --muted:#9DB0C6;
+  --faint:#7389A4; --border:#1C3550; --ring:rgba(45,212,191,.32);
+  --shadow:0 1px 2px rgba(0,0,0,.3), 0 14px 34px -14px rgba(0,0,0,.6);
+  --shadow-lg:0 30px 60px -22px rgba(0,0,0,.7);
+  --grad-ink:linear-gradient(160deg,#102A43,#081425 70%);
+  color-scheme:dark;
+}
+
+*{box-sizing:border-box}
+html,body{margin:0}
+body{
+  background:var(--bg); color:var(--fg);
+  font-family:"Sora",system-ui,-apple-system,"Segoe UI",sans-serif;
+  line-height:1.55; -webkit-font-smoothing:antialiased;
+}
+[dir="rtl"] body, body[dir="rtl"]{font-family:"Noto Sans Arabic","Sora",system-ui,sans-serif}
+h1,h2,h3,h4{margin:0;line-height:1.12;text-wrap:balance;font-weight:700;letter-spacing:-.02em}
+p{margin:0}
+a{color:inherit;text-decoration:none}
+button{font-family:inherit}
+img{max-width:100%}
+:focus-visible{outline:2px solid var(--teal);outline-offset:2px;border-radius:6px}
+
+.wrap{width:100%;max-width:1160px;margin-inline:auto;
+  padding-left:max(20px,env(safe-area-inset-left,0px));
+  padding-right:max(20px,env(safe-area-inset-right,0px));}
+.band{padding-block:84px}
+.band.tight{padding-block:56px}
+
+/* ---------- buttons ---------- */
+.btn{display:inline-flex;align-items:center;gap:9px;border:0;cursor:pointer;
+  font-weight:600;font-size:15px;border-radius:12px;padding:12px 20px;
+  transition:transform .15s ease, box-shadow .2s ease, background .2s ease;white-space:nowrap}
+.btn i{width:18px;height:18px}
+.btn-primary{background:var(--grad);color:#042018;box-shadow:0 10px 22px -10px rgba(20,184,166,.7)}
+.btn-primary:hover{transform:translateY(-1px);box-shadow:0 16px 30px -12px rgba(20,184,166,.8)}
+.btn-ghost{background:transparent;color:var(--fg);border:1.5px solid var(--border)}
+.btn-ghost:hover{border-color:var(--teal);color:var(--teal)}
+.btn-ink{background:var(--ink);color:#fff}
+:root[data-theme="dark"] .btn-ink,
+:root:not([data-theme="light"]) .btn-ink{background:var(--teal);color:#042018}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .btn-ink{background:var(--teal);color:#042018}}
+.btn-block{width:100%;justify-content:center}
+.btn-lg{padding:15px 26px;font-size:16px}
+
+/* ---------- header ---------- */
+.topbar{position:sticky;top:env(safe-area-inset-top,0px);z-index:40;
+  background:color-mix(in srgb,var(--bg) 86%,transparent);backdrop-filter:blur(14px);
+  border-bottom:1px solid var(--border)}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);
+  background:var(--bg);z-index:41}
+.nav{display:flex;align-items:center;gap:18px;height:68px}
+.brand{display:flex;align-items:center;gap:11px;font-weight:800;letter-spacing:-.02em;font-size:19px;cursor:pointer}
+.brand .logo{width:38px;height:38px;border-radius:11px;background:var(--grad);display:grid;place-items:center;
+  color:#042018;box-shadow:0 8px 18px -8px rgba(20,184,166,.8)}
+.brand .logo i{width:21px;height:21px}
+.brand small{display:block;font-size:10.5px;font-weight:500;color:var(--teal);letter-spacing:.04em;margin-top:-3px}
+.nav-links{display:flex;gap:4px;margin-inline-start:18px}
+.nav-links a{padding:8px 13px;border-radius:9px;font-size:14.5px;font-weight:500;color:var(--muted);cursor:pointer}
+.nav-links a:hover{color:var(--fg);background:var(--band)}
+.nav-links a.active{color:var(--teal);background:color-mix(in srgb,var(--teal) 12%,transparent)}
+.nav-right{margin-inline-start:auto;display:flex;align-items:center;gap:10px}
+.icon-btn{width:40px;height:40px;border-radius:11px;border:1.5px solid var(--border);background:transparent;
+  color:var(--muted);display:grid;place-items:center;cursor:pointer}
+.icon-btn:hover{color:var(--teal);border-color:var(--teal)}
+.icon-btn i{width:18px;height:18px}
+.lang{font-size:13px;font-weight:600;letter-spacing:.02em}
+.burger{display:none}
+@media(max-width:900px){
+  .nav-links{display:none;position:absolute;top:68px;inset-inline:0;flex-direction:column;background:var(--bg);
+    border-bottom:1px solid var(--border);padding:12px max(20px,env(safe-area-inset-left,0px));gap:2px;margin:0}
+  .nav-links.open{display:flex}
+  .nav-links a{padding:12px 14px}
+  .burger{display:grid}
+  .nav-right .hide-sm{display:none}
+}
+
+/* ---------- screens ---------- */
+.screen{display:none;animation:fade .4s ease}
+.screen.active{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@media(prefers-reduced-motion:reduce){.screen,.screen.active{animation:none}}
+
+.eyebrow{display:inline-flex;align-items:center;gap:8px;font-size:12.5px;font-weight:600;letter-spacing:.09em;
+  text-transform:uppercase;color:var(--teal);margin-bottom:16px}
+.eyebrow i{width:15px;height:15px}
+.section-head{max-width:640px;margin:0 auto 52px;text-align:center}
+.section-head h2{font-size:clamp(28px,4.2vw,40px)}
+.section-head p{color:var(--muted);margin-top:14px;font-size:17px}
+
+/* ---------- hero ---------- */
+.hero{position:relative;overflow:hidden}
+.hero-grid{display:grid;grid-template-columns:1.05fr .95fr;gap:52px;align-items:center}
+.hero h1{font-size:clamp(34px,5.4vw,58px);font-weight:800;letter-spacing:-.03em}
+.hero h1 .hl{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+.hero .lede{color:var(--muted);font-size:clamp(16px,2vw,19px);margin-top:22px;max-width:30em}
+.hero-cta{display:flex;gap:12px;flex-wrap:wrap;margin-top:30px}
+.hero-trust{display:flex;gap:22px;flex-wrap:wrap;margin-top:28px;color:var(--faint);font-size:13.5px}
+.hero-trust span{display:inline-flex;align-items:center;gap:7px}
+.hero-trust i{width:15px;height:15px;color:var(--green)}
+@media(max-width:860px){.hero-grid{grid-template-columns:1fr;gap:34px}}
+
+/* device mock */
+.mock{background:var(--grad-ink);border-radius:var(--r-lg);padding:14px;box-shadow:var(--shadow-lg);position:relative}
+.mock::after{content:"";position:absolute;inset:0;border-radius:var(--r-lg);box-shadow:inset 0 0 0 1px rgba(255,255,255,.06)}
+.mock-top{display:flex;gap:6px;padding:4px 6px 12px}
+.mock-top i{width:11px;height:11px;border-radius:50%;background:rgba(255,255,255,.28)}
+.mock-screen{background:var(--card);border-radius:14px;padding:16px;display:grid;gap:12px}
+.mini-row{display:flex;align-items:center;gap:11px;padding:11px;border:1px solid var(--border);border-radius:12px}
+.mini-av{width:34px;height:34px;border-radius:9px;background:var(--grad);display:grid;place-items:center;color:#042018;flex:0 0 auto}
+.mini-av i{width:17px;height:17px}
+.mini-row b{font-size:13.5px}
+.mini-row small{display:block;color:var(--muted);font-size:11.5px}
+.pill{margin-inline-start:auto;font-size:11px;font-weight:600;padding:4px 10px;border-radius:20px}
+.pill.ok{background:color-mix(in srgb,var(--green) 16%,transparent);color:var(--green)}
+.pill.wait{background:color-mix(in srgb,#F59E0B 18%,transparent);color:#D98B07}
+.float-chip{position:absolute;background:var(--card);border:1px solid var(--border);border-radius:13px;
+  padding:11px 14px;box-shadow:var(--shadow);display:flex;align-items:center;gap:10px;font-size:13px;font-weight:600}
+.float-chip i{width:17px;height:17px}
+.float-chip.wa{bottom:-16px;left:-18px;color:var(--green)}
+.float-chip.bk{top:-14px;right:-14px;color:var(--teal)}
+@media(max-width:520px){.float-chip{display:none}}
+
+.blob{position:absolute;border-radius:50%;filter:blur(70px);opacity:.5;z-index:-1}
+.blob.a{width:380px;height:380px;background:var(--teal);top:-120px;right:-80px;opacity:.16}
+.blob.b{width:320px;height:320px;background:var(--green);bottom:-140px;left:-60px;opacity:.12}
+
+/* logos strip */
+.logos{display:flex;gap:30px;flex-wrap:wrap;align-items:center;justify-content:center;opacity:.7}
+.logos span{display:inline-flex;align-items:center;gap:8px;font-weight:600;color:var(--faint);font-size:15px}
+.logos i{width:19px;height:19px}
+
+/* ---------- feature cards ---------- */
+.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:22px}
+.grid-2{display:grid;grid-template-columns:repeat(2,1fr);gap:22px}
+@media(max-width:860px){.grid-3{grid-template-columns:1fr}.grid-2{grid-template-columns:1fr}}
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:26px;box-shadow:var(--shadow)}
+.f-ic{width:52px;height:52px;border-radius:14px;display:grid;place-items:center;margin-bottom:18px;
+  background:color-mix(in srgb,var(--teal) 13%,transparent);color:var(--teal)}
+.f-ic i{width:24px;height:24px}
+.card h3{font-size:19px;margin-bottom:9px}
+.card p{color:var(--muted);font-size:15px}
+.f-list{list-style:none;padding:0;margin:16px 0 0;display:grid;gap:9px}
+.f-list li{display:flex;gap:10px;align-items:flex-start;font-size:14.5px;color:var(--muted)}
+.f-list i{width:17px;height:17px;color:var(--green);flex:0 0 auto;margin-top:2px}
+
+/* feature split rows */
+.split{display:grid;grid-template-columns:1fr 1fr;gap:48px;align-items:center;margin-bottom:64px}
+.split:last-child{margin-bottom:0}
+.split.rev .txt{order:2}
+.split h3{font-size:clamp(23px,3vw,30px);margin-bottom:14px}
+.split p{color:var(--muted);font-size:16px}
+@media(max-width:860px){.split{grid-template-columns:1fr;gap:26px}.split.rev .txt{order:0}}
+
+/* ---------- pricing ---------- */
+.price-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:22px;align-items:stretch}
+@media(max-width:860px){.price-grid{grid-template-columns:1fr}}
+.plan{background:var(--card);border:1px solid var(--border);border-radius:var(--r-lg);padding:30px;display:flex;flex-direction:column;box-shadow:var(--shadow)}
+.plan.pop{border:1.5px solid var(--teal);box-shadow:var(--shadow-lg);position:relative}
+.plan.pop::before{content:"Le plus populaire";position:absolute;top:-13px;left:50%;transform:translateX(-50%);
+  background:var(--grad);color:#042018;font-size:12px;font-weight:700;padding:5px 15px;border-radius:20px;white-space:nowrap}
+.plan .pname{font-size:15px;font-weight:600;color:var(--teal);text-transform:uppercase;letter-spacing:.06em}
+.plan .pdesc{color:var(--muted);font-size:14px;margin-top:6px;min-height:40px}
+.plan .cost{display:flex;align-items:baseline;gap:6px;margin:18px 0}
+.plan .cost b{font-size:44px;font-weight:800;letter-spacing:-.03em}
+.plan .cost span{color:var(--muted);font-size:15px}
+.plan ul{list-style:none;padding:0;margin:4px 0 24px;display:grid;gap:12px}
+.plan li{display:flex;gap:11px;align-items:flex-start;font-size:14.5px}
+.plan li i{width:18px;height:18px;color:var(--green);flex:0 0 auto;margin-top:2px}
+.plan li.off{color:var(--faint)}
+.plan li.off i{color:var(--faint)}
+.plan .btn{margin-top:auto}
+
+/* ---------- FAQ ---------- */
+.faq{max-width:760px;margin:0 auto}
+.qa{border:1px solid var(--border);border-radius:14px;background:var(--card);margin-bottom:12px;overflow:hidden}
+.qa summary{list-style:none;cursor:pointer;padding:19px 22px;font-weight:600;font-size:16px;display:flex;align-items:center;gap:14px}
+.qa summary::-webkit-details-marker{display:none}
+.qa summary .chev{margin-inline-start:auto;transition:transform .25s;color:var(--teal)}
+.qa summary .chev i{width:20px;height:20px}
+.qa[open] summary .chev{transform:rotate(180deg)}
+.qa .ans{padding:0 22px 20px;color:var(--muted);font-size:15px}
+
+/* contact */
+.contact-grid{display:grid;grid-template-columns:1fr 1fr;gap:40px;align-items:start}
+@media(max-width:860px){.contact-grid{grid-template-columns:1fr}}
+.ct-item{display:flex;gap:15px;align-items:flex-start;margin-bottom:22px}
+.ct-item .f-ic{margin:0;width:46px;height:46px}
+.ct-item b{font-size:15px}
+.ct-item p{color:var(--muted);font-size:14.5px;margin-top:2px}
+
+/* ---------- auth ---------- */
+.auth{min-height:calc(100vh - 68px);display:grid;grid-template-columns:1fr 1fr}
+@media(max-width:860px){.auth{grid-template-columns:1fr}.auth .aside{display:none}}
+.auth .aside{background:var(--grad-ink);color:#EAF1F8;padding:56px 48px;display:flex;flex-direction:column;justify-content:center;position:relative;overflow:hidden}
+.auth .aside h2{color:#fff;font-size:34px;margin-bottom:18px}
+.auth .aside p{color:#AFC3DA;font-size:16px;max-width:30em}
+.aside-list{list-style:none;padding:0;margin:30px 0 0;display:grid;gap:16px}
+.aside-list li{display:flex;gap:13px;align-items:center;font-size:15px;color:#DCE7F2}
+.aside-list .tick{width:30px;height:30px;border-radius:9px;background:rgba(20,184,166,.22);display:grid;place-items:center;color:var(--teal);flex:0 0 auto}
+.aside-list .tick i{width:16px;height:16px}
+.aside .quote{margin-top:40px;padding:20px;background:rgba(255,255,255,.06);border-radius:14px;border:1px solid rgba(255,255,255,.1)}
+.aside .quote p{color:#EAF1F8;font-style:italic}
+.aside .quote .who{margin-top:12px;display:flex;align-items:center;gap:10px;color:#AFC3DA;font-size:13.5px;font-style:normal}
+.aside .quote .who .av{width:32px;height:32px;border-radius:50%;background:var(--grad);display:grid;place-items:center;color:#042018;font-weight:700}
+.form-wrap{display:flex;align-items:center;justify-content:center;padding:48px max(20px,env(safe-area-inset-right,0px)) 48px max(20px,env(safe-area-inset-left,0px))}
+.form-card{width:100%;max-width:400px}
+.form-card h1{font-size:28px;margin-bottom:8px}
+.form-card .sub{color:var(--muted);margin-bottom:28px;font-size:15px}
+.field{margin-bottom:16px}
+.field label{display:block;font-size:13.5px;font-weight:600;margin-bottom:7px}
+.inp{position:relative;display:flex;align-items:center}
+.inp i{position:absolute;inset-inline-start:14px;width:18px;height:18px;color:var(--faint);pointer-events:none}
+.inp input,.inp select{width:100%;padding:13px 14px 13px 42px;border:1.5px solid var(--border);border-radius:12px;
+  background:var(--bg);color:var(--fg);font-size:15px;font-family:inherit;transition:border .18s,box-shadow .18s}
+[dir="rtl"] .inp input,[dir="rtl"] .inp select{padding:13px 42px 13px 14px}
+.inp input:focus,.inp select:focus{outline:none;border-color:var(--teal);box-shadow:0 0 0 4px var(--ring)}
+.inp .eye{inset-inline-start:auto;inset-inline-end:14px;pointer-events:auto;cursor:pointer}
+.row-between{display:flex;align-items:center;justify-content:space-between;margin-bottom:22px;font-size:13.5px}
+.row-between a{color:var(--teal);font-weight:600;cursor:pointer}
+.check{display:flex;align-items:center;gap:8px;color:var(--muted);cursor:pointer}
+.check input{width:17px;height:17px;accent-color:var(--teal)}
+.divider{display:flex;align-items:center;gap:14px;color:var(--faint);font-size:13px;margin:22px 0}
+.divider::before,.divider::after{content:"";height:1px;background:var(--border);flex:1}
+.social{display:flex;gap:12px}
+.social button{flex:1;display:flex;align-items:center;justify-content:center;gap:9px;padding:12px;border:1.5px solid var(--border);
+  background:var(--bg);color:var(--fg);border-radius:12px;font-weight:600;font-size:14px;cursor:pointer}
+.social button:hover{border-color:var(--teal)}
+.social svg{width:18px;height:18px}
+.alt{text-align:center;margin-top:24px;color:var(--muted);font-size:14.5px}
+.alt a{color:var(--teal);font-weight:600;cursor:pointer}
+
+/* ---------- booking flow ---------- */
+.book-shell{max-width:920px;margin:0 auto}
+.steps{display:flex;gap:8px;margin-bottom:34px;flex-wrap:wrap}
+.step{flex:1;min-width:120px;display:flex;align-items:center;gap:11px;padding:12px 14px;border-radius:12px;border:1px solid var(--border);background:var(--card)}
+.step .num{width:28px;height:28px;border-radius:50%;background:var(--band);color:var(--muted);display:grid;place-items:center;font-size:13px;font-weight:700;flex:0 0 auto}
+.step small{display:block;font-size:10.5px;color:var(--faint);text-transform:uppercase;letter-spacing:.05em}
+.step b{font-size:13.5px}
+.step.done .num,.step.cur .num{background:var(--grad);color:#042018}
+.step.cur{border-color:var(--teal);box-shadow:0 0 0 3px var(--ring)}
+.step.done .num i{width:15px;height:15px}
+@media(max-width:620px){.step b,.step small{display:none}.step{min-width:0;flex:0 0 auto;width:44px;justify-content:center;padding:10px}}
+
+.biz-head{display:flex;gap:16px;align-items:center;background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:18px 20px;margin-bottom:26px}
+.biz-head .logo-sq{width:58px;height:58px;border-radius:14px;background:var(--grad);display:grid;place-items:center;color:#042018;flex:0 0 auto}
+.biz-head .logo-sq i{width:28px;height:28px}
+.biz-head h3{font-size:19px}
+.biz-head .meta{color:var(--muted);font-size:13.5px;display:flex;gap:14px;flex-wrap:wrap;margin-top:4px}
+.biz-head .meta span{display:inline-flex;align-items:center;gap:5px}
+.biz-head .meta i{width:14px;height:14px}
+.biz-head .rate{margin-inline-start:auto;text-align:center;flex:0 0 auto}
+.biz-head .rate b{font-size:22px;display:block}
+.biz-head .rate .stars{color:#F5A524;font-size:13px}
+.biz-head .rate small{color:var(--faint);font-size:11.5px}
+@media(max-width:620px){.biz-head .rate{display:none}}
+
+.step-body{display:none}
+.step-body.active{display:block}
+.pick-list{display:grid;gap:12px}
+.pick{display:flex;align-items:center;gap:15px;padding:16px 18px;border:1.5px solid var(--border);border-radius:14px;
+  background:var(--card);cursor:pointer;transition:border .15s,box-shadow .15s,transform .1s}
+.pick:hover{border-color:var(--teal);transform:translateY(-1px)}
+.pick.sel{border-color:var(--teal);box-shadow:0 0 0 3px var(--ring)}
+.pick .ic{width:46px;height:46px;border-radius:12px;background:var(--band);display:grid;place-items:center;color:var(--teal);flex:0 0 auto}
+.pick .ic i{width:22px;height:22px}
+.pick .ic.ph{background:var(--grad);color:#042018;font-weight:700;font-size:16px}
+.pick b{font-size:16px}
+.pick .dur{color:var(--muted);font-size:13px;display:flex;align-items:center;gap:6px;margin-top:3px}
+.pick .dur i{width:13px;height:13px}
+.pick .cost{margin-inline-start:auto;text-align:end;flex:0 0 auto}
+.pick .cost b{color:var(--teal);font-size:17px}
+.pick .radio{width:22px;height:22px;border-radius:50%;border:2px solid var(--border);flex:0 0 auto;display:grid;place-items:center}
+.pick.sel .radio{border-color:var(--teal);background:var(--teal)}
+.pick.sel .radio::after{content:"";width:8px;height:8px;border-radius:50%;background:#fff}
+
+.emp-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+@media(max-width:680px){.emp-grid{grid-template-columns:repeat(2,1fr)}}
+.emp{text-align:center;padding:20px 14px;border:1.5px solid var(--border);border-radius:14px;background:var(--card);cursor:pointer;transition:border .15s,transform .1s}
+.emp:hover{border-color:var(--teal);transform:translateY(-2px)}
+.emp.sel{border-color:var(--teal);box-shadow:0 0 0 3px var(--ring)}
+.emp .av{width:62px;height:62px;border-radius:50%;background:var(--grad);display:grid;place-items:center;color:#042018;
+  font-weight:700;font-size:21px;margin:0 auto 12px}
+.emp b{font-size:15px}
+.emp small{color:var(--muted);font-size:12.5px;display:block;margin-top:2px}
+.emp .stars{color:#F5A524;font-size:12px;margin-top:6px}
+
+.dt-grid{display:grid;grid-template-columns:1.1fr 1fr;gap:26px}
+@media(max-width:680px){.dt-grid{grid-template-columns:1fr}}
+.cal{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:20px}
+.cal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.cal-head b{font-size:16px}
+.cal-nav{display:flex;gap:6px}
+.cal-nav button{width:32px;height:32px;border-radius:9px;border:1px solid var(--border);background:transparent;color:var(--muted);cursor:pointer;display:grid;place-items:center}
+.cal-nav button:hover{border-color:var(--teal);color:var(--teal)}
+.cal-nav i{width:16px;height:16px}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;text-align:center}
+.cal-grid .dow{font-size:11px;color:var(--faint);font-weight:600;padding-bottom:6px}
+.cal-day{aspect-ratio:1;display:grid;place-items:center;border-radius:10px;font-size:14px;cursor:pointer;border:1px solid transparent}
+.cal-day:hover{background:var(--band)}
+.cal-day.mut{color:var(--faint);opacity:.4;cursor:default}
+.cal-day.off{color:var(--faint);text-decoration:line-through;cursor:not-allowed;opacity:.5}
+.cal-day.sel{background:var(--grad);color:#042018;font-weight:700}
+.cal-day.today{border-color:var(--teal)}
+.slots{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;align-content:start}
+.slot{padding:11px 8px;border:1.5px solid var(--border);border-radius:11px;text-align:center;font-size:14px;font-weight:600;cursor:pointer;background:var(--card);transition:border .12s}
+.slot:hover{border-color:var(--teal);color:var(--teal)}
+.slot.sel{background:var(--grad);color:#042018;border-color:transparent}
+.slot.off{opacity:.4;cursor:not-allowed;text-decoration:line-through}
+.slot-label{font-size:13px;color:var(--faint);font-weight:600;grid-column:1/-1;margin-top:6px;text-transform:uppercase;letter-spacing:.05em}
+
+.summary-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:22px;position:sticky;top:90px}
+.sum-row{display:flex;justify-content:space-between;gap:12px;padding:11px 0;border-bottom:1px dashed var(--border);font-size:14.5px}
+.sum-row:last-of-type{border:0}
+.sum-row span{color:var(--muted)}
+.sum-row b{text-align:end}
+.sum-total{display:flex;justify-content:space-between;align-items:baseline;margin-top:14px;padding-top:16px;border-top:2px solid var(--border)}
+.sum-total b{font-size:26px;color:var(--teal)}
+.book-grid{display:grid;grid-template-columns:1fr 320px;gap:26px;align-items:start}
+@media(max-width:860px){.book-grid{grid-template-columns:1fr}.summary-card{position:static}}
+.flow-nav{display:flex;justify-content:space-between;gap:12px;margin-top:28px}
+
+/* confirmation */
+.confirm{max-width:560px;margin:0 auto;text-align:center}
+.confirm .seal{width:92px;height:92px;border-radius:50%;background:var(--grad);display:grid;place-items:center;color:#042018;
+  margin:0 auto 24px;box-shadow:0 18px 40px -14px rgba(34,197,94,.7);animation:pop .5s cubic-bezier(.2,1.4,.4,1)}
+@keyframes pop{from{transform:scale(.6);opacity:0}to{transform:scale(1);opacity:1}}
+.confirm .seal i{width:46px;height:46px}
+.confirm h1{font-size:30px}
+.confirm .sub{color:var(--muted);margin-top:12px;font-size:16px}
+.ticket{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:0;margin:30px 0;text-align:start;overflow:hidden}
+.ticket-top{background:var(--grad-ink);color:#EAF1F8;padding:20px 24px;display:flex;align-items:center;gap:14px}
+.ticket-top .logo-sq{width:46px;height:46px;border-radius:12px;background:var(--grad);display:grid;place-items:center;color:#042018}
+.ticket-top .logo-sq i{width:22px;height:22px}
+.ticket-top b{color:#fff}
+.ticket-top small{color:#AFC3DA;display:block;font-size:12.5px}
+.ticket-body{padding:22px 24px;display:grid;gap:2px}
+.wa-note{display:flex;align-items:center;gap:12px;background:color-mix(in srgb,var(--green) 11%,transparent);
+  border:1px solid color-mix(in srgb,var(--green) 30%,transparent);border-radius:13px;padding:14px 16px;margin-bottom:26px}
+.wa-note .ic{width:38px;height:38px;border-radius:10px;background:var(--green);color:#042018;display:grid;place-items:center;flex:0 0 auto}
+.wa-note p{font-size:13.5px;color:var(--fg);text-align:start}
+.wa-note b{color:var(--green)}
+
+/* ---------- footer ---------- */
+.footer{background:var(--ink);color:#C6D4E3;padding-block:56px 30px}
+:root[data-theme="dark"] .footer,:root:not([data-theme="light"]) .footer{background:#060F1C}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]) .footer{background:#060F1C}}
+.foot-grid{display:grid;grid-template-columns:1.6fr 1fr 1fr 1fr;gap:34px;margin-bottom:40px}
+@media(max-width:780px){.foot-grid{grid-template-columns:1fr 1fr}}
+@media(max-width:480px){.foot-grid{grid-template-columns:1fr}}
+.footer .brand{color:#fff;margin-bottom:14px}
+.footer .brand small{color:var(--teal)}
+.foot-grid p{color:#8DA2BA;font-size:14px;max-width:26em}
+.foot-col h4{color:#fff;font-size:14px;letter-spacing:.03em;margin-bottom:14px}
+.foot-col a{display:block;color:#8DA2BA;font-size:14px;padding:5px 0;cursor:pointer}
+.foot-col a:hover{color:var(--teal)}
+.foot-bottom{border-top:1px solid rgba(255,255,255,.1);padding-top:22px;display:flex;justify-content:space-between;
+  align-items:center;gap:16px;flex-wrap:wrap;color:#7B91AB;font-size:13px}
+.foot-social{display:flex;gap:10px}
+.foot-social a{width:36px;height:36px;border-radius:10px;border:1px solid rgba(255,255,255,.12);display:grid;place-items:center;color:#8DA2BA}
+.foot-social a:hover{color:var(--teal);border-color:var(--teal)}
+.foot-social i{width:17px;height:17px}
+
+.cta-band{background:var(--grad-ink);border-radius:26px;padding:52px;text-align:center;position:relative;overflow:hidden}
+.cta-band h2{color:#fff;font-size:clamp(26px,3.6vw,38px);max-width:16em;margin:0 auto}
+.cta-band p{color:#AFC3DA;margin:16px auto 0;max-width:34em;font-size:16px}
+.cta-band .hero-cta{justify-content:center}
+.cta-band .blob.a{opacity:.22}
+
+.badge-soft{display:inline-flex;align-items:center;gap:7px;font-size:12.5px;font-weight:600;padding:6px 13px;border-radius:30px;
+  background:color-mix(in srgb,var(--teal) 12%,transparent);color:var(--teal);margin-bottom:18px}
+.badge-soft i{width:14px;height:14px}
+
+.stat-row{display:flex;gap:44px;flex-wrap:wrap;justify-content:center;margin-top:46px}
+.stat b{font-size:34px;font-weight:800;background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent;display:block}
+.stat span{color:var(--muted);font-size:14px}
+</style>
+
+<div class="topbar">
+  <div class="wrap nav">
+    <div class="brand" onclick="go('accueil')">
+      <span class="logo"><i data-lucide="calendar-check-2"></i></span>
+      <span>Booking+<small data-i18n="tag">WhatsApp Reminders</small></span>
+    </div>
+    <nav class="nav-links" id="navlinks">
+      <a onclick="go('accueil')" data-route="accueil" data-i18n="nav_home">Accueil</a>
+      <a onclick="go('fonctionnalites')" data-route="fonctionnalites" data-i18n="nav_feat">Fonctionnalités</a>
+      <a onclick="go('tarifs')" data-route="tarifs" data-i18n="nav_price">Tarifs</a>
+      <a onclick="go('reservation')" data-route="reservation" data-i18n="nav_book">Réserver</a>
+      <a onclick="go('contact')" data-route="contact" data-i18n="nav_contact">Contact</a>
+    </nav>
+    <div class="nav-right">
+      <button class="icon-btn lang" onclick="toggleLang()" id="langBtn" title="العربية / Français">AR</button>
+      <button class="icon-btn" onclick="toggleTheme()" title="Thème"><i data-lucide="moon" id="themeIcon"></i></button>
+      <button class="btn btn-ghost hide-sm" onclick="go('connexion')" data-i18n="cta_login">Connexion</button>
+      <button class="btn btn-primary hide-sm" onclick="go('inscription')" data-i18n="cta_signup">Commencer</button>
+      <button class="icon-btn burger" onclick="document.getElementById('navlinks').classList.toggle('open')"><i data-lucide="menu"></i></button>
+    </div>
+  </div>
+</div>
+
+<main id="app">
+
+<!-- ============ ACCUEIL ============ -->
+<section class="screen active" id="s-accueil">
+  <div class="hero band">
+    <span class="blob a"></span><span class="blob b"></span>
+    <div class="wrap hero-grid">
+      <div>
+        <span class="badge-soft"><i data-lucide="sparkles"></i> <span data-i18n="hero_badge">Rappels WhatsApp automatiques</span></span>
+        <h1 data-i18n="hero_h1">Vos rendez-vous, <span class="hl">gérés tout seuls.</span></h1>
+        <p class="lede" data-i18n="hero_lede">Booking+ gère vos réservations, vos rappels et vos disponibilités 24/7. Vos clients réservent en ligne, vos rappels partent par WhatsApp, vous réduisez les absences.</p>
+        <div class="hero-cta">
+          <button class="btn btn-primary btn-lg" onclick="go('inscription')"><i data-lucide="rocket"></i> <span data-i18n="hero_cta1">Créer mon établissement</span></button>
+          <button class="btn btn-ghost btn-lg" onclick="go('reservation')"><i data-lucide="play"></i> <span data-i18n="hero_cta2">Voir une réservation</span></button>
+        </div>
+        <div class="hero-trust">
+          <span><i data-lucide="check-circle-2"></i> <span data-i18n="trust1">14 jours gratuits</span></span>
+          <span><i data-lucide="check-circle-2"></i> <span data-i18n="trust2">Sans carte bancaire</span></span>
+          <span><i data-lucide="check-circle-2"></i> <span data-i18n="trust3">Annulable à tout moment</span></span>
+        </div>
+      </div>
+      <div style="position:relative">
+        <div class="float-chip bk"><i data-lucide="calendar-check"></i> Nouveau RDV · 14:00</div>
+        <div class="float-chip wa"><i data-lucide="message-circle"></i> Rappel envoyé ✓</div>
+        <div class="mock">
+          <div class="mock-top"><i></i><i></i><i></i></div>
+          <div class="mock-screen">
+            <div class="mini-row"><span class="mini-av"><i data-lucide="scissors"></i></span><div><b>Sofia Martin</b><small>Coupe + Brushing · 10:00</small></div><span class="pill ok">Confirmé</span></div>
+            <div class="mini-row"><span class="mini-av"><i data-lucide="palette"></i></span><div><b>Karim Jebali</b><small>Coloration · 11:30</small></div><span class="pill ok">Confirmé</span></div>
+            <div class="mini-row"><span class="mini-av"><i data-lucide="sparkles"></i></span><div><b>Nour Slim</b><small>Soin du visage · 14:00</small></div><span class="pill wait">En attente</span></div>
+            <div class="mini-row"><span class="mini-av"><i data-lucide="zap"></i></span><div><b>Yassine Ammar</b><small>Épilation laser · 16:00</small></div><span class="pill ok">Confirmé</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- logos -->
+  <div class="wrap band tight" style="padding-top:0">
+    <p style="text-align:center;color:var(--faint);font-size:13.5px;margin-bottom:26px" data-i18n="logos_label">Adopté par les salons, cliniques et instituts en Tunisie</p>
+    <div class="logos">
+      <span><i data-lucide="scissors"></i> Beauty Studio</span>
+      <span><i data-lucide="stethoscope"></i> Clinique Nour</span>
+      <span><i data-lucide="flower-2"></i> Spa Jasmin</span>
+      <span><i data-lucide="dumbbell"></i> FitZone</span>
+      <span><i data-lucide="smile"></i> Dental Care</span>
+    </div>
+  </div>
+
+  <!-- avantages -->
+  <div class="band" style="background:var(--band)">
+    <div class="wrap">
+      <div class="section-head">
+        <span class="eyebrow"><i data-lucide="layers"></i> <span data-i18n="adv_eyebrow">Pourquoi Booking+</span></span>
+        <h2 data-i18n="adv_h2">Tout ce qu'il faut pour remplir votre agenda</h2>
+        <p data-i18n="adv_p">Trois piliers pour automatiser la prise de rendez-vous et vous concentrer sur votre métier.</p>
+      </div>
+      <div class="grid-3">
+        <div class="card">
+          <div class="f-ic"><i data-lucide="calendar-days"></i></div>
+          <h3 data-i18n="adv1_t">Réservation 24/7</h3>
+          <p data-i18n="adv1_p">Vos clients réservent en ligne à toute heure. Chaque créneau respecte vos disponibilités réelles — fini les doubles réservations.</p>
+          <ul class="f-list">
+            <li><i data-lucide="check"></i> <span data-i18n="adv1_l1">Page de réservation à votre nom</span></li>
+            <li><i data-lucide="check"></i> <span data-i18n="adv1_l2">Choix du service et de l'employé</span></li>
+          </ul>
+        </div>
+        <div class="card">
+          <div class="f-ic" style="background:color-mix(in srgb,var(--green) 13%,transparent);color:var(--green)"><i data-lucide="message-circle"></i></div>
+          <h3 data-i18n="adv2_t">Rappels WhatsApp</h3>
+          <p data-i18n="adv2_p">Confirmations et rappels automatiques par WhatsApp pour réduire les absences et les annulations de dernière minute.</p>
+          <ul class="f-list">
+            <li><i data-lucide="check"></i> <span data-i18n="adv2_l1">Modèles personnalisables</span></li>
+            <li><i data-lucide="check"></i> <span data-i18n="adv2_l2">Programmation 24h / 2h avant</span></li>
+          </ul>
+        </div>
+        <div class="card">
+          <div class="f-ic"><i data-lucide="bar-chart-3"></i></div>
+          <h3 data-i18n="adv3_t">Pilotage & croissance</h3>
+          <p data-i18n="adv3_p">Toute votre activité au même endroit : agenda, clients, revenus et statistiques pour mieux décider.</p>
+          <ul class="f-list">
+            <li><i data-lucide="check"></i> <span data-i18n="adv3_l1">Tableau de bord temps réel</span></li>
+            <li><i data-lucide="check"></i> <span data-i18n="adv3_l2">Historique et fiches clients</span></li>
+          </ul>
+        </div>
+      </div>
+      <div class="stat-row">
+        <div class="stat"><b>−38%</b><span data-i18n="stat1">d'absences en moyenne</span></div>
+        <div class="stat"><b>24/7</b><span data-i18n="stat2">de réservations possibles</span></div>
+        <div class="stat"><b>+28%</b><span data-i18n="stat3">de rendez-vous confirmés</span></div>
+        <div class="stat"><b>5 min</b><span data-i18n="stat4">pour tout configurer</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CTA -->
+  <div class="wrap band">
+    <div class="cta-band">
+      <span class="blob a"></span>
+      <h2 data-i18n="cta_h2">Plus de rendez-vous. Moins de gestion.</h2>
+      <p data-i18n="cta_p">Lancez votre page de réservation en quelques minutes et laissez WhatsApp s'occuper des rappels.</p>
+      <div class="hero-cta">
+        <button class="btn btn-primary btn-lg" onclick="go('inscription')"><i data-lucide="rocket"></i> <span data-i18n="cta_btn1">Démarrer gratuitement</span></button>
+        <button class="btn btn-ghost btn-lg" style="color:#fff;border-color:rgba(255,255,255,.3)" onclick="go('tarifs')"><span data-i18n="cta_btn2">Voir les tarifs</span></button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ FONCTIONNALITÉS ============ -->
+<section class="screen" id="s-fonctionnalites">
+  <div class="band" style="background:var(--band)">
+    <div class="wrap section-head">
+      <span class="eyebrow"><i data-lucide="layout-grid"></i> <span data-i18n="feat_eyebrow">Fonctionnalités</span></span>
+      <h2 data-i18n="feat_h2">Une plateforme complète de réservation</h2>
+      <p data-i18n="feat_p">De la prise de rendez-vous en ligne jusqu'au rappel WhatsApp et aux statistiques.</p>
+    </div>
+  </div>
+  <div class="wrap band">
+    <div class="split">
+      <div class="txt">
+        <span class="eyebrow"><i data-lucide="calendar-days"></i> <span data-i18n="feat1_e">Réservation en ligne</span></span>
+        <h3 data-i18n="feat1_t">Un agenda qui se remplit tout seul</h3>
+        <p data-i18n="feat1_p">Partagez votre page de réservation. Vos clients choisissent le service, l'employé et le créneau — en temps réel, selon vos disponibilités.</p>
+        <ul class="f-list" style="margin-top:20px">
+          <li><i data-lucide="check"></i> <span data-i18n="feat1_l1">Disponibilités, pauses et congés respectés</span></li>
+          <li><i data-lucide="check"></i> <span data-i18n="feat1_l2">Durée et tarif par service</span></li>
+          <li><i data-lucide="check"></i> <span data-i18n="feat1_l3">Confirmation instantanée</span></li>
+        </ul>
+      </div>
+      <div class="card" style="padding:18px">
+        <div class="mock" style="box-shadow:var(--shadow)">
+          <div class="mock-top"><i></i><i></i><i></i></div>
+          <div class="mock-screen">
+            <div class="mini-row"><span class="mini-av"><i data-lucide="scissors"></i></span><div><b>Coupe + Brushing</b><small>45 min</small></div><span style="margin-inline-start:auto;color:var(--teal);font-weight:700">40 DT</span></div>
+            <div class="mini-row"><span class="mini-av"><i data-lucide="palette"></i></span><div><b>Coloration</b><small>90 min</small></div><span style="margin-inline-start:auto;color:var(--teal);font-weight:700">80 DT</span></div>
+            <div class="mini-row"><span class="mini-av"><i data-lucide="sparkles"></i></span><div><b>Soin du visage</b><small>60 min</small></div><span style="margin-inline-start:auto;color:var(--teal);font-weight:700">70 DT</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="split rev">
+      <div class="txt">
+        <span class="eyebrow"><i data-lucide="message-circle"></i> <span data-i18n="feat2_e">Rappels WhatsApp</span></span>
+        <h3 data-i18n="feat2_t">Des rappels qui réduisent les absences</h3>
+        <p data-i18n="feat2_p">Confirmations, rappels et relances partent automatiquement via WhatsApp Business. Personnalisez chaque modèle et programmez l'envoi.</p>
+        <ul class="f-list" style="margin-top:20px">
+          <li><i data-lucide="check"></i> <span data-i18n="feat2_l1">Modèles FR / AR réutilisables</span></li>
+          <li><i data-lucide="check"></i> <span data-i18n="feat2_l2">Envoi 24h et 2h avant le RDV</span></li>
+          <li><i data-lucide="check"></i> <span data-i18n="feat2_l3">Historique des messages envoyés</span></li>
+        </ul>
+      </div>
+      <div class="card" style="padding:18px">
+        <div class="mock" style="box-shadow:var(--shadow)">
+          <div class="mock-top"><i></i><i></i><i></i></div>
+          <div class="mock-screen" style="gap:10px">
+            <div class="wa-note" style="margin:0"><span class="ic"><i data-lucide="message-circle"></i></span><p><b>Rappel 24h</b> — Bonjour {nom}, rappel de votre RDV demain à {heure}. Merci de confirmer.</p></div>
+            <div class="mini-row"><span class="mini-av" style="background:var(--green)"><i data-lucide="check-check"></i></span><div><b>Confirmation</b><small>Programmé · à la réservation</small></div><span class="pill ok">Actif</span></div>
+            <div class="mini-row"><span class="mini-av" style="background:var(--green)"><i data-lucide="clock"></i></span><div><b>Rappel 2h avant</b><small>Programmé</small></div><span class="pill ok">Actif</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="split">
+      <div class="txt">
+        <span class="eyebrow"><i data-lucide="bar-chart-3"></i> <span data-i18n="feat3_e">Tableau de bord</span></span>
+        <h3 data-i18n="feat3_t">Vos chiffres clés, en un coup d'œil</h3>
+        <p data-i18n="feat3_p">Suivez vos rendez-vous, votre chiffre d'affaires et votre taux de confirmation. Pilotez la charge de chaque membre de l'équipe.</p>
+        <ul class="f-list" style="margin-top:20px">
+          <li><i data-lucide="check"></i> <span data-i18n="feat3_l1">KPI temps réel et graphiques</span></li>
+          <li><i data-lucide="check"></i> <span data-i18n="feat3_l2">Répartition par service et par employé</span></li>
+          <li><i data-lucide="check"></i> <span data-i18n="feat3_l3">Export et rapports</span></li>
+        </ul>
+      </div>
+      <div class="card" style="padding:22px">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px">
+          <div style="border:1px solid var(--border);border-radius:12px;padding:14px"><small style="color:var(--muted);font-size:12px">Rendez-vous</small><div style="font-size:26px;font-weight:800">128</div><small style="color:var(--green);font-size:12px">+12% ce mois</small></div>
+          <div style="border:1px solid var(--border);border-radius:12px;padding:14px"><small style="color:var(--muted);font-size:12px">Chiffre d'affaires</small><div style="font-size:26px;font-weight:800">4 580 DT</div><small style="color:var(--green);font-size:12px">+8% ce mois</small></div>
+        </div>
+        <div style="display:flex;align-items:flex-end;gap:7px;height:90px;padding:6px 2px">
+          <div style="flex:1;height:40%;background:var(--grad);border-radius:6px"></div>
+          <div style="flex:1;height:65%;background:var(--grad);border-radius:6px"></div>
+          <div style="flex:1;height:50%;background:var(--grad);border-radius:6px"></div>
+          <div style="flex:1;height:80%;background:var(--grad);border-radius:6px"></div>
+          <div style="flex:1;height:70%;background:var(--grad);border-radius:6px"></div>
+          <div style="flex:1;height:95%;background:var(--grad);border-radius:6px"></div>
+          <div style="flex:1;height:60%;background:var(--grad);border-radius:6px"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- feature grid extras -->
+  <div class="band" style="background:var(--band)">
+    <div class="wrap">
+      <div class="section-head"><h2 data-i18n="feat_more_h">Et bien plus encore</h2></div>
+      <div class="grid-3">
+        <div class="card"><div class="f-ic"><i data-lucide="users"></i></div><h3 data-i18n="fm1_t">Gestion d'équipe</h3><p data-i18n="fm1_p">Employés, services affectés, horaires et rôles pour toute votre équipe.</p></div>
+        <div class="card"><div class="f-ic"><i data-lucide="clock"></i></div><h3 data-i18n="fm2_t">Disponibilités</h3><p data-i18n="fm2_p">Horaires d'ouverture, pauses et congés configurables par employé.</p></div>
+        <div class="card"><div class="f-ic"><i data-lucide="globe"></i></div><h3 data-i18n="fm3_t">Multi-langue</h3><p data-i18n="fm3_p">Interface et messages en français et en arabe (RTL).</p></div>
+        <div class="card"><div class="f-ic"><i data-lucide="building-2"></i></div><h3 data-i18n="fm4_t">Multi-établissement</h3><p data-i18n="fm4_p">Gérez plusieurs établissements avec des données isolées et sécurisées.</p></div>
+        <div class="card"><div class="f-ic"><i data-lucide="credit-card"></i></div><h3 data-i18n="fm5_t">Abonnements</h3><p data-i18n="fm5_p">Plans, quotas et facturation gérés depuis votre espace.</p></div>
+        <div class="card"><div class="f-ic"><i data-lucide="shield-check"></i></div><h3 data-i18n="fm6_t">Sécurité & RGPD</h3><p data-i18n="fm6_p">Données chiffrées, isolées par organisation et conformes aux bonnes pratiques.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ TARIFS ============ -->
+<section class="screen" id="s-tarifs">
+  <div class="band">
+    <div class="wrap">
+      <div class="section-head">
+        <span class="eyebrow"><i data-lucide="tag"></i> <span data-i18n="price_eyebrow">Tarifs</span></span>
+        <h2 data-i18n="price_h2">Des formules adaptées à chaque établissement</h2>
+        <p data-i18n="price_p">Sans engagement. 14 jours d'essai gratuit sur toutes les formules.</p>
+      </div>
+      <div class="price-grid">
+        <div class="plan">
+          <div class="pname">Starter</div>
+          <div class="pdesc" data-i18n="plan1_d">Pour se lancer en solo ou en petite équipe.</div>
+          <div class="cost"><b>29</b><span>DT / mois</span></div>
+          <ul>
+            <li><i data-lucide="check"></i> <span data-i18n="plan1_1">1 établissement</span></li>
+            <li><i data-lucide="check"></i> <span data-i18n="plan1_2">Jusqu'à 3 employés</span></li>
+            <li><i data-lucide="check"></i> <span data-i18n="plan1_3">Réservation en ligne</span></li>
+            <li><i data-lucide="check"></i> <span data-i18n="plan1_4">200 rappels WhatsApp / mois</span></li>
+            <li class="off"><i data-lucide="minus"></i> <span data-i18n="plan1_5">Statistiques avancées</span></li>
+          </ul>
+          <button class="btn btn-ghost btn-block" onclick="go('inscription')" data-i18n="plan_cta">Commencer</button>
+        </div>
+        <div class="plan pop">
+          <div class="pname">Pro</div>
+          <div class="pdesc" data-i18n="plan2_d">Le choix des établissements en croissance.</div>
+          <div class="cost"><b>59</b><span>DT / mois</span></div>
+          <ul>
+            <li><i data-lucide="check"></i> <span data-i18n="plan2_1">1 établissement</span></li>
+            <li><i data-lucide="check"></i> <span data-i18n="plan2_2">Jusqu'à 10 employés</span></li>
+            <li><i data-lucide="check"></i> <span data-i18n="plan2_3">Rappels WhatsApp illimités</span></li>
+            <li><i data-lucide="check"></i> <span data-i18n="plan2_4">Statistiques avancées</span></li>
+            <li><i data-lucide="check"></i> <span data-i18n="plan2_5">Support prioritaire</span></li>
+          </ul>
+          <button class="btn btn-primary btn-block" onclick="go('inscription')" data-i18n="plan_cta2">Choisir Pro</button>
+        </div>
+        <div class="plan">
+          <div class="pname">Business</div>
+          <div class="pdesc" data-i18n="plan3_d">Pour les réseaux et multi-établissements.</div>
+          <div class="cost"><b>99</b><span>DT / mois</span></div>
+          <ul>
+            <li><i data-lucide="check"></i> <span data-i18n="plan3_1">Établissements multiples</span></li>
+            <li><i data-lucide="check"></i> <span data-i18n="plan3_2">Employés illimités</span></li>
+            <li><i data-lucide="check"></i> <span data-i18n="plan3_3">Tout le plan Pro</span></li>
+            <li><i data-lucide="check"></i> <span data-i18n="plan3_4">Rôles & permissions avancés</span></li>
+            <li><i data-lucide="check"></i> <span data-i18n="plan3_5">Accompagnement dédié</span></li>
+          </ul>
+          <button class="btn btn-ghost btn-block" onclick="go('inscription')" data-i18n="plan_cta">Commencer</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="wrap band tight" style="padding-top:0">
+    <div class="faq">
+      <div class="section-head" style="margin-bottom:30px"><h2 style="font-size:26px" data-i18n="price_faq_h">Questions sur les tarifs</h2></div>
+      <details class="qa"><summary><span data-i18n="pf1_q">Puis-je changer de formule à tout moment ?</span><span class="chev"><i data-lucide="chevron-down"></i></span></summary><div class="ans" data-i18n="pf1_a">Oui. Vous pouvez passer d'une formule à l'autre à tout moment depuis votre espace ; la facturation est ajustée au prorata.</div></details>
+      <details class="qa"><summary><span data-i18n="pf2_q">Les rappels WhatsApp sont-ils inclus ?</span><span class="chev"><i data-lucide="chevron-down"></i></span></summary><div class="ans" data-i18n="pf2_a">Oui. Starter inclut 200 rappels par mois, Pro et Business les proposent en illimité.</div></details>
+      <details class="qa"><summary><span data-i18n="pf3_q">Y a-t-il un engagement ?</span><span class="chev"><i data-lucide="chevron-down"></i></span></summary><div class="ans" data-i18n="pf3_a">Aucun engagement. Vous êtes libre d'annuler votre abonnement quand vous le souhaitez.</div></details>
+    </div>
+  </div>
+</section>
+
+<!-- ============ CONTACT / FAQ ============ -->
+<section class="screen" id="s-contact">
+  <div class="band" style="background:var(--band)">
+    <div class="wrap section-head">
+      <span class="eyebrow"><i data-lucide="life-buoy"></i> <span data-i18n="ct_eyebrow">Assistance</span></span>
+      <h2 data-i18n="ct_h2">Contact & questions fréquentes</h2>
+      <p data-i18n="ct_p">Une question avant de vous lancer ? Notre équipe répond en français et en arabe.</p>
+    </div>
+  </div>
+  <div class="wrap band">
+    <div class="contact-grid">
+      <div>
+        <h3 style="font-size:22px;margin-bottom:22px" data-i18n="ct_reach">Nous contacter</h3>
+        <div class="ct-item"><div class="f-ic"><i data-lucide="mail"></i></div><div><b data-i18n="ct_email">Email</b><p>contact@bookingplus.tn</p></div></div>
+        <div class="ct-item"><div class="f-ic" style="background:color-mix(in srgb,var(--green) 13%,transparent);color:var(--green)"><i data-lucide="message-circle"></i></div><div><b data-i18n="ct_wa">WhatsApp</b><p>+216 50 123 456</p></div></div>
+        <div class="ct-item"><div class="f-ic"><i data-lucide="map-pin"></i></div><div><b data-i18n="ct_addr">Adresse</b><p data-i18n="ct_addr_v">Rue du Lac, Les Berges du Lac, Tunis</p></div></div>
+        <div class="ct-item"><div class="f-ic"><i data-lucide="clock"></i></div><div><b data-i18n="ct_hours">Horaires</b><p data-i18n="ct_hours_v">Lun — Ven · 9h00 à 18h00</p></div></div>
+      </div>
+      <div class="card">
+        <h3 style="font-size:19px;margin-bottom:18px" data-i18n="ct_form">Envoyez-nous un message</h3>
+        <form onsubmit="event.preventDefault();this.reset();showToast('Message envoyé ✓ Nous vous répondons sous 24h.')">
+          <div class="field"><label data-i18n="ct_name">Nom complet</label><div class="inp"><i data-lucide="user"></i><input required placeholder="Nom et prénom"></div></div>
+          <div class="field"><label>Email</label><div class="inp"><i data-lucide="mail"></i><input type="email" required placeholder="vous@exemple.com"></div></div>
+          <div class="field"><label data-i18n="ct_msg">Message</label><div class="inp"><i data-lucide="message-square" style="top:16px"></i><textarea required rows="4" placeholder="Votre message…" style="width:100%;padding:13px 14px 13px 42px;border:1.5px solid var(--border);border-radius:12px;background:var(--bg);color:var(--fg);font-family:inherit;font-size:15px;resize:vertical"></textarea></div></div>
+          <button class="btn btn-primary btn-block" type="submit"><i data-lucide="send"></i> <span data-i18n="ct_send">Envoyer</span></button>
+        </form>
+      </div>
+    </div>
+
+    <div class="faq" style="margin-top:72px">
+      <div class="section-head" style="margin-bottom:30px"><h2 style="font-size:26px" data-i18n="faq_h">Questions fréquentes</h2></div>
+      <details class="qa" open><summary><span data-i18n="faq1_q">Comment mes clients réservent-ils ?</span><span class="chev"><i data-lucide="chevron-down"></i></span></summary><div class="ans" data-i18n="faq1_a">Vous recevez une page de réservation à votre nom. Vos clients y choisissent le service, l'employé puis le créneau, et reçoivent une confirmation immédiate.</div></details>
+      <details class="qa"><summary><span data-i18n="faq2_q">Ai-je besoin d'un compte WhatsApp Business ?</span><span class="chev"><i data-lucide="chevron-down"></i></span></summary><div class="ans" data-i18n="faq2_a">Booking+ s'appuie sur l'API WhatsApp Business pour envoyer les rappels. Nous vous accompagnons lors de la configuration.</div></details>
+      <details class="qa"><summary><span data-i18n="faq3_q">Puis-je gérer plusieurs établissements ?</span><span class="chev"><i data-lucide="chevron-down"></i></span></summary><div class="ans" data-i18n="faq3_a">Oui, avec la formule Business. Chaque établissement a ses propres employés, services et données, totalement isolés.</div></details>
+      <details class="qa"><summary><span data-i18n="faq4_q">Mes données sont-elles sécurisées ?</span><span class="chev"><i data-lucide="chevron-down"></i></span></summary><div class="ans" data-i18n="faq4_a">Vos données sont chiffrées, isolées par organisation et traitées conformément aux bonnes pratiques de sécurité et au RGPD.</div></details>
+    </div>
+  </div>
+</section>
+
+<!-- ============ CONNEXION ============ -->
+<section class="screen" id="s-connexion">
+  <div class="auth">
+    <div class="aside">
+      <span class="blob a"></span>
+      <div class="brand" style="color:#fff;margin-bottom:30px"><span class="logo"><i data-lucide="calendar-check-2"></i></span><span>Booking+</span></div>
+      <h2 data-i18n="log_aside_h">Bon retour parmi nous 👋</h2>
+      <p data-i18n="log_aside_p">Retrouvez votre agenda, vos rendez-vous et vos statistiques, là où vous les avez laissés.</p>
+      <ul class="aside-list">
+        <li><span class="tick"><i data-lucide="calendar-check"></i></span> <span data-i18n="log_a1">Agenda synchronisé en temps réel</span></li>
+        <li><span class="tick"><i data-lucide="message-circle"></i></span> <span data-i18n="log_a2">Rappels WhatsApp automatiques</span></li>
+        <li><span class="tick"><i data-lucide="bar-chart-3"></i></span> <span data-i18n="log_a3">Statistiques et revenus</span></li>
+      </ul>
+      <div class="quote">
+        <p data-i18n="log_quote">« Depuis Booking+, nos absences ont chuté et l'agenda se remplit tout seul. »</p>
+        <div class="who"><span class="av">S</span><div><b style="color:#fff">Sarah Ben Ali</b> · <span data-i18n="log_quote_who">Beauty Studio, Tunis</span></div></div>
+      </div>
+    </div>
+    <div class="form-wrap">
+      <div class="form-card">
+        <h1 data-i18n="log_h">Connexion</h1>
+        <p class="sub" data-i18n="log_sub">Accédez à votre espace de gestion.</p>
+        <form onsubmit="event.preventDefault();go('accueil');showToast('Connexion réussie ✓ (démo)')">
+          <div class="field"><label>Email</label><div class="inp"><i data-lucide="mail"></i><input type="email" required placeholder="vous@exemple.com"></div></div>
+          <div class="field"><label data-i18n="log_pw">Mot de passe</label><div class="inp"><i data-lucide="lock"></i><input type="password" id="logpw" required placeholder="••••••••"><i data-lucide="eye" class="eye" onclick="togglePw('logpw',this)"></i></div></div>
+          <div class="row-between"><label class="check"><input type="checkbox"> <span data-i18n="log_remember">Se souvenir de moi</span></label><a onclick="go('accueil')" data-i18n="log_forgot">Mot de passe oublié ?</a></div>
+          <button class="btn btn-primary btn-block btn-lg" type="submit"><span data-i18n="log_btn">Se connecter</span> <i data-lucide="arrow-right"></i></button>
+        </form>
+        <div class="divider" data-i18n="or">ou continuer avec</div>
+        <div class="social">
+          <button type="button" onclick="showToast('Google — démo')"><svg viewBox="0 0 24 24"><path fill="#4285F4" d="M22.5 12.3c0-.8-.1-1.4-.2-2H12v3.8h5.9c-.1 1-.8 2.5-2.2 3.5l3.4 2.6c2-1.8 3.4-4.5 3.4-7.9z"/><path fill="#34A853" d="M12 23c2.9 0 5.4-1 7.2-2.6l-3.4-2.6c-.9.6-2.1 1-3.8 1-2.9 0-5.3-1.9-6.2-4.6l-3.5 2.7C4.1 20.3 7.8 23 12 23z"/><path fill="#FBBC05" d="M5.8 14.1c-.2-.6-.4-1.3-.4-2.1s.1-1.5.4-2.1L2.3 7.2C1.5 8.7 1 10.3 1 12s.5 3.3 1.3 4.8l3.5-2.7z"/><path fill="#EA4335" d="M12 5.4c1.6 0 2.7.7 3.3 1.3l2.9-2.9C16.5 2.1 14.5 1 12 1 7.8 1 4.1 3.7 2.3 7.2l3.5 2.7C6.7 7.3 9.1 5.4 12 5.4z"/></svg> Google</button>
+          <button type="button" onclick="showToast('Apple — démo')"><svg viewBox="0 0 24 24"><path fill="currentColor" d="M16.4 12.9c0-2.3 1.9-3.4 2-3.5-1.1-1.6-2.8-1.8-3.4-1.8-1.4-.1-2.8.9-3.5.9s-1.8-.8-3-.8c-1.5 0-2.9.9-3.7 2.3-1.6 2.7-.4 6.8 1.1 9 .7 1.1 1.6 2.3 2.8 2.3 1.1 0 1.5-.7 2.9-.7s1.7.7 2.9.7 1.9-1.1 2.6-2.2c.8-1.2 1.2-2.4 1.2-2.5-.1 0-2.3-.9-2.4-3.4zM14.2 5.6c.6-.8 1-1.8.9-2.9-.9 0-2 .6-2.6 1.3-.6.7-1.1 1.7-.9 2.7 1 .1 2-.5 2.6-1.1z"/></svg> Apple</button>
+        </div>
+        <p class="alt" data-i18n="log_alt">Pas encore de compte ? <a onclick="go('inscription')" data-i18n="log_alt_a">Créer un compte</a></p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ INSCRIPTION ============ -->
+<section class="screen" id="s-inscription">
+  <div class="auth">
+    <div class="aside">
+      <span class="blob a"></span>
+      <div class="brand" style="color:#fff;margin-bottom:30px"><span class="logo"><i data-lucide="calendar-check-2"></i></span><span>Booking+</span></div>
+      <h2 data-i18n="reg_aside_h">Créez votre établissement en 5 minutes</h2>
+      <p data-i18n="reg_aside_p">Mettez en ligne votre page de réservation et automatisez vos rappels dès aujourd'hui.</p>
+      <ul class="aside-list">
+        <li><span class="tick"><i data-lucide="gift"></i></span> <span data-i18n="reg_a1">14 jours d'essai gratuit</span></li>
+        <li><span class="tick"><i data-lucide="credit-card"></i></span> <span data-i18n="reg_a2">Aucune carte bancaire requise</span></li>
+        <li><span class="tick"><i data-lucide="zap"></i></span> <span data-i18n="reg_a3">Configuration guidée pas à pas</span></li>
+      </ul>
+      <div class="stat-row" style="margin-top:36px;gap:30px;justify-content:flex-start">
+        <div class="stat"><b style="color:#fff;-webkit-text-fill-color:#fff">500+</b><span style="color:#AFC3DA" data-i18n="reg_s1">établissements</span></div>
+        <div class="stat"><b style="color:#fff;-webkit-text-fill-color:#fff">120k</b><span style="color:#AFC3DA" data-i18n="reg_s2">RDV gérés</span></div>
+      </div>
+    </div>
+    <div class="form-wrap">
+      <div class="form-card">
+        <h1 data-i18n="reg_h">Créer mon compte</h1>
+        <p class="sub" data-i18n="reg_sub">Commencez gratuitement, sans engagement.</p>
+        <form onsubmit="event.preventDefault();go('accueil');showToast('Compte créé ✓ Bienvenue sur Booking+ (démo)')">
+          <div class="field"><label data-i18n="reg_biz">Nom de l'établissement</label><div class="inp"><i data-lucide="building-2"></i><input required placeholder="Ex. Beauty Studio"></div></div>
+          <div class="field"><label data-i18n="reg_name">Votre nom</label><div class="inp"><i data-lucide="user"></i><input required placeholder="Nom et prénom"></div></div>
+          <div class="field"><label>Email</label><div class="inp"><i data-lucide="mail"></i><input type="email" required placeholder="vous@exemple.com"></div></div>
+          <div class="field"><label data-i18n="reg_pw">Mot de passe</label><div class="inp"><i data-lucide="lock"></i><input type="password" id="regpw" required placeholder="8 caractères minimum"><i data-lucide="eye" class="eye" onclick="togglePw('regpw',this)"></i></div></div>
+          <label class="check" style="margin-bottom:20px;font-size:13px"><input type="checkbox" required> <span data-i18n="reg_terms">J'accepte les conditions d'utilisation et la politique de confidentialité.</span></label>
+          <button class="btn btn-primary btn-block btn-lg" type="submit"><span data-i18n="reg_btn">Créer mon établissement</span> <i data-lucide="arrow-right"></i></button>
+        </form>
+        <p class="alt" data-i18n="reg_alt">Déjà un compte ? <a onclick="go('connexion')" data-i18n="reg_alt_a">Se connecter</a></p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ RÉSERVATION PUBLIQUE ============ -->
+<section class="screen" id="s-reservation">
+  <div class="wrap band">
+    <div class="book-shell">
+      <div class="biz-head">
+        <span class="logo-sq"><i data-lucide="scissors"></i></span>
+        <div>
+          <h3>Beauty Studio</h3>
+          <div class="meta">
+            <span><i data-lucide="map-pin"></i> Les Berges du Lac, Tunis</span>
+            <span><i data-lucide="clock"></i> <span data-i18n="rv_open">Ouvert · 9h–18h</span></span>
+          </div>
+        </div>
+        <div class="rate"><b>4.8</b><div class="stars">★★★★★</div><small data-i18n="rv_reviews">128 avis</small></div>
+      </div>
+
+      <div class="steps">
+        <div class="step cur" id="step-1"><span class="num">1</span><div><small data-i18n="rv_step1s">Étape 1</small><b data-i18n="rv_step1">Service</b></div></div>
+        <div class="step" id="step-2"><span class="num">2</span><div><small data-i18n="rv_step2s">Étape 2</small><b data-i18n="rv_step2">Employé</b></div></div>
+        <div class="step" id="step-3"><span class="num">3</span><div><small data-i18n="rv_step3s">Étape 3</small><b data-i18n="rv_step3">Date & heure</b></div></div>
+        <div class="step" id="step-4"><span class="num">4</span><div><small data-i18n="rv_step4s">Étape 4</small><b data-i18n="rv_step4">Vos infos</b></div></div>
+      </div>
+
+      <div class="book-grid">
+        <div>
+          <!-- step 1 : service -->
+          <div class="step-body active" id="body-1">
+            <h3 style="font-size:20px;margin-bottom:16px" data-i18n="rv_pick_service">Choisissez un service</h3>
+            <div class="pick-list" id="services"></div>
+          </div>
+          <!-- step 2 : employé -->
+          <div class="step-body" id="body-2">
+            <h3 style="font-size:20px;margin-bottom:16px" data-i18n="rv_pick_emp">Choisissez un professionnel</h3>
+            <div class="emp-grid" id="emps"></div>
+          </div>
+          <!-- step 3 : date & heure -->
+          <div class="step-body" id="body-3">
+            <h3 style="font-size:20px;margin-bottom:16px" data-i18n="rv_pick_dt">Choisissez la date et l'heure</h3>
+            <div class="dt-grid">
+              <div class="cal">
+                <div class="cal-head">
+                  <b id="calTitle">Mai 2026</b>
+                  <div class="cal-nav"><button onclick="void 0"><i data-lucide="chevron-left"></i></button><button onclick="void 0"><i data-lucide="chevron-right"></i></button></div>
+                </div>
+                <div class="cal-grid" id="calGrid"></div>
+              </div>
+              <div>
+                <div class="slots" id="slots"></div>
+              </div>
+            </div>
+          </div>
+          <!-- step 4 : infos -->
+          <div class="step-body" id="body-4">
+            <h3 style="font-size:20px;margin-bottom:16px" data-i18n="rv_your_info">Vos informations</h3>
+            <div class="card">
+              <div class="field"><label data-i18n="rv_fname">Nom complet</label><div class="inp"><i data-lucide="user"></i><input id="cuName" required placeholder="Nom et prénom"></div></div>
+              <div class="field"><label data-i18n="rv_phone">Téléphone (WhatsApp)</label><div class="inp"><i data-lucide="phone"></i><input id="cuPhone" required placeholder="+216 00 000 000"></div></div>
+              <div class="field"><label>Email <span style="color:var(--faint);font-weight:400" data-i18n="rv_opt">(optionnel)</span></label><div class="inp"><i data-lucide="mail"></i><input type="email" placeholder="vous@exemple.com"></div></div>
+              <div class="field" style="margin:0"><label data-i18n="rv_note">Note <span style="color:var(--faint);font-weight:400" data-i18n="rv_opt2">(optionnel)</span></label><div class="inp"><i data-lucide="message-square" style="top:16px"></i><textarea rows="2" placeholder="Une précision pour votre rendez-vous…" style="width:100%;padding:13px 14px 13px 42px;border:1.5px solid var(--border);border-radius:12px;background:var(--bg);color:var(--fg);font-family:inherit;font-size:15px;resize:vertical"></textarea></div></div>
+              <div class="wa-note" style="margin-top:20px"><span class="ic"><i data-lucide="message-circle"></i></span><p data-i18n="rv_wa">Vous recevrez votre <b>confirmation</b> et vos <b>rappels</b> par WhatsApp sur ce numéro.</p></div>
+            </div>
+          </div>
+
+          <div class="flow-nav">
+            <button class="btn btn-ghost" id="btnPrev" onclick="prevStep()" style="visibility:hidden"><i data-lucide="arrow-left"></i> <span data-i18n="rv_prev">Retour</span></button>
+            <button class="btn btn-primary" id="btnNext" onclick="nextStep()"><span data-i18n="rv_next">Continuer</span> <i data-lucide="arrow-right"></i></button>
+          </div>
+        </div>
+
+        <!-- summary -->
+        <aside class="summary-card">
+          <h3 style="font-size:16px;margin-bottom:14px" data-i18n="rv_sum">Récapitulatif</h3>
+          <div class="sum-row"><span data-i18n="rv_sum_biz">Établissement</span><b>Beauty Studio</b></div>
+          <div class="sum-row"><span data-i18n="rv_sum_service">Service</span><b id="sumService" data-i18n="rv_tbd">À choisir</b></div>
+          <div class="sum-row"><span data-i18n="rv_sum_emp">Professionnel</span><b id="sumEmp" data-i18n="rv_tbd2">À choisir</b></div>
+          <div class="sum-row"><span data-i18n="rv_sum_when">Date & heure</span><b id="sumWhen" data-i18n="rv_tbd3">À choisir</b></div>
+          <div class="sum-row"><span data-i18n="rv_sum_dur">Durée</span><b id="sumDur">—</b></div>
+          <div class="sum-total"><span data-i18n="rv_total">Total</span><b id="sumTotal">0 DT</b></div>
+        </aside>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ CONFIRMATION ============ -->
+<section class="screen" id="s-confirmation">
+  <div class="wrap band">
+    <div class="confirm">
+      <div class="seal"><i data-lucide="check"></i></div>
+      <h1 data-i18n="cf_h">Réservation confirmée !</h1>
+      <p class="sub" data-i18n="cf_sub">Votre rendez-vous est bien enregistré. Un récapitulatif vous a été envoyé par WhatsApp.</p>
+
+      <div class="ticket">
+        <div class="ticket-top">
+          <span class="logo-sq"><i data-lucide="scissors"></i></span>
+          <div><b>Beauty Studio</b><small>Les Berges du Lac, Tunis</small></div>
+        </div>
+        <div class="ticket-body">
+          <div class="sum-row"><span data-i18n="cf_service">Service</span><b id="cfService">Coupe + Brushing</b></div>
+          <div class="sum-row"><span data-i18n="cf_emp">Professionnel</span><b id="cfEmp">Carla Gómez</b></div>
+          <div class="sum-row"><span data-i18n="cf_when">Date & heure</span><b id="cfWhen">Jeu. 14 mai · 10:00</b></div>
+          <div class="sum-row"><span data-i18n="cf_ref">Référence</span><b id="cfRef">#BK-2026-0481</b></div>
+          <div class="sum-total"><span data-i18n="cf_total">Total</span><b id="cfTotal">40 DT</b></div>
+        </div>
+      </div>
+
+      <div class="wa-note"><span class="ic"><i data-lucide="message-circle"></i></span><p data-i18n="cf_wa">Un <b>rappel WhatsApp</b> vous sera envoyé 24h puis 2h avant votre rendez-vous.</p></div>
+
+      <div class="hero-cta" style="justify-content:center">
+        <button class="btn btn-primary" onclick="go('accueil')"><i data-lucide="home"></i> <span data-i18n="cf_home">Retour à l'accueil</span></button>
+        <button class="btn btn-ghost" onclick="resetBooking();go('reservation')"><i data-lucide="plus"></i> <span data-i18n="cf_again">Nouvelle réservation</span></button>
+      </div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<!-- ============ FOOTER ============ -->
+<footer class="footer">
+  <div class="wrap">
+    <div class="foot-grid">
+      <div>
+        <div class="brand"><span class="logo"><i data-lucide="calendar-check-2"></i></span><span>Booking+<small>WhatsApp Reminders</small></span></div>
+        <p data-i18n="foot_p">La plateforme de réservation et de rappels WhatsApp pour les établissements de services en Tunisie.</p>
+      </div>
+      <div class="foot-col"><h4 data-i18n="foot_prod">Produit</h4>
+        <a onclick="go('fonctionnalites')" data-i18n="nav_feat">Fonctionnalités</a>
+        <a onclick="go('tarifs')" data-i18n="nav_price">Tarifs</a>
+        <a onclick="go('reservation')" data-i18n="nav_book">Réserver</a>
+      </div>
+      <div class="foot-col"><h4 data-i18n="foot_comp">Entreprise</h4>
+        <a onclick="go('contact')" data-i18n="nav_contact">Contact</a>
+        <a onclick="go('contact')" data-i18n="faq_h">FAQ</a>
+        <a onclick="go('connexion')" data-i18n="cta_login">Connexion</a>
+      </div>
+      <div class="foot-col"><h4 data-i18n="foot_legal">Légal</h4>
+        <a onclick="showToast('Page à venir')" data-i18n="foot_cgu">Conditions d'utilisation</a>
+        <a onclick="showToast('Page à venir')" data-i18n="foot_privacy">Confidentialité</a>
+      </div>
+    </div>
+    <div class="foot-bottom">
+      <span>© 2026 Booking+. <span data-i18n="foot_rights">Tous droits réservés.</span></span>
+      <div class="foot-social">
+        <a onclick="showToast('—')"><i data-lucide="instagram"></i></a>
+        <a onclick="showToast('—')"><i data-lucide="facebook"></i></a>
+        <a onclick="showToast('—')"><i data-lucide="linkedin"></i></a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<div id="toast" style="position:fixed;left:50%;bottom:28px;transform:translateX(-50%) translateY(140%);background:var(--ink);color:#fff;padding:13px 20px;border-radius:13px;font-size:14px;font-weight:600;box-shadow:var(--shadow-lg);z-index:100;transition:transform .35s cubic-bezier(.2,1.2,.4,1);max-width:90vw;text-align:center"></div>
+
+<script>
+/* ---------------- data ---------------- */
+const SERVICES=[
+  {id:'s1',ic:'scissors',name:'Coupe + Brushing',dur:45,price:40},
+  {id:'s2',ic:'palette',name:'Coloration',dur:90,price:80},
+  {id:'s3',ic:'sparkles',name:'Soin du visage',dur:60,price:70},
+  {id:'s4',ic:'zap',name:'Épilation laser',dur:30,price:90},
+  {id:'s5',ic:'hand',name:'Manucure',dur:40,price:35},
+];
+const EMPS=[
+  {id:'e0',name:'Sans préférence',role:'Premier disponible',rate:'',init:'★',any:true},
+  {id:'e1',name:'Carla Gómez',role:'Coiffure & couleur',rate:'4.9',init:'CG'},
+  {id:'e2',name:'Melina Rojas',role:'Soins du visage',rate:'4.8',init:'MR'},
+  {id:'e3',name:'Sofía Díaz',role:'Esthétique',rate:'4.9',init:'SD'},
+  {id:'e4',name:'Iván Torres',role:'Coiffure',rate:'4.7',init:'IT'},
+  {id:'e5',name:'Agustina López',role:'Manucure',rate:'5.0',init:'AL'},
+];
+const DAYS=['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'];
+const DOW=['L','M','M','J','V','S','D'];
+const MONTH='Mai 2026';
+const OFF_DAYS=[4,11,18,25]; // sundays off in this demo month layout
+const SLOTS_AM=['09:00','09:30','10:00','10:30','11:00','11:30'];
+const SLOTS_PM=['14:00','14:30','15:00','16:00','16:30','17:30'];
+const OFF_SLOTS=['10:30','15:00'];
+
+/* ---------------- booking state ---------------- */
+let st={step:1,service:null,emp:EMPS[0],day:null,slot:null};
+
+/* ---------------- routing ---------------- */
+const ROUTES=['accueil','fonctionnalites','tarifs','reservation','contact','connexion','inscription','confirmation'];
+function go(route){
+  if(!ROUTES.includes(route))route='accueil';
+  location.hash=route;
+}
+function render(){
+  const route=(location.hash.replace('#','')||'accueil');
+  const r=ROUTES.includes(route)?route:'accueil';
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  const el=document.getElementById('s-'+r);
+  if(el)el.classList.add('active');
+  document.querySelectorAll('.nav-links a').forEach(a=>a.classList.toggle('active',a.dataset.route===r));
+  document.getElementById('navlinks').classList.remove('open');
+  window.scrollTo({top:0,behavior:'auto'});
+  if(window.lucide)lucide.createIcons();
+}
+window.addEventListener('hashchange',render);
+
+/* ---------------- booking UI ---------------- */
+function money(n){return n+' DT'}
+function buildServices(){
+  document.getElementById('services').innerHTML=SERVICES.map(s=>`
+    <div class="pick ${st.service&&st.service.id===s.id?'sel':''}" onclick="pickService('${s.id}')">
+      <span class="ic"><i data-lucide="${s.ic}"></i></span>
+      <div><b>${s.name}</b><div class="dur"><i data-lucide="clock"></i> ${s.dur} min</div></div>
+      <div class="cost"><b>${money(s.price)}</b></div>
+      <span class="radio"></span>
+    </div>`).join('');
+  if(window.lucide)lucide.createIcons();
+}
+function pickService(id){st.service=SERVICES.find(s=>s.id===id);buildServices();updateSummary();}
+function buildEmps(){
+  document.getElementById('emps').innerHTML=EMPS.map(e=>`
+    <div class="emp ${st.emp&&st.emp.id===e.id?'sel':''}" onclick="pickEmp('${e.id}')">
+      <div class="av">${e.any?'<i data-lucide="users"></i>':e.init}</div>
+      <b>${e.name}</b><small>${e.role}</small>
+      ${e.rate?`<div class="stars">★ ${e.rate}</div>`:''}
+    </div>`).join('');
+  if(window.lucide)lucide.createIcons();
+}
+function pickEmp(id){st.emp=EMPS.find(e=>e.id===id);buildEmps();updateSummary();}
+function buildCal(){
+  // Mai 2026 starts on a Friday (demo). Build a 5-week grid.
+  let html=DOW.map(d=>`<div class="dow">${d}</div>`).join('');
+  const startPad=4; // Mon-based: 1st is Friday -> 4 empty
+  for(let i=0;i<startPad;i++)html+=`<div class="cal-day mut"></div>`;
+  for(let d=1;d<=31;d++){
+    const off=OFF_DAYS.includes(d);
+    const cls=['cal-day'];
+    if(off)cls.push('off');
+    if(st.day===d)cls.push('sel');
+    if(d===13)cls.push('today');
+    html+=`<div class="${cls.join(' ')}" ${off?'':`onclick="pickDay(${d})"`}>${d}</div>`;
+  }
+  document.getElementById('calGrid').innerHTML=html;
+}
+function pickDay(d){st.day=d;st.slot=null;buildCal();buildSlots();updateSummary();}
+function buildSlots(){
+  if(!st.day){document.getElementById('slots').innerHTML=`<p style="color:var(--faint);font-size:14px;grid-column:1/-1">${t('rv_pickday')}</p>`;return;}
+  let html=`<div class="slot-label">${t('rv_morning')}</div>`;
+  html+=SLOTS_AM.map(s=>slotHtml(s)).join('');
+  html+=`<div class="slot-label">${t('rv_afternoon')}</div>`;
+  html+=SLOTS_PM.map(s=>slotHtml(s)).join('');
+  document.getElementById('slots').innerHTML=html;
+}
+function slotHtml(s){
+  const off=OFF_SLOTS.includes(s);
+  return `<div class="slot ${off?'off':''} ${st.slot===s?'sel':''}" ${off?'':`onclick="pickSlot('${s}')"`}>${s}</div>`;
+}
+function pickSlot(s){st.slot=s;buildSlots();updateSummary();}
+function updateSummary(){
+  document.getElementById('sumService').textContent=st.service?st.service.name:t('rv_tbd');
+  document.getElementById('sumEmp').textContent=st.emp?(st.emp.any?t('rv_anyemp'):st.emp.name):t('rv_tbd2');
+  document.getElementById('sumWhen').textContent=(st.day&&st.slot)?`${dayLabel(st.day)} · ${st.slot}`:t('rv_tbd3');
+  document.getElementById('sumDur').textContent=st.service?st.service.dur+' min':'—';
+  document.getElementById('sumTotal').textContent=st.service?money(st.service.price):'0 DT';
+}
+function dayLabel(d){
+  // 1 May 2026 = Friday => weekday index
+  const idx=(4+(d-1))%7; // 0=Mon
+  return `${DAYS[idx]} ${d} mai`;
+}
+function setStep(n){
+  st.step=n;
+  for(let i=1;i<=4;i++){
+    const chip=document.getElementById('step-'+i);
+    const body=document.getElementById('body-'+i);
+    chip.classList.toggle('cur',i===n);
+    chip.classList.toggle('done',i<n);
+    chip.querySelector('.num').innerHTML = i<n?'<i data-lucide="check"></i>':i;
+    body.classList.toggle('active',i===n);
+  }
+  document.getElementById('btnPrev').style.visibility=n===1?'hidden':'visible';
+  const next=document.getElementById('btnNext');
+  next.querySelector('span').textContent = n===4 ? t('rv_confirm') : t('rv_next');
+  if(window.lucide)lucide.createIcons();
+}
+function nextStep(){
+  if(st.step===1&&!st.service){showToast(t('rv_need_service'));return;}
+  if(st.step===3&&(!st.day||!st.slot)){showToast(t('rv_need_dt'));return;}
+  if(st.step===4){
+    const name=document.getElementById('cuName').value.trim();
+    const phone=document.getElementById('cuPhone').value.trim();
+    if(!name||!phone){showToast(t('rv_need_info'));return;}
+    // fill confirmation
+    document.getElementById('cfService').textContent=st.service.name;
+    document.getElementById('cfEmp').textContent=st.emp.any?'Carla Gómez':st.emp.name;
+    document.getElementById('cfWhen').textContent=`${dayLabel(st.day)} · ${st.slot}`;
+    document.getElementById('cfTotal').textContent=money(st.service.price);
+    document.getElementById('cfRef').textContent='#BK-2026-0'+(400+Math.floor(Math.random()*99));
+    go('confirmation');
+    return;
+  }
+  setStep(Math.min(4,st.step+1));
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+function prevStep(){setStep(Math.max(1,st.step-1));window.scrollTo({top:0,behavior:'smooth'});}
+function resetBooking(){st={step:1,service:null,emp:EMPS[0],day:null,slot:null};buildServices();buildEmps();buildCal();buildSlots();updateSummary();setStep(1);}
+
+/* ---------------- helpers ---------------- */
+function togglePw(id,icon){const i=document.getElementById(id);const show=i.type==='password';i.type=show?'text':'password';icon.setAttribute('data-lucide',show?'eye-off':'eye');if(window.lucide)lucide.createIcons();}
+let toastT;
+function showToast(msg){const el=document.getElementById('toast');el.textContent=msg;el.style.transform='translateX(-50%) translateY(0)';clearTimeout(toastT);toastT=setTimeout(()=>{el.style.transform='translateX(-50%) translateY(140%)';},3000);}
+
+/* ---------------- theme ---------------- */
+function toggleTheme(){
+  const root=document.documentElement;
+  const dark=root.getAttribute('data-theme')==='dark' || (!root.getAttribute('data-theme')&&matchMedia('(prefers-color-scheme:dark)').matches);
+  root.setAttribute('data-theme',dark?'light':'dark');
+  document.getElementById('themeIcon').setAttribute('data-lucide',dark?'moon':'sun');
+  if(window.lucide)lucide.createIcons();
+}
+
+/* ---------------- i18n (FR / AR RTL) ---------------- */
+let lang='fr';
+const AR={
+  tag:'تذكيرات واتساب', nav_home:'الرئيسية', nav_feat:'المزايا', nav_price:'الأسعار', nav_book:'حجز', nav_contact:'اتصل بنا',
+  cta_login:'تسجيل الدخول', cta_signup:'ابدأ الآن',
+  hero_badge:'تذكيرات واتساب تلقائية', hero_h1:'مواعيدك، <span class="hl">تُدار تلقائيًا.</span>',
+  hero_lede:'يدير Booking+ حجوزاتك وتذكيراتك وأوقات توفّرك على مدار الساعة. يحجز عملاؤك عبر الإنترنت وتنطلق التذكيرات عبر واتساب فتقلّ حالات الغياب.',
+  hero_cta1:'أنشئ مؤسستي', hero_cta2:'شاهد عملية حجز',
+  trust1:'14 يومًا مجانًا', trust2:'بدون بطاقة بنكية', trust3:'يمكن الإلغاء في أي وقت',
+  logos_label:'تعتمده الصالونات والعيادات والمعاهد في تونس',
+  adv_eyebrow:'لماذا Booking+', adv_h2:'كل ما تحتاجه لملء أجندتك', adv_p:'ثلاث ركائز لأتمتة حجز المواعيد والتفرّغ لمهنتك.',
+  adv1_t:'حجز على مدار الساعة', adv1_p:'يحجز عملاؤك عبر الإنترنت في أي وقت، مع احترام أوقات توفّرك الفعلية.',
+  adv1_l1:'صفحة حجز باسمك', adv1_l2:'اختيار الخدمة والموظف',
+  adv2_t:'تذكيرات واتساب', adv2_p:'تأكيدات وتذكيرات تلقائية عبر واتساب لتقليل الغياب والإلغاء في آخر لحظة.',
+  adv2_l1:'قوالب قابلة للتخصيص', adv2_l2:'جدولة قبل 24 ساعة / ساعتين',
+  adv3_t:'القيادة والنمو', adv3_p:'كل نشاطك في مكان واحد: الأجندة والعملاء والإيرادات والإحصائيات.',
+  adv3_l1:'لوحة تحكم فورية', adv3_l2:'سجل وبطاقات العملاء',
+  stat1:'انخفاض في الغياب', stat2:'إمكانية الحجز', stat3:'مواعيد مؤكدة', stat4:'لإعداد كل شيء',
+  cta_h2:'مواعيد أكثر. إدارة أقل.', cta_p:'أطلق صفحة الحجز خلال دقائق ودع واتساب يتكفّل بالتذكيرات.',
+  cta_btn1:'ابدأ مجانًا', cta_btn2:'شاهد الأسعار',
+  feat_eyebrow:'المزايا', feat_h2:'منصة حجز متكاملة', feat_p:'من حجز المواعيد عبر الإنترنت إلى تذكيرات واتساب والإحصائيات.',
+  feat1_e:'الحجز عبر الإنترنت', feat1_t:'أجندة تمتلئ تلقائيًا', feat1_p:'شارك صفحة الحجز الخاصة بك. يختار عملاؤك الخدمة والموظف والموعد في الوقت الفعلي.',
+  feat1_l1:'احترام أوقات التوفّر والاستراحات والعطل', feat1_l2:'مدة وسعر لكل خدمة', feat1_l3:'تأكيد فوري',
+  feat2_e:'تذكيرات واتساب', feat2_t:'تذكيرات تقلّل الغياب', feat2_p:'تنطلق التأكيدات والتذكيرات تلقائيًا عبر واتساب للأعمال. خصّص كل قالب واجدول الإرسال.',
+  feat2_l1:'قوالب فرنسية / عربية قابلة لإعادة الاستخدام', feat2_l2:'إرسال قبل 24 ساعة وساعتين', feat2_l3:'سجل الرسائل المُرسلة',
+  feat3_e:'لوحة التحكم', feat3_t:'أرقامك الأساسية بنظرة واحدة', feat3_p:'تابع مواعيدك ورقم أعمالك ونسبة التأكيد، وأدِر حمل كل عضو في الفريق.',
+  feat3_l1:'مؤشرات ورسوم فورية', feat3_l2:'توزيع حسب الخدمة والموظف', feat3_l3:'تصدير وتقارير',
+  feat_more_h:'والمزيد أيضًا',
+  fm1_t:'إدارة الفريق', fm1_p:'الموظفون والخدمات المخصّصة والأوقات والأدوار لكامل فريقك.',
+  fm2_t:'أوقات التوفّر', fm2_p:'ساعات العمل والاستراحات والعطل قابلة للضبط لكل موظف.',
+  fm3_t:'متعدد اللغات', fm3_p:'الواجهة والرسائل بالفرنسية والعربية (من اليمين لليسار).',
+  fm4_t:'متعدد المؤسسات', fm4_p:'أدِر عدة مؤسسات ببيانات معزولة وآمنة.',
+  fm5_t:'الاشتراكات', fm5_p:'الخطط والحصص والفوترة من مساحتك.',
+  fm6_t:'الأمان وحماية البيانات', fm6_p:'بيانات مشفّرة ومعزولة حسب المؤسسة ومتوافقة مع أفضل الممارسات.',
+  price_eyebrow:'الأسعار', price_h2:'صيغ مناسبة لكل مؤسسة', price_p:'بدون التزام. 14 يومًا تجربة مجانية على كل الصيغ.',
+  plan1_d:'للانطلاق منفردًا أو ضمن فريق صغير.', plan1_1:'مؤسسة واحدة', plan1_2:'حتى 3 موظفين', plan1_3:'حجز عبر الإنترنت', plan1_4:'200 تذكير واتساب / شهر', plan1_5:'إحصائيات متقدمة',
+  plan2_d:'خيار المؤسسات النامية.', plan2_1:'مؤسسة واحدة', plan2_2:'حتى 10 موظفين', plan2_3:'تذكيرات واتساب غير محدودة', plan2_4:'إحصائيات متقدمة', plan2_5:'دعم ذو أولوية',
+  plan3_d:'للشبكات والمؤسسات المتعددة.', plan3_1:'مؤسسات متعددة', plan3_2:'موظفون غير محدودين', plan3_3:'كل مزايا Pro', plan3_4:'أدوار وصلاحيات متقدمة', plan3_5:'مرافقة مخصّصة',
+  plan_cta:'ابدأ', plan_cta2:'اختر Pro',
+  price_faq_h:'أسئلة حول الأسعار',
+  pf1_q:'هل يمكنني تغيير الصيغة في أي وقت؟', pf1_a:'نعم، يمكنك الانتقال بين الصيغ في أي وقت من مساحتك، وتُعدّل الفوترة تناسبيًا.',
+  pf2_q:'هل تذكيرات واتساب مشمولة؟', pf2_a:'نعم. تشمل Starter 200 تذكير شهريًا، وتوفّرها Pro و Business بلا حدود.',
+  pf3_q:'هل هناك التزام؟', pf3_a:'لا يوجد أي التزام. يمكنك إلغاء اشتراكك متى شئت.',
+  ct_eyebrow:'الدعم', ct_h2:'اتصل بنا والأسئلة الشائعة', ct_p:'سؤال قبل البدء؟ فريقنا يجيب بالفرنسية والعربية.',
+  ct_reach:'تواصل معنا', ct_email:'البريد الإلكتروني', ct_wa:'واتساب', ct_addr:'العنوان', ct_addr_v:'نهج البحيرة، ضفاف البحيرة، تونس', ct_hours:'الأوقات', ct_hours_v:'الإثنين — الجمعة · من 9:00 إلى 18:00',
+  ct_form:'أرسل لنا رسالة', ct_name:'الاسم الكامل', ct_msg:'الرسالة', ct_send:'إرسال',
+  faq_h:'الأسئلة الشائعة',
+  faq1_q:'كيف يحجز عملائي؟', faq1_a:'تحصل على صفحة حجز باسمك. يختار عملاؤك الخدمة والموظف ثم الموعد ويتلقّون تأكيدًا فوريًا.',
+  faq2_q:'هل أحتاج حساب واتساب للأعمال؟', faq2_a:'يعتمد Booking+ على واجهة واتساب للأعمال لإرسال التذكيرات، ونرافقك في الإعداد.',
+  faq3_q:'هل يمكنني إدارة عدة مؤسسات؟', faq3_a:'نعم، مع صيغة Business. لكل مؤسسة موظفوها وخدماتها وبياناتها المعزولة تمامًا.',
+  faq4_q:'هل بياناتي آمنة؟', faq4_a:'بياناتك مشفّرة ومعزولة حسب المؤسسة وتُعالَج وفق أفضل ممارسات الأمان وحماية البيانات.',
+  log_aside_h:'مرحبًا بعودتك 👋', log_aside_p:'استعد أجندتك ومواعيدك وإحصائياتك من حيث تركتها.',
+  log_a1:'أجندة متزامنة فوريًا', log_a2:'تذكيرات واتساب تلقائية', log_a3:'إحصائيات وإيرادات',
+  log_quote:'«منذ Booking+ انخفضت حالات الغياب وامتلأت الأجندة تلقائيًا.»', log_quote_who:'Beauty Studio، تونس',
+  log_h:'تسجيل الدخول', log_sub:'ادخل إلى مساحة الإدارة.', log_pw:'كلمة المرور', log_remember:'تذكّرني', log_forgot:'هل نسيت كلمة المرور؟', log_btn:'دخول', or:'أو المتابعة عبر', log_alt:'ليس لديك حساب؟', log_alt_a:'أنشئ حسابًا',
+  reg_aside_h:'أنشئ مؤسستك خلال 5 دقائق', reg_aside_p:'انشر صفحة الحجز وأتمت تذكيراتك منذ اليوم.',
+  reg_a1:'14 يومًا تجربة مجانية', reg_a2:'لا حاجة لبطاقة بنكية', reg_a3:'إعداد موجّه خطوة بخطوة',
+  reg_s1:'مؤسسة', reg_s2:'موعد مُدار',
+  reg_h:'إنشاء حسابي', reg_sub:'ابدأ مجانًا بدون التزام.', reg_biz:'اسم المؤسسة', reg_name:'اسمك', reg_pw:'كلمة المرور', reg_terms:'أوافق على شروط الاستخدام وسياسة الخصوصية.', reg_btn:'أنشئ مؤسستي', reg_alt:'لديك حساب بالفعل؟', reg_alt_a:'تسجيل الدخول',
+  rv_open:'مفتوح · 9ص–6م', rv_reviews:'128 تقييم',
+  rv_step1s:'الخطوة 1', rv_step1:'الخدمة', rv_step2s:'الخطوة 2', rv_step2:'الموظف', rv_step3s:'الخطوة 3', rv_step3:'التاريخ والوقت', rv_step4s:'الخطوة 4', rv_step4:'معلوماتك',
+  rv_pick_service:'اختر خدمة', rv_pick_emp:'اختر محترفًا', rv_pick_dt:'اختر التاريخ والوقت', rv_your_info:'معلوماتك',
+  rv_fname:'الاسم الكامل', rv_phone:'الهاتف (واتساب)', rv_opt:'(اختياري)', rv_note:'ملاحظة', rv_opt2:'(اختياري)',
+  rv_wa:'ستتلقى <b>التأكيد</b> و<b>التذكيرات</b> عبر واتساب على هذا الرقم.',
+  rv_sum:'ملخّص', rv_sum_biz:'المؤسسة', rv_sum_service:'الخدمة', rv_sum_emp:'المحترف', rv_sum_when:'التاريخ والوقت', rv_sum_dur:'المدة', rv_total:'المجموع',
+  rv_tbd:'للاختيار', rv_tbd2:'للاختيار', rv_tbd3:'للاختيار', rv_anyemp:'أول متاح',
+  rv_prev:'رجوع', rv_next:'متابعة', rv_confirm:'تأكيد الحجز',
+  rv_need_service:'الرجاء اختيار خدمة', rv_need_dt:'الرجاء اختيار التاريخ والوقت', rv_need_info:'الرجاء إدخال اسمك ورقم هاتفك',
+  rv_pickday:'اختر يومًا لعرض المواعيد', rv_morning:'صباحًا', rv_afternoon:'بعد الظهر',
+  cf_h:'تم تأكيد الحجز!', cf_sub:'موعدك مُسجّل. أُرسل لك ملخّص عبر واتساب.',
+  cf_service:'الخدمة', cf_emp:'المحترف', cf_when:'التاريخ والوقت', cf_ref:'المرجع', cf_total:'المجموع',
+  cf_wa:'سيُرسل لك <b>تذكير واتساب</b> قبل 24 ساعة ثم ساعتين من موعدك.',
+  cf_home:'العودة إلى الرئيسية', cf_again:'حجز جديد',
+  foot_p:'منصة الحجز وتذكيرات واتساب لمؤسسات الخدمات في تونس.',
+  foot_prod:'المنتج', foot_comp:'الشركة', foot_legal:'قانوني', foot_cgu:'شروط الاستخدام', foot_privacy:'الخصوصية', foot_rights:'كل الحقوق محفوظة.',
+};
+const FR_DYN={rv_tbd:'À choisir',rv_tbd2:'À choisir',rv_tbd3:'À choisir',rv_anyemp:'Premier disponible',
+  rv_next:'Continuer',rv_confirm:'Confirmer la réservation',rv_need_service:'Veuillez choisir un service',
+  rv_need_dt:'Veuillez choisir la date et l\'heure',rv_need_info:'Veuillez renseigner votre nom et téléphone',
+  rv_pickday:'Sélectionnez un jour pour voir les créneaux',rv_morning:'Matin',rv_afternoon:'Après-midi'};
+function t(key){ if(lang==='ar'&&AR[key]!=null)return AR[key]; return FR_DYN[key]!=null?FR_DYN[key]:key; }
+function toggleLang(){
+  lang=lang==='fr'?'ar':'fr';
+  const root=document.documentElement;
+  root.setAttribute('dir',lang==='ar'?'rtl':'ltr');
+  root.setAttribute('lang',lang);
+  document.getElementById('langBtn').textContent=lang==='fr'?'AR':'FR';
+  document.querySelectorAll('[data-i18n]').forEach(el=>{
+    const k=el.getAttribute('data-i18n');
+    if(lang==='ar'&&AR[k]!=null)el.innerHTML=AR[k];
+    else if(lang==='fr'&&el.dataset.fr!=null)el.innerHTML=el.dataset.fr;
+  });
+  // rebuild dynamic booking bits
+  buildServices();buildEmps();buildSlots();updateSummary();setStep(st.step);
+  if(window.lucide)lucide.createIcons();
+}
+// store french originals for restore
+function cacheFr(){document.querySelectorAll('[data-i18n]').forEach(el=>{el.dataset.fr=el.innerHTML;});}
+
+/* ---------------- init ---------------- */
+cacheFr();
+buildServices();buildEmps();buildCal();buildSlots();updateSummary();setStep(1);
+render();
+if(window.lucide)lucide.createIcons();
+</script>
