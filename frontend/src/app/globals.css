@@ -281,6 +281,13 @@ h1, h2, h3, p { margin: 0; }
   flex: 0 0 auto;
 }
 
+/* ====== Cellule utilisateur (avatar + nom) dans les tables ====== */
+.cell-user { display: flex; align-items: center; gap: 10px; }
+.cell-user .ava { display: grid; place-items: center; width: 30px; height: 30px; border-radius: 9px;
+  background: var(--grad); color: var(--on-brand); font-size: 10px; font-weight: 700; flex: 0 0 auto; font-family: var(--font-display); }
+.cell-user .nm strong { display: block; font-size: 12px; }
+.cell-user .nm small { display: block; color: var(--muted); font-size: 9px; margin-top: 2px; }
+
 /* ====== Entity cards (services / employés) ====== */
 .entity-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(236px, 1fr)); gap: 13px; }
 .entity-card { display: flex; flex-direction: column; background: var(--surface); border: 1px solid var(--line);
