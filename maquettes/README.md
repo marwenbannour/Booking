@@ -31,8 +31,16 @@ Calendrier (jour/semaine/mois), Rendez-vous (liste + détail + création),
 Clients, Services, Employés, Disponibilités, WhatsApp (modèles + historique),
 Abonnement (quotas + facturation), Paramètres (onglets), Administration (multi-tenant).
 
-### ⏳ 03 — Application mobile (`03-mobile.html`) — à venir
-Espace Client + Espace Professionnel.
+### ✅ 03 — Application mobile (`03-mobile.html`)
+Cadre téléphone interactif avec bascule **Espace Client / Espace Pro** et barre
+d'onglets par espace.
+- **Client** : Accueil, Recherche, Services d'un établissement, Réservation
+  (employé → date → heure), Confirmation, Mes RDV, Notifications, Profil.
+- **Pro** : Dashboard (KPI + mini-graphes), Agenda (timeline), Clients,
+  Notifications, Profil/paramètres.
+
+### 🧭 Page d'accueil (`index.html`)
+Hub qui relie les 3 prototypes — point d'entrée à ouvrir en premier.
 
 ## Utilisation
 Chaque fichier est autonome (HTML/CSS/JS, dépendances via CDN). Ouvrir directement
@@ -41,7 +49,7 @@ dans un navigateur. Boutons de bascule 🌙 thème et AR/FR en haut de chaque ma
 ## Ordre de réalisation
 1. ✅ Site public
 2. ✅ Dashboard SaaS
-3. ⏳ Application mobile
-4. ⏳ Prototype global (navigation inter-écrans)
+3. ✅ Application mobile
+4. ✅ Prototype interactif (navigation dans chaque maquette + hub `index.html`)
 5. ⏳ Validation des parcours
 6. ⏳ Développement

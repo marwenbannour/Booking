@@ -1,0 +1,596 @@
+<title>Booking+ Mobile</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Noto+Sans+Arabic:wght@400;500;600;700&display=swap">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/lucide/0.344.0/lucide.min.js"></script>
+<style>
+/* Layout: an interactive phone frame on a studio backdrop; screens swap inside; a Client/Pro space switch and a per-space bottom tab bar drive navigation. */
+:root{
+  --ink:#0A1B2E; --ink-2:#102A43; --teal:#14B8A6; --green:#22C55E; --mist:#F1F5F9; --white:#FFFFFF;
+  --bg:#EAF0F7; --sheet:#FFFFFF; --fg:#0A1B2E; --muted:#5A6B82; --faint:#8294AC; --border:#E8EEF5;
+  --ring:rgba(20,184,166,.25); --amber:#F59E0B; --red:#EF4444; --blue:#3B82F6; --violet:#8B5CF6;
+  --grad:linear-gradient(135deg,var(--teal),var(--green));
+  --grad-ink:linear-gradient(165deg,#102A43,#0A1B2E);
+  --shadow:0 1px 2px rgba(10,27,46,.05),0 8px 22px -12px rgba(10,27,46,.18);
+  --r:18px; --r-sm:12px;
+  color-scheme:light;
+}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#060D18; --sheet:#0D1E31; --fg:#E7EFF8; --muted:#9BAEC6; --faint:#6E85A1; --border:#1A3048; --mist:#122338;
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 10px 28px -12px rgba(0,0,0,.7); color-scheme:dark;
+}}
+:root[data-theme="dark"]{
+  --bg:#060D18; --sheet:#0D1E31; --fg:#E7EFF8; --muted:#9BAEC6; --faint:#6E85A1; --border:#1A3048; --mist:#122338;
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 10px 28px -12px rgba(0,0,0,.7); color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%}
+body{background:
+    radial-gradient(900px 500px at 15% 0%,color-mix(in srgb,var(--teal) 10%,transparent),transparent 60%),
+    radial-gradient(900px 600px at 100% 100%,color-mix(in srgb,var(--violet) 8%,transparent),transparent 55%),
+    var(--bg);
+  color:var(--fg);font-family:"Sora",system-ui,-apple-system,sans-serif;line-height:1.5;-webkit-font-smoothing:antialiased;
+  padding:30px max(16px,env(safe-area-inset-left,0px)) 40px}
+[dir="rtl"]{font-family:"Noto Sans Arabic","Sora",sans-serif}
+h1,h2,h3,h4{margin:0;font-weight:700;letter-spacing:-.02em;line-height:1.18}
+p{margin:0}button{font-family:inherit;cursor:pointer}a{color:inherit;text-decoration:none}
+img{max-width:100%}:focus-visible{outline:2px solid var(--teal);outline-offset:2px}
+
+/* page header */
+.page-head{max-width:420px;margin:0 auto 22px;text-align:center}
+.page-head .brand{display:inline-flex;align-items:center;gap:10px;font-weight:800;font-size:20px;margin-bottom:10px}
+.page-head .brand .logo{width:36px;height:36px;border-radius:10px;background:var(--grad);display:grid;place-items:center;color:#042018}
+.page-head .brand .logo i{width:20px;height:20px}
+.page-head p{color:var(--muted);font-size:13.5px}
+
+/* space switch */
+.space-switch{display:inline-flex;background:var(--sheet);border:1px solid var(--border);border-radius:30px;padding:4px;margin:0 auto 10px;box-shadow:var(--shadow)}
+.space-switch button{border:0;background:transparent;padding:9px 20px;border-radius:24px;font-size:13.5px;font-weight:600;color:var(--muted);display:inline-flex;align-items:center;gap:7px}
+.space-switch button i{width:15px;height:15px}
+.space-switch button.active{background:var(--ink);color:#fff}
+:root[data-theme="dark"] .space-switch button.active,:root:not([data-theme="light"]) .space-switch button.active{background:var(--teal);color:#042018}
+.topctrl{display:flex;gap:8px;justify-content:center;margin-bottom:22px}
+.mini-ic{width:36px;height:36px;border-radius:10px;border:1px solid var(--border);background:var(--sheet);color:var(--muted);display:grid;place-items:center}
+.mini-ic i{width:16px;height:16px}
+
+/* phone */
+.phone{width:390px;max-width:100%;margin:0 auto;background:#05101e;border-radius:46px;padding:11px;box-shadow:0 40px 80px -30px rgba(10,27,46,.55),0 0 0 1px rgba(255,255,255,.04);position:relative}
+.screen{background:var(--sheet);border-radius:36px;overflow:hidden;height:770px;max-height:80vh;position:relative;display:flex;flex-direction:column}
+.notch{position:absolute;top:0;left:50%;transform:translateX(-50%);width:130px;height:26px;background:#05101e;border-radius:0 0 16px 16px;z-index:30}
+.statusbar{height:40px;display:flex;align-items:flex-end;justify-content:space-between;padding:0 24px 5px;font-size:12px;font-weight:600;flex:0 0 auto}
+.statusbar .r{display:flex;gap:6px;align-items:center}
+.statusbar i{width:15px;height:15px}
+
+/* app area */
+.app{flex:1;overflow-y:auto;overflow-x:hidden;position:relative}
+.app::-webkit-scrollbar{width:0}
+.view{display:none;padding:0 0 16px;animation:fade .3s ease}
+.view.active{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1}}
+@media(prefers-reduced-motion:reduce){.view{animation:none}}
+.px{padding-inline:18px}
+
+/* app header bits */
+.ahead{padding:6px 18px 12px;display:flex;align-items:center;gap:12px}
+.ahead .av{width:42px;height:42px;border-radius:13px;background:var(--grad);display:grid;place-items:center;color:#042018;font-weight:700;flex:0 0 auto}
+.ahead .hi small{font-size:12px;color:var(--muted)}
+.ahead .hi b{font-size:16px}
+.ahead .sp{margin-inline-start:auto;display:flex;gap:8px}
+.hbtn{width:38px;height:38px;border-radius:11px;border:1px solid var(--border);background:var(--sheet);color:var(--muted);display:grid;place-items:center;position:relative}
+.hbtn i{width:18px;height:18px}
+.hbtn .dot{position:absolute;top:8px;inset-inline-end:9px;width:7px;height:7px;border-radius:50%;background:var(--red);border:1.5px solid var(--sheet)}
+
+.search{margin:4px 18px 16px;position:relative;display:flex;align-items:center}
+.search i{position:absolute;inset-inline-start:14px;width:17px;height:17px;color:var(--faint)}
+.search input{width:100%;padding:12px 14px 12px 42px;border:1px solid var(--border);border-radius:14px;background:var(--mist);color:var(--fg);font-size:14px;font-family:inherit}
+.search input:focus{outline:none;border-color:var(--teal);background:var(--sheet)}
+[dir="rtl"] .search input{padding:12px 42px 12px 14px}
+
+.sec-h{display:flex;align-items:center;justify-content:space-between;padding:0 18px;margin:18px 0 12px}
+.sec-h b{font-size:15.5px}
+.sec-h a{font-size:12.5px;color:var(--teal);font-weight:600}
+
+/* category chips */
+.cats{display:flex;gap:10px;overflow-x:auto;padding:0 18px 4px;scrollbar-width:none}
+.cats::-webkit-scrollbar{display:none}
+.cat{flex:0 0 auto;text-align:center}
+.cat .ic{width:62px;height:62px;border-radius:18px;background:var(--mist);display:grid;place-items:center;color:var(--teal);margin-bottom:6px}
+.cat .ic i{width:24px;height:24px}
+.cat small{font-size:11.5px;color:var(--muted);font-weight:500}
+
+/* establishment card */
+.estab-card{margin:0 18px 12px;background:var(--sheet);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;box-shadow:var(--shadow)}
+.estab-card .cover{height:96px;background:var(--grad-ink);position:relative;display:flex;align-items:flex-end;padding:12px}
+.estab-card .cover .badge{background:rgba(255,255,255,.14);color:#fff;font-size:11px;font-weight:600;padding:4px 10px;border-radius:20px;backdrop-filter:blur(6px)}
+.estab-card .cover .logo{position:absolute;bottom:-20px;inset-inline-start:14px;width:52px;height:52px;border-radius:14px;background:var(--grad);display:grid;place-items:center;color:#042018;border:3px solid var(--sheet)}
+.estab-card .cover .logo i{width:24px;height:24px}
+.estab-card .body{padding:26px 14px 14px}
+.estab-card h3{font-size:16px}
+.estab-card .meta{display:flex;gap:12px;color:var(--muted);font-size:12.5px;margin-top:5px;flex-wrap:wrap}
+.estab-card .meta span{display:inline-flex;align-items:center;gap:4px}
+.estab-card .meta i{width:13px;height:13px}
+.estab-card .meta .star{color:#F5A524}
+
+/* list item (service / rdv) */
+.li{display:flex;align-items:center;gap:13px;margin:0 18px 10px;background:var(--sheet);border:1px solid var(--border);border-radius:var(--r);padding:13px;box-shadow:var(--shadow)}
+.li .ic{width:46px;height:46px;border-radius:13px;background:var(--mist);display:grid;place-items:center;color:var(--teal);flex:0 0 auto}
+.li .ic i{width:22px;height:22px}
+.li .ic.ph{background:var(--grad);color:#042018;font-weight:700;font-size:15px}
+.li .tx{min-width:0;flex:1}
+.li .tx b{font-size:14.5px;display:block}
+.li .tx small{font-size:12px;color:var(--muted);display:flex;align-items:center;gap:5px}
+.li .tx small i{width:12px;height:12px}
+.li .end{margin-inline-start:auto;text-align:end;flex:0 0 auto}
+.li .price{color:var(--teal);font-weight:700;font-size:15px}
+.li .chev{color:var(--faint)}
+.li .chev i{width:18px;height:18px}
+.li.sel{border-color:var(--teal);box-shadow:0 0 0 2px var(--ring)}
+
+.chip{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:600;padding:3px 9px;border-radius:20px}
+.chip.ok{background:color-mix(in srgb,var(--green) 15%,transparent);color:var(--green)}
+.chip.wait{background:color-mix(in srgb,var(--amber) 17%,transparent);color:#C57C04}
+.chip.no{background:color-mix(in srgb,var(--red) 14%,transparent);color:var(--red)}
+.chip.info{background:color-mix(in srgb,var(--blue) 14%,transparent);color:var(--blue)}
+
+/* employee picks */
+.emp-strip{display:flex;gap:12px;overflow-x:auto;padding:0 18px 6px;scrollbar-width:none}
+.emp-strip::-webkit-scrollbar{display:none}
+.epick{flex:0 0 auto;width:88px;text-align:center;padding:12px 6px;border:1.5px solid var(--border);border-radius:16px;background:var(--sheet)}
+.epick.sel{border-color:var(--teal);box-shadow:0 0 0 2px var(--ring)}
+.epick .av{width:50px;height:50px;border-radius:50%;background:var(--grad);display:grid;place-items:center;color:#042018;font-weight:700;margin:0 auto 7px}
+.epick b{font-size:12.5px;display:block}
+.epick small{font-size:10.5px;color:var(--muted)}
+
+/* date + slots */
+.dates{display:flex;gap:9px;overflow-x:auto;padding:0 18px 6px;scrollbar-width:none}
+.dates::-webkit-scrollbar{display:none}
+.date{flex:0 0 auto;width:56px;text-align:center;padding:11px 0;border:1.5px solid var(--border);border-radius:14px;background:var(--sheet)}
+.date small{font-size:11px;color:var(--muted);display:block}
+.date b{font-size:18px}
+.date.sel{background:var(--grad);border-color:transparent;color:#042018}
+.date.sel small{color:#063}
+.date.off{opacity:.4}
+.slots{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;padding:0 18px}
+.slot{padding:11px 0;text-align:center;border:1.5px solid var(--border);border-radius:12px;font-size:13.5px;font-weight:600;background:var(--sheet)}
+.slot.sel{background:var(--grad);border-color:transparent;color:#042018}
+.slot.off{opacity:.4;text-decoration:line-through}
+
+/* bottom bar in-screen (booking) */
+.sheet-bar{position:sticky;bottom:0;background:var(--sheet);border-top:1px solid var(--border);padding:14px 18px;display:flex;align-items:center;gap:14px}
+.sheet-bar .tot small{font-size:11px;color:var(--muted);display:block}
+.sheet-bar .tot b{font-size:19px;color:var(--teal)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:0;font-weight:600;font-size:14.5px;border-radius:14px;padding:13px 20px;background:var(--grad);color:#042018;box-shadow:0 8px 18px -10px rgba(20,184,166,.7)}
+.btn.block{width:100%}
+.btn.ghost{background:transparent;border:1.5px solid var(--border);color:var(--fg);box-shadow:none}
+.btn i{width:17px;height:17px}
+
+/* steps mini */
+.steps-mini{display:flex;gap:6px;padding:0 18px;margin-bottom:14px}
+.steps-mini .s{flex:1;height:5px;border-radius:4px;background:var(--border)}
+.steps-mini .s.on{background:var(--grad)}
+
+/* confirmation */
+.confirm-m{text-align:center;padding:40px 24px 0}
+.confirm-m .seal{width:84px;height:84px;border-radius:50%;background:var(--grad);display:grid;place-items:center;color:#042018;margin:0 auto 20px;box-shadow:0 16px 36px -12px rgba(34,197,94,.7);animation:pop .5s cubic-bezier(.2,1.4,.4,1)}
+@keyframes pop{from{transform:scale(.6);opacity:0}to{transform:scale(1);opacity:1}}
+.confirm-m .seal i{width:42px;height:42px}
+.confirm-m h2{font-size:22px}
+.confirm-m p{color:var(--muted);font-size:14px;margin-top:8px}
+.ticket{margin:24px 18px;border:1px solid var(--border);border-radius:var(--r);overflow:hidden;text-align:start}
+.ticket .t-top{background:var(--grad-ink);color:#fff;padding:14px 16px;display:flex;align-items:center;gap:11px}
+.ticket .t-top .logo{width:40px;height:40px;border-radius:11px;background:var(--grad);display:grid;place-items:center;color:#042018}
+.ticket .t-top .logo i{width:20px;height:20px}
+.ticket .t-top small{color:#AFC3DA;font-size:11.5px;display:block}
+.ticket .t-body{padding:14px 16px}
+.trow{display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px dashed var(--border);font-size:13.5px}
+.trow:last-child{border-bottom:0}
+.trow span{color:var(--muted)}
+.wa-note{display:flex;gap:11px;align-items:center;background:color-mix(in srgb,var(--green) 11%,transparent);border:1px solid color-mix(in srgb,var(--green) 28%,transparent);border-radius:14px;padding:12px;margin:0 18px}
+.wa-note .ic{width:34px;height:34px;border-radius:9px;background:var(--green);color:#042018;display:grid;place-items:center;flex:0 0 auto}
+.wa-note .ic i{width:17px;height:17px}
+.wa-note p{font-size:12px}
+
+/* tabs inside (mes rdv) */
+.inner-tabs{display:flex;gap:6px;margin:0 18px 14px;background:var(--mist);padding:4px;border-radius:12px}
+.inner-tabs button{flex:1;border:0;background:transparent;padding:9px;border-radius:9px;font-size:13px;font-weight:600;color:var(--muted)}
+.inner-tabs button.active{background:var(--sheet);color:var(--fg);box-shadow:var(--shadow)}
+
+/* notifications */
+.notif{display:flex;gap:12px;margin:0 18px 10px;padding:13px;border:1px solid var(--border);border-radius:14px;background:var(--sheet)}
+.notif .ic{width:38px;height:38px;border-radius:11px;display:grid;place-items:center;flex:0 0 auto}
+.notif .ic i{width:18px;height:18px}
+.notif .tx b{font-size:13.5px}
+.notif .tx p{font-size:12.5px;color:var(--muted);margin-top:2px}
+.notif time{font-size:11px;color:var(--faint);margin-inline-start:auto;flex:0 0 auto}
+.notif.unread{background:color-mix(in srgb,var(--teal) 6%,transparent);border-color:color-mix(in srgb,var(--teal) 25%,transparent)}
+
+/* profile */
+.prof-head{text-align:center;padding:14px 18px 20px}
+.prof-head .av{width:76px;height:76px;border-radius:24px;background:var(--grad);display:grid;place-items:center;color:#042018;font-weight:700;font-size:26px;margin:0 auto 12px}
+.prof-head h2{font-size:19px}
+.prof-head p{color:var(--muted);font-size:13px;margin-top:2px}
+.menu{margin:0 18px}
+.menu-item{display:flex;align-items:center;gap:13px;padding:14px 4px;border-bottom:1px solid var(--border);font-size:14.5px;font-weight:500}
+.menu-item .ic{width:38px;height:38px;border-radius:11px;background:var(--mist);display:grid;place-items:center;color:var(--teal);flex:0 0 auto}
+.menu-item .ic i{width:18px;height:18px}
+.menu-item .chev{margin-inline-start:auto;color:var(--faint)}
+.menu-item .chev i{width:18px;height:18px}
+[dir="rtl"] .menu-item .chev i{transform:scaleX(-1)}
+
+/* pro dashboard */
+.kpi2{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:0 18px;margin-bottom:6px}
+.kpi2 .k{background:var(--sheet);border:1px solid var(--border);border-radius:16px;padding:15px;box-shadow:var(--shadow)}
+.kpi2 .k .ic{width:36px;height:36px;border-radius:10px;display:grid;place-items:center;margin-bottom:10px}
+.kpi2 .k .ic i{width:18px;height:18px}
+.kpi2 .k .v{font-size:24px;font-weight:800}
+.kpi2 .k .l{font-size:12px;color:var(--muted)}
+.kpi2 .k .d{font-size:11px;color:var(--green);font-weight:600;margin-top:4px}
+.minibars{display:flex;align-items:flex-end;gap:6px;height:70px;padding:10px 18px 0}
+.minibars .b{flex:1;background:var(--grad);border-radius:5px}
+
+/* pro agenda timeline */
+.tl{padding:0 18px}
+.tl-item{display:flex;gap:12px;padding:3px 0}
+.tl-item .time{width:48px;flex:0 0 auto;font-size:12px;color:var(--muted);font-weight:600;padding-top:14px;font-variant-numeric:tabular-nums}
+.tl-item .ev{flex:1;border-radius:13px;padding:12px 14px;margin-bottom:8px;border-inline-start:3px solid var(--teal)}
+.tl-item .ev.teal{background:color-mix(in srgb,var(--teal) 12%,transparent);border-color:var(--teal)}
+.tl-item .ev.blue{background:color-mix(in srgb,var(--blue) 11%,transparent);border-color:var(--blue)}
+.tl-item .ev.amber{background:color-mix(in srgb,var(--amber) 13%,transparent);border-color:var(--amber)}
+.tl-item .ev.green{background:color-mix(in srgb,var(--green) 12%,transparent);border-color:var(--green)}
+.tl-item .ev b{font-size:14px}
+.tl-item .ev small{font-size:12px;color:var(--muted);display:block}
+
+/* bottom nav */
+.tabbar{flex:0 0 auto;display:flex;background:var(--sheet);border-top:1px solid var(--border);padding:8px 6px calc(8px + env(safe-area-inset-bottom,0px));position:relative;z-index:20}
+.tab{flex:1;background:transparent;border:0;display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 0;color:var(--faint);font-size:10.5px;font-weight:600}
+.tab i{width:21px;height:21px}
+.tab.active{color:var(--teal)}
+.tab.fab{position:relative}
+.tab.fab .fb{width:50px;height:50px;border-radius:16px;background:var(--grad);color:#042018;display:grid;place-items:center;margin-top:-22px;box-shadow:0 10px 22px -8px rgba(20,184,166,.8)}
+.tab.fab .fb i{width:24px;height:24px}
+
+/* section banner (client home hero) */
+.hero-m{margin:4px 18px 8px;background:var(--grad-ink);border-radius:var(--r);padding:18px;color:#fff;position:relative;overflow:hidden}
+.hero-m h3{font-size:17px;max-width:80%}
+.hero-m p{color:#AFC3DA;font-size:12.5px;margin-top:6px;max-width:85%}
+.hero-m .btn{margin-top:12px;padding:9px 16px;font-size:13px}
+.hero-m .deco{position:absolute;inset-inline-end:-20px;bottom:-20px;width:120px;height:120px;border-radius:50%;background:rgba(20,184,166,.18)}
+
+.hint{max-width:420px;margin:18px auto 0;text-align:center;color:var(--muted);font-size:12.5px}
+.hint kbd{background:var(--sheet);border:1px solid var(--border);border-radius:6px;padding:1px 7px;font-family:inherit;font-size:12px}
+#toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(160%);background:var(--ink);color:#fff;padding:11px 18px;border-radius:12px;font-size:13px;font-weight:600;z-index:100;transition:transform .35s cubic-bezier(.2,1.2,.4,1)}
+:root[data-theme="dark"] #toast,:root:not([data-theme="light"]) #toast{background:var(--teal);color:#042018}
+</style>
+
+<div class="page-head">
+  <div class="brand"><span class="logo"><i data-lucide="calendar-check-2"></i></span> Booking+</div>
+  <p>Application mobile — prototype interactif (iOS / Android)</p>
+</div>
+
+<div style="text-align:center">
+  <div class="space-switch">
+    <button class="active" id="sw-client" onclick="setSpace('client')"><i data-lucide="user"></i> Espace Client</button>
+    <button id="sw-pro" onclick="setSpace('pro')"><i data-lucide="briefcase"></i> Espace Pro</button>
+  </div>
+</div>
+<div class="topctrl">
+  <button class="mini-ic" onclick="toggleTheme()" title="Thème"><i data-lucide="moon" id="themeIcon"></i></button>
+  <button class="mini-ic" onclick="toggleLang()" title="AR/FR" id="langBtn" style="font-weight:700;font-size:12px;width:auto;padding:0 12px">AR</button>
+</div>
+
+<div class="phone">
+  <div class="screen">
+    <div class="notch"></div>
+    <div class="statusbar">
+      <span id="sbTime">9:41</span>
+      <span class="r"><i data-lucide="signal"></i><i data-lucide="wifi"></i><i data-lucide="battery-full"></i></span>
+    </div>
+
+    <div class="app" id="app">
+
+      <!-- ========== CLIENT : ACCUEIL ========== -->
+      <section class="view active" id="c-home" data-space="client">
+        <div class="ahead">
+          <span class="av">NB</span>
+          <div class="hi"><small>Bonjour 👋</small><b>Nadia Ben Salah</b></div>
+          <div class="sp"><button class="hbtn" onclick="goc('c-notif')"><i data-lucide="bell"></i><span class="dot"></span></button></div>
+        </div>
+        <div class="search" onclick="goc('c-search')"><i data-lucide="search"></i><input placeholder="Rechercher un service, un salon…" readonly></div>
+        <div class="hero-m">
+          <span class="deco"></span>
+          <h3>Trouvez et réservez votre prochain rendez-vous</h3>
+          <p>Réservation en ligne · rappels WhatsApp · confirmation immédiate.</p>
+          <button class="btn" onclick="goc('c-search')"><i data-lucide="calendar-plus"></i> Réserver maintenant</button>
+        </div>
+        <div class="sec-h"><b>Catégories</b></div>
+        <div class="cats">
+          <div class="cat" onclick="goc('c-search')"><div class="ic"><i data-lucide="scissors"></i></div><small>Coiffure</small></div>
+          <div class="cat" onclick="goc('c-search')"><div class="ic"><i data-lucide="sparkles"></i></div><small>Esthétique</small></div>
+          <div class="cat" onclick="goc('c-search')"><div class="ic"><i data-lucide="flower-2"></i></div><small>Spa</small></div>
+          <div class="cat" onclick="goc('c-search')"><div class="ic"><i data-lucide="hand"></i></div><small>Onglerie</small></div>
+          <div class="cat" onclick="goc('c-search')"><div class="ic"><i data-lucide="stethoscope"></i></div><small>Santé</small></div>
+        </div>
+        <div class="sec-h"><b>Établissements populaires</b><a onclick="goc('c-search')">Voir tout</a></div>
+        <div class="estab-card" onclick="goc('c-services')">
+          <div class="cover"><span class="logo"><i data-lucide="scissors"></i></span><span class="badge">★ 4.8 · Ouvert</span></div>
+          <div class="body"><h3>Beauty Studio</h3><div class="meta"><span class="star">★ 4.8</span><span>(128 avis)</span><span><i data-lucide="map-pin"></i> Les Berges du Lac</span></div></div>
+        </div>
+        <div class="estab-card" onclick="goc('c-services')">
+          <div class="cover" style="background:linear-gradient(165deg,#134e4a,#0A1B2E)"><span class="logo"><i data-lucide="flower-2"></i></span><span class="badge">★ 4.9 · Ouvert</span></div>
+          <div class="body"><h3>Spa Jasmin</h3><div class="meta"><span class="star">★ 4.9</span><span>(86 avis)</span><span><i data-lucide="map-pin"></i> Sousse</span></div></div>
+        </div>
+      </section>
+
+      <!-- ========== CLIENT : RECHERCHE ========== -->
+      <section class="view" id="c-search" data-space="client">
+        <div class="ahead"><button class="hbtn" onclick="goc('c-home')"><i data-lucide="arrow-left"></i></button><div class="hi"><b>Recherche</b></div></div>
+        <div class="search"><i data-lucide="search"></i><input placeholder="Salon, service, ville…" value="Les Berges du Lac"></div>
+        <div class="cats" style="margin-bottom:8px">
+          <div class="cat"><div class="ic" style="background:var(--grad);color:#042018"><i data-lucide="list"></i></div><small>Tout</small></div>
+          <div class="cat"><div class="ic"><i data-lucide="scissors"></i></div><small>Coiffure</small></div>
+          <div class="cat"><div class="ic"><i data-lucide="sparkles"></i></div><small>Soin</small></div>
+          <div class="cat"><div class="ic"><i data-lucide="hand"></i></div><small>Ongles</small></div>
+        </div>
+        <div class="sec-h"><b>6 résultats</b><a>Trier</a></div>
+        <div class="estab-card" onclick="goc('c-services')"><div class="cover"><span class="logo"><i data-lucide="scissors"></i></span><span class="badge">★ 4.8</span></div><div class="body"><h3>Beauty Studio</h3><div class="meta"><span class="star">★ 4.8</span><span><i data-lucide="map-pin"></i> 1,2 km</span><span><i data-lucide="clock"></i> Ouvert</span></div></div></div>
+        <div class="estab-card" onclick="goc('c-services')"><div class="cover" style="background:linear-gradient(165deg,#1e3a5f,#0A1B2E)"><span class="logo"><i data-lucide="smile"></i></span><span class="badge">★ 4.6</span></div><div class="body"><h3>Dental Care</h3><div class="meta"><span class="star">★ 4.6</span><span><i data-lucide="map-pin"></i> 2,0 km</span><span><i data-lucide="clock"></i> Ouvert</span></div></div></div>
+        <div class="estab-card" onclick="goc('c-services')"><div class="cover" style="background:linear-gradient(165deg,#134e4a,#0A1B2E)"><span class="logo"><i data-lucide="dumbbell"></i></span><span class="badge">★ 4.7</span></div><div class="body"><h3>FitZone</h3><div class="meta"><span class="star">★ 4.7</span><span><i data-lucide="map-pin"></i> 3,4 km</span><span><i data-lucide="clock"></i> Ferme à 20h</span></div></div></div>
+      </section>
+
+      <!-- ========== CLIENT : SERVICES (établissement) ========== -->
+      <section class="view" id="c-services" data-space="client">
+        <div class="ahead"><button class="hbtn" onclick="goc('c-search')"><i data-lucide="arrow-left"></i></button><div class="hi"><small>Beauty Studio</small><b>Nos services</b></div><div class="sp"><button class="hbtn"><i data-lucide="heart"></i></button></div></div>
+        <div class="estab-card" style="margin-bottom:16px"><div class="cover"><span class="logo"><i data-lucide="scissors"></i></span><span class="badge">★ 4.8 · 128 avis</span></div><div class="body"><h3>Beauty Studio</h3><div class="meta"><span><i data-lucide="map-pin"></i> Les Berges du Lac, Tunis</span><span><i data-lucide="clock"></i> 9h — 18h</span></div></div></div>
+        <div class="inner-tabs"><button class="active">Services</button><button onclick="toast('À propos (démo)')">À propos</button><button onclick="toast('Avis (démo)')">Avis</button></div>
+        <div class="li" onclick="startBooking('Coupe + Brushing','40 DT','45 min')"><span class="ic"><i data-lucide="scissors"></i></span><div class="tx"><b>Coupe + Brushing</b><small><i data-lucide="clock"></i> 45 min</small></div><div class="end"><div class="price">40 DT</div></div></div>
+        <div class="li" onclick="startBooking('Coloration','80 DT','90 min')"><span class="ic"><i data-lucide="palette"></i></span><div class="tx"><b>Coloration</b><small><i data-lucide="clock"></i> 90 min</small></div><div class="end"><div class="price">80 DT</div></div></div>
+        <div class="li" onclick="startBooking('Soin du visage','70 DT','60 min')"><span class="ic"><i data-lucide="sparkles"></i></span><div class="tx"><b>Soin du visage</b><small><i data-lucide="clock"></i> 60 min</small></div><div class="end"><div class="price">70 DT</div></div></div>
+        <div class="li" onclick="startBooking('Épilation laser','90 DT','30 min')"><span class="ic"><i data-lucide="zap"></i></span><div class="tx"><b>Épilation laser</b><small><i data-lucide="clock"></i> 30 min</small></div><div class="end"><div class="price">90 DT</div></div></div>
+        <div class="li" onclick="startBooking('Manucure','35 DT','40 min')"><span class="ic"><i data-lucide="hand"></i></span><div class="tx"><b>Manucure</b><small><i data-lucide="clock"></i> 40 min</small></div><div class="end"><div class="price">35 DT</div></div></div>
+      </section>
+
+      <!-- ========== CLIENT : RÉSERVATION (employé + date + heure) ========== -->
+      <section class="view" id="c-book" data-space="client">
+        <div class="ahead"><button class="hbtn" onclick="goc('c-services')"><i data-lucide="arrow-left"></i></button><div class="hi"><small id="bkSvc">Coupe + Brushing</small><b>Réserver</b></div></div>
+        <div class="steps-mini"><div class="s on"></div><div class="s on"></div><div class="s"></div></div>
+        <div class="sec-h"><b>Choisissez un professionnel</b></div>
+        <div class="emp-strip">
+          <div class="epick sel" onclick="pickEmp(this,'Premier dispo')"><div class="av"><i data-lucide="users" style="width:22px;height:22px"></i></div><b>Sans préf.</b><small>1er dispo</small></div>
+          <div class="epick" onclick="pickEmp(this,'Carla Gómez')"><div class="av">CG</div><b>Carla</b><small>★ 4.9</small></div>
+          <div class="epick" onclick="pickEmp(this,'Melina Rojas')"><div class="av">MR</div><b>Melina</b><small>★ 4.8</small></div>
+          <div class="epick" onclick="pickEmp(this,'Sofía Díaz')"><div class="av">SD</div><b>Sofía</b><small>★ 4.9</small></div>
+        </div>
+        <div class="sec-h"><b>Date</b><span style="font-size:12.5px;color:var(--muted)">Mai 2026</span></div>
+        <div class="dates">
+          <div class="date" onclick="pickDate(this)"><small>Lun</small><b>11</b></div>
+          <div class="date" onclick="pickDate(this)"><small>Mar</small><b>12</b></div>
+          <div class="date sel" onclick="pickDate(this)"><small>Mer</small><b>13</b></div>
+          <div class="date" onclick="pickDate(this)"><small>Jeu</small><b>14</b></div>
+          <div class="date" onclick="pickDate(this)"><small>Ven</small><b>15</b></div>
+          <div class="date off"><small>Dim</small><b>17</b></div>
+          <div class="date" onclick="pickDate(this)"><small>Lun</small><b>18</b></div>
+        </div>
+        <div class="sec-h"><b>Créneaux disponibles</b></div>
+        <div class="slots" style="margin-bottom:14px">
+          <div class="slot" onclick="pickSlot(this)">09:00</div>
+          <div class="slot sel" onclick="pickSlot(this)">10:00</div>
+          <div class="slot off">10:30</div>
+          <div class="slot" onclick="pickSlot(this)">11:30</div>
+          <div class="slot" onclick="pickSlot(this)">14:00</div>
+          <div class="slot" onclick="pickSlot(this)">16:00</div>
+        </div>
+        <div class="sheet-bar">
+          <div class="tot"><small id="bkWhen">Mer. 13 mai · 10:00</small><b id="bkPrice">40 DT</b></div>
+          <button class="btn" style="margin-inline-start:auto" onclick="goc('c-confirm')">Confirmer <i data-lucide="arrow-right"></i></button>
+        </div>
+      </section>
+
+      <!-- ========== CLIENT : CONFIRMATION ========== -->
+      <section class="view" id="c-confirm" data-space="client">
+        <div class="confirm-m">
+          <div class="seal"><i data-lucide="check"></i></div>
+          <h2>Réservation confirmée !</h2>
+          <p>Un récapitulatif vous a été envoyé par WhatsApp.</p>
+        </div>
+        <div class="ticket">
+          <div class="t-top"><span class="logo"><i data-lucide="scissors"></i></span><div><b>Beauty Studio</b><small>Les Berges du Lac, Tunis</small></div></div>
+          <div class="t-body">
+            <div class="trow"><span>Service</span><b id="cfSvc">Coupe + Brushing</b></div>
+            <div class="trow"><span>Professionnel</span><b id="cfEmp">Premier disponible</b></div>
+            <div class="trow"><span>Date & heure</span><b id="cfWhen">Mer. 13 mai · 10:00</b></div>
+            <div class="trow"><span>Référence</span><b>#BK-2026-0481</b></div>
+            <div class="trow"><span>Total</span><b style="color:var(--teal)" id="cfPrice">40 DT</b></div>
+          </div>
+        </div>
+        <div class="wa-note"><span class="ic"><i data-lucide="message-circle"></i></span><p>Un <b style="color:var(--green)">rappel WhatsApp</b> vous sera envoyé 24h puis 2h avant.</p></div>
+        <div class="px" style="margin-top:20px;display:grid;gap:10px">
+          <button class="btn block" onclick="goc('c-rdv')"><i data-lucide="calendar-check"></i> Voir mes rendez-vous</button>
+          <button class="btn ghost block" onclick="goc('c-home')">Retour à l'accueil</button>
+        </div>
+      </section>
+
+      <!-- ========== CLIENT : MES RDV ========== -->
+      <section class="view" id="c-rdv" data-space="client">
+        <div class="ahead"><div class="hi"><b style="font-size:18px">Mes rendez-vous</b></div></div>
+        <div class="inner-tabs"><button class="active" onclick="rdvTab(this,'up')">À venir</button><button onclick="rdvTab(this,'past')">Passés</button></div>
+        <div id="rdv-up">
+          <div class="li"><span class="ic ph">BS</span><div class="tx"><b>Coupe + Brushing</b><small>Beauty Studio · Mer. 13 mai, 10:00</small></div><div class="end"><span class="chip ok">Confirmé</span></div></div>
+          <div class="li"><span class="ic ph">SJ</span><div class="tx"><b>Soin du visage</b><small>Spa Jasmin · Ven. 22 mai, 15:30</small></div><div class="end"><span class="chip wait">En attente</span></div></div>
+        </div>
+        <div id="rdv-past" style="display:none">
+          <div class="li" style="opacity:.75"><span class="ic ph">BS</span><div class="tx"><b>Coloration</b><small>Beauty Studio · 28 avr., 11:00</small></div><div class="end"><span class="chip ok">Terminé</span></div></div>
+          <div class="li" style="opacity:.75"><span class="ic ph">BS</span><div class="tx"><b>Manucure</b><small>Beauty Studio · 12 avr., 14:00</small></div><div class="end"><span class="chip no">Annulé</span></div></div>
+        </div>
+      </section>
+
+      <!-- ========== CLIENT : NOTIFICATIONS ========== -->
+      <section class="view" id="c-notif" data-space="client">
+        <div class="ahead"><button class="hbtn" onclick="goc('c-home')"><i data-lucide="arrow-left"></i></button><div class="hi"><b>Notifications</b></div><div class="sp"><button class="hbtn" onclick="toast('Tout lu ✓')"><i data-lucide="check-check"></i></button></div></div>
+        <div class="notif unread"><span class="ic" style="background:color-mix(in srgb,var(--green) 15%,transparent);color:var(--green)"><i data-lucide="message-circle"></i></span><div class="tx"><b>Rappel de rendez-vous</b><p>Votre RDV chez Beauty Studio est demain à 10:00.</p></div><time>2 min</time></div>
+        <div class="notif unread"><span class="ic" style="background:color-mix(in srgb,var(--teal) 15%,transparent);color:var(--teal)"><i data-lucide="check-circle-2"></i></span><div class="tx"><b>Réservation confirmée</b><p>Coupe + Brushing le 13 mai à 10:00.</p></div><time>1 h</time></div>
+        <div class="notif"><span class="ic" style="background:color-mix(in srgb,var(--amber) 16%,transparent);color:#C57C04"><i data-lucide="gift"></i></span><div class="tx"><b>Offre spéciale</b><p>-20% sur les soins du visage ce mois chez Spa Jasmin.</p></div><time>1 j</time></div>
+        <div class="notif"><span class="ic" style="background:color-mix(in srgb,var(--blue) 14%,transparent);color:var(--blue)"><i data-lucide="star"></i></span><div class="tx"><b>Donnez votre avis</b><p>Comment s'est passé votre RDV du 28 avril ?</p></div><time>3 j</time></div>
+      </section>
+
+      <!-- ========== CLIENT : PROFIL ========== -->
+      <section class="view" id="c-profil" data-space="client">
+        <div class="prof-head"><div class="av">NB</div><h2>Nadia Ben Salah</h2><p>nadia@exemple.com · +216 50 220 118</p></div>
+        <div class="menu">
+          <div class="menu-item" onclick="goc('c-rdv')"><span class="ic"><i data-lucide="calendar-check"></i></span> Mes rendez-vous <span class="chev"><i data-lucide="chevron-right"></i></span></div>
+          <div class="menu-item" onclick="toast('Favoris')"><span class="ic"><i data-lucide="heart"></i></span> Établissements favoris <span class="chev"><i data-lucide="chevron-right"></i></span></div>
+          <div class="menu-item" onclick="toast('Moyens de paiement')"><span class="ic"><i data-lucide="credit-card"></i></span> Moyens de paiement <span class="chev"><i data-lucide="chevron-right"></i></span></div>
+          <div class="menu-item" onclick="goc('c-notif')"><span class="ic"><i data-lucide="bell"></i></span> Notifications <span class="chev"><i data-lucide="chevron-right"></i></span></div>
+          <div class="menu-item" onclick="toggleLang()"><span class="ic"><i data-lucide="globe"></i></span> Langue · FR / AR <span class="chev"><i data-lucide="chevron-right"></i></span></div>
+          <div class="menu-item" onclick="toast('Aide & support')"><span class="ic"><i data-lucide="life-buoy"></i></span> Aide & support <span class="chev"><i data-lucide="chevron-right"></i></span></div>
+          <div class="menu-item" style="color:var(--red)" onclick="toast('Déconnexion (démo)')"><span class="ic" style="background:color-mix(in srgb,var(--red) 12%,transparent);color:var(--red)"><i data-lucide="log-out"></i></span> Se déconnecter</div>
+        </div>
+      </section>
+
+      <!-- ========== PRO : DASHBOARD ========== -->
+      <section class="view" id="p-dash" data-space="pro">
+        <div class="ahead"><span class="av">SB</span><div class="hi"><small>Beauty Studio</small><b>Bonjour Sarah 👋</b></div><div class="sp"><button class="hbtn" onclick="gop('p-notif')"><i data-lucide="bell"></i><span class="dot"></span></button></div></div>
+        <div class="kpi2">
+          <div class="k"><div class="ic" style="background:color-mix(in srgb,var(--teal) 13%,transparent);color:var(--teal)"><i data-lucide="calendar-check"></i></div><div class="v">128</div><div class="l">RDV ce mois</div><div class="d">↑ +12%</div></div>
+          <div class="k"><div class="ic" style="background:color-mix(in srgb,var(--blue) 13%,transparent);color:var(--blue)"><i data-lucide="users"></i></div><div class="v">256</div><div class="l">Clients</div><div class="d">↑ +6%</div></div>
+          <div class="k"><div class="ic" style="background:color-mix(in srgb,var(--green) 13%,transparent);color:var(--green)"><i data-lucide="wallet"></i></div><div class="v">4 580</div><div class="l">DT ce mois</div><div class="d">↑ +8%</div></div>
+          <div class="k"><div class="ic" style="background:color-mix(in srgb,var(--violet) 13%,transparent);color:var(--violet)"><i data-lucide="check-check"></i></div><div class="v">89%</div><div class="l">Confirmation</div><div class="d">↑ +4%</div></div>
+        </div>
+        <div class="sec-h"><b>RDV cette semaine</b></div>
+        <div class="minibars"><div class="b" style="height:45%"></div><div class="b" style="height:70%"></div><div class="b" style="height:55%"></div><div class="b" style="height:85%"></div><div class="b" style="height:72%"></div><div class="b" style="height:95%"></div><div class="b" style="height:30%"></div></div>
+        <div style="display:flex;justify-content:space-between;padding:4px 18px 0;font-size:10.5px;color:var(--faint)"><span>L</span><span>M</span><span>M</span><span>J</span><span>V</span><span>S</span><span>D</span></div>
+        <div class="sec-h"><b>Prochains RDV</b><a onclick="gop('p-rdv')">Voir tout</a></div>
+        <div class="li"><span class="ic ph">VR</span><div class="tx"><b>Valentina Ruiz</b><small>Manucure · 10:00</small></div><div class="end"><span class="chip ok">Confirmé</span></div></div>
+        <div class="li"><span class="ic ph">CB</span><div class="tx"><b>Camila Beltrán</b><small>Coloration · 11:30</small></div><div class="end"><span class="chip ok">Confirmé</span></div></div>
+        <div class="li"><span class="ic ph">MG</span><div class="tx"><b>Martina Giordano</b><small>Coupe · 16:00</small></div><div class="end"><span class="chip wait">Attente</span></div></div>
+      </section>
+
+      <!-- ========== PRO : AGENDA ========== -->
+      <section class="view" id="p-agenda" data-space="pro">
+        <div class="ahead"><div class="hi"><small>Jeudi 14 mai 2026</small><b style="font-size:17px">Agenda</b></div><div class="sp"><button class="hbtn" onclick="toast('Changer de vue')"><i data-lucide="calendar-days"></i></button><button class="hbtn" onclick="toast('Nouveau RDV')"><i data-lucide="plus"></i></button></div></div>
+        <div class="dates" style="margin-bottom:12px">
+          <div class="date" onclick="pickDate(this)"><small>Lun</small><b>11</b></div>
+          <div class="date" onclick="pickDate(this)"><small>Mar</small><b>12</b></div>
+          <div class="date" onclick="pickDate(this)"><small>Mer</small><b>13</b></div>
+          <div class="date sel" onclick="pickDate(this)"><small>Jeu</small><b>14</b></div>
+          <div class="date" onclick="pickDate(this)"><small>Ven</small><b>15</b></div>
+          <div class="date" onclick="pickDate(this)"><small>Sam</small><b>16</b></div>
+        </div>
+        <div class="tl">
+          <div class="tl-item"><span class="time">09:00</span><div class="ev teal"><b>Soin du visage</b><small>Sofía Castro · Melina R. · 60 min</small></div></div>
+          <div class="tl-item"><span class="time">10:00</span><div class="ev blue"><b>Manucure</b><small>Valentina Ruiz · Agustina L. · 40 min</small></div></div>
+          <div class="tl-item"><span class="time">11:30</span><div class="ev green"><b>Coloration</b><small>Camila Beltrán · Carla G. · 90 min</small></div></div>
+          <div class="tl-item"><span class="time">14:00</span><div class="ev teal"><b>Épilation laser</b><small>Luciana Ferreyra · Sofía D. · 30 min</small></div></div>
+          <div class="tl-item"><span class="time">16:00</span><div class="ev amber"><b>Coupe + Brushing</b><small>Martina Giordano · Carla G. · 45 min</small></div></div>
+        </div>
+      </section>
+
+      <!-- ========== PRO : CLIENTS ========== -->
+      <section class="view" id="p-clients" data-space="pro">
+        <div class="ahead"><div class="hi"><b style="font-size:17px">Clients</b><small>256 clients</small></div><div class="sp"><button class="hbtn" onclick="toast('Nouveau client')"><i data-lucide="user-plus"></i></button></div></div>
+        <div class="search"><i data-lucide="search"></i><input placeholder="Rechercher un client…"></div>
+        <div class="li"><span class="ic ph">SM</span><div class="tx"><b>Sofia Martin</b><small><i data-lucide="phone"></i> +216 50 123 456 · 12 RDV</small></div><div class="end"><span class="chip ok">Fidèle</span></div></div>
+        <div class="li"><span class="ic ph">KJ</span><div class="tx"><b>Karim Jebali</b><small><i data-lucide="phone"></i> +216 98 887 344 · 7 RDV</small></div><div class="end"><span class="chip ok">Fidèle</span></div></div>
+        <div class="li"><span class="ic ph">NS</span><div class="tx"><b>Noura Slim</b><small><i data-lucide="phone"></i> +216 55 321 987 · 3 RDV</small></div><div class="end"><span class="chip wait">Nouveau</span></div></div>
+        <div class="li"><span class="ic ph">YA</span><div class="tx"><b>Yassine Ammar</b><small><i data-lucide="phone"></i> +216 29 654 877 · 9 RDV</small></div><div class="end"><span class="chip ok">Fidèle</span></div></div>
+      </section>
+
+      <!-- ========== PRO : PROFIL / PARAMÈTRES ========== -->
+      <section class="view" id="p-profil" data-space="pro">
+        <div class="prof-head"><div class="av">SB</div><h2>Sarah Ben Ali</h2><p>Administratrice · Beauty Studio</p></div>
+        <div class="menu">
+          <div class="menu-item" onclick="toast('Profil établissement')"><span class="ic"><i data-lucide="building-2"></i></span> Profil de l'établissement <span class="chev"><i data-lucide="chevron-right"></i></span></div>
+          <div class="menu-item" onclick="toast('Services')"><span class="ic"><i data-lucide="scissors"></i></span> Services <span class="chev"><i data-lucide="chevron-right"></i></span></div>
+          <div class="menu-item" onclick="toast('Équipe')"><span class="ic"><i data-lucide="user-cog"></i></span> Équipe & employés <span class="chev"><i data-lucide="chevron-right"></i></span></div>
+          <div class="menu-item" onclick="toast('Horaires')"><span class="ic"><i data-lucide="clock"></i></span> Horaires & disponibilités <span class="chev"><i data-lucide="chevron-right"></i></span></div>
+          <div class="menu-item" onclick="toast('WhatsApp')"><span class="ic" style="color:var(--green)"><i data-lucide="message-circle"></i></span> Modèles WhatsApp <span class="chev"><i data-lucide="chevron-right"></i></span></div>
+          <div class="menu-item" onclick="toast('Abonnement Pro')"><span class="ic"><i data-lucide="credit-card"></i></span> Abonnement · <b style="color:var(--teal);font-weight:600">Pro</b> <span class="chev"><i data-lucide="chevron-right"></i></span></div>
+          <div class="menu-item" style="color:var(--red)" onclick="toast('Déconnexion (démo)')"><span class="ic" style="background:color-mix(in srgb,var(--red) 12%,transparent);color:var(--red)"><i data-lucide="log-out"></i></span> Se déconnecter</div>
+        </div>
+      </section>
+
+      <!-- ========== PRO : NOTIFICATIONS ========== -->
+      <section class="view" id="p-notif" data-space="pro">
+        <div class="ahead"><button class="hbtn" onclick="gop('p-dash')"><i data-lucide="arrow-left"></i></button><div class="hi"><b>Notifications</b></div></div>
+        <div class="notif unread"><span class="ic" style="background:color-mix(in srgb,var(--teal) 15%,transparent);color:var(--teal)"><i data-lucide="calendar-plus"></i></span><div class="tx"><b>Nouvelle réservation</b><p>Valentina Ruiz · Manucure demain 10:00.</p></div><time>5 min</time></div>
+        <div class="notif unread"><span class="ic" style="background:color-mix(in srgb,var(--red) 13%,transparent);color:var(--red)"><i data-lucide="calendar-x"></i></span><div class="tx"><b>Annulation</b><p>Emma Navarro a annulé son RDV du 16 mai.</p></div><time>40 min</time></div>
+        <div class="notif"><span class="ic" style="background:color-mix(in srgb,var(--green) 15%,transparent);color:var(--green)"><i data-lucide="check-check"></i></span><div class="tx"><b>Rappel livré</b><p>Camila Beltrán a confirmé sa présence.</p></div><time>2 h</time></div>
+      </section>
+
+    </div>
+
+    <!-- bottom nav : CLIENT -->
+    <nav class="tabbar" id="tab-client">
+      <button class="tab active" data-t="c-home" onclick="goc('c-home')"><i data-lucide="home"></i> Accueil</button>
+      <button class="tab" data-t="c-search" onclick="goc('c-search')"><i data-lucide="search"></i> Explorer</button>
+      <button class="tab fab" onclick="goc('c-search')"><span class="fb"><i data-lucide="calendar-plus"></i></span></button>
+      <button class="tab" data-t="c-rdv" onclick="goc('c-rdv')"><i data-lucide="calendar-check"></i> Mes RDV</button>
+      <button class="tab" data-t="c-profil" onclick="goc('c-profil')"><i data-lucide="user"></i> Profil</button>
+    </nav>
+
+    <!-- bottom nav : PRO -->
+    <nav class="tabbar" id="tab-pro" style="display:none">
+      <button class="tab active" data-t="p-dash" onclick="gop('p-dash')"><i data-lucide="layout-dashboard"></i> Accueil</button>
+      <button class="tab" data-t="p-agenda" onclick="gop('p-agenda')"><i data-lucide="calendar-days"></i> Agenda</button>
+      <button class="tab fab" onclick="toast('Nouveau RDV')"><span class="fb"><i data-lucide="plus"></i></span></button>
+      <button class="tab" data-t="p-clients" onclick="gop('p-clients')"><i data-lucide="users"></i> Clients</button>
+      <button class="tab" data-t="p-profil" onclick="gop('p-profil')"><i data-lucide="user"></i> Profil</button>
+    </nav>
+  </div>
+</div>
+
+<p class="hint">Prototype interactif · touchez les éléments pour naviguer. Basculez <kbd>Client</kbd> / <kbd>Pro</kbd>, 🌙 thème et <kbd>AR</kbd> en haut.</p>
+<div id="toast"></div>
+
+<script>
+let space='client';
+function setSpace(s){
+  space=s;
+  document.getElementById('sw-client').classList.toggle('active',s==='client');
+  document.getElementById('sw-pro').classList.toggle('active',s==='pro');
+  document.getElementById('tab-client').style.display=s==='client'?'flex':'none';
+  document.getElementById('tab-pro').style.display=s==='pro'?'flex':'none';
+  if(s==='client')goc('c-home');else gop('p-dash');
+}
+function showView(id){
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  const el=document.getElementById(id);if(el)el.classList.add('active');
+  document.getElementById('app').scrollTo({top:0,behavior:'auto'});
+  if(window.lucide)lucide.createIcons();
+}
+function goc(id){showView(id);document.querySelectorAll('#tab-client .tab').forEach(t=>t.classList.toggle('active',t.dataset.t===id));}
+function gop(id){showView(id);document.querySelectorAll('#tab-pro .tab').forEach(t=>t.classList.toggle('active',t.dataset.t===id));}
+
+/* booking flow */
+let bk={svc:'Coupe + Brushing',price:'40 DT',emp:'Premier disponible',when:'Mer. 13 mai · 10:00'};
+function startBooking(svc,price,dur){
+  bk.svc=svc;bk.price=price;
+  document.getElementById('bkSvc').textContent=svc;
+  document.getElementById('bkPrice').textContent=price;
+  goc('c-book');updateWhen();
+}
+function pickEmp(el,name){el.parentNode.querySelectorAll('.epick').forEach(x=>x.classList.remove('sel'));el.classList.add('sel');bk.emp=name;}
+function pickDate(el){el.parentNode.querySelectorAll('.date').forEach(x=>x.classList.remove('sel'));el.classList.add('sel');updateWhen();}
+function pickSlot(el){el.parentNode.querySelectorAll('.slot').forEach(x=>x.classList.remove('sel'));el.classList.add('sel');updateWhen();}
+function updateWhen(){
+  const bookView=document.getElementById('c-book');
+  const d=bookView.querySelector('.date.sel'),s=bookView.querySelector('.slot.sel');
+  const dd=d?d.querySelector('small').textContent+'. '+d.querySelector('b').textContent+' mai':'';
+  const ss=s?s.textContent:'';
+  bk.when=(dd&&ss)?`${dd} · ${ss}`:bk.when;
+  const w=document.getElementById('bkWhen');if(w)w.textContent=bk.when;
+  // sync confirmation
+  document.getElementById('cfSvc').textContent=bk.svc;
+  document.getElementById('cfEmp').textContent=bk.emp;
+  document.getElementById('cfWhen').textContent=bk.when;
+  document.getElementById('cfPrice').textContent=bk.price;
+}
+function rdvTab(btn,t){btn.parentNode.querySelectorAll('button').forEach(b=>b.classList.remove('active'));btn.classList.add('active');document.getElementById('rdv-up').style.display=t==='up'?'block':'none';document.getElementById('rdv-past').style.display=t==='past'?'block':'none';}
+
+let toastT;function toast(m){const el=document.getElementById('toast');el.textContent=m;el.style.transform='translateX(-50%) translateY(0)';clearTimeout(toastT);toastT=setTimeout(()=>el.style.transform='translateX(-50%) translateY(160%)',2400);}
+function toggleTheme(){const r=document.documentElement;const dark=r.getAttribute('data-theme')==='dark'||(!r.getAttribute('data-theme')&&matchMedia('(prefers-color-scheme:dark)').matches);r.setAttribute('data-theme',dark?'light':'dark');document.getElementById('themeIcon').setAttribute('data-lucide',dark?'moon':'sun');if(window.lucide)lucide.createIcons();}
+let lang='fr';function toggleLang(){lang=lang==='fr'?'ar':'fr';const r=document.documentElement;r.setAttribute('dir',lang==='ar'?'rtl':'ltr');document.getElementById('langBtn').textContent=lang==='fr'?'AR':'FR';toast(lang==='ar'?'الواجهة بالعربية (عرض)':'Interface en français');}
+
+updateWhen();
+if(window.lucide)lucide.createIcons();
+</script>
