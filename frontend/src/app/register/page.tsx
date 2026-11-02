@@ -7,9 +7,11 @@ import { useAuth } from "@/lib/auth";
 import { ApiError } from "@/lib/api";
 import { Button } from "@/components/ui/Button";
 import { Field } from "@/components/ui/Field";
+import { LanguageToggle, useI18n } from "@/lib/i18n";
 
 export default function RegisterPage() {
   const router = useRouter();
+  const { t, lang } = useI18n();
   const { signUp } = useAuth();
   const [name, setName] = useState("");
   const [slug, setSlug] = useState("");
@@ -38,7 +40,7 @@ export default function RegisterPage() {
         password,
         establishmentName: name.trim(),
         establishmentSlug,
-        locale: "fr",
+        locale: lang,
       });
       router.replace("/dashboard");
     } catch (reason) {
@@ -47,7 +49,7 @@ export default function RegisterPage() {
           ? reason.message
           : reason instanceof Error
             ? reason.message
-            : "Inscription impossible.",
+            : t("auth.registerFailed"),
       );
     } finally {
       setBusy(false);
@@ -57,23 +59,24 @@ export default function RegisterPage() {
   return (
     <div className="center-screen">
       <form className="auth-pane stack" onSubmit={onSubmit}>
+        <div className="row" style={{ justifyContent: "flex-end" }}><LanguageToggle /></div>
         <div>
-          <h1 className="t-h2">Créer votre espace professionnel</h1>
+          <h1 className="t-h2">{t("auth.registerTitle")}</h1>
           <p className="t-muted" style={{ fontSize: 12 }}>
-            Votre compte propriétaire et votre établissement seront créés ensemble.
+            {t("auth.registerHint")}
           </p>
         </div>
         {error && <p className="api-error">{error}</p>}
-        <Field label="Nom de l’établissement" name="establishmentName" value={name} onChange={(event) => setName(event.target.value)} required minLength={2} maxLength={120} />
-        <Field label="Identifiant public" name="establishmentSlug" value={slug} onChange={(event) => setSlug(event.target.value)} placeholder="généré depuis le nom" pattern="[a-z0-9]+(?:-[a-z0-9]+)*" minLength={3} maxLength={80} />
-        <Field label="Adresse e-mail" name="email" type="email" autoComplete="email" value={email} onChange={(event) => setEmail(event.target.value)} required={!phone} />
-        <Field label="Téléphone au format international" name="phone" type="tel" autoComplete="tel" placeholder="+21620123456" value={phone} onChange={(event) => setPhone(event.target.value)} required={!email} pattern="\+[1-9]\d{7,14}" />
-        <Field label="Mot de passe (12 caractères minimum)" name="password" type="password" autoComplete="new-password" value={password} onChange={(event) => setPassword(event.target.value)} minLength={12} maxLength={128} required />
+        <Field label={t("auth.establishmentName")} name="establishmentName" value={name} onChange={(event) => setName(event.target.value)} required minLength={2} maxLength={120} />
+        <Field label={t("auth.publicSlug")} name="establishmentSlug" value={slug} onChange={(event) => setSlug(event.target.value)} placeholder={t("auth.slugPlaceholder")} pattern="[a-z0-9]+(?:-[a-z0-9]+)*" minLength={3} maxLength={80} />
+        <Field label={t("auth.email")} name="email" type="email" autoComplete="email" value={email} onChange={(event) => setEmail(event.target.value)} required={!phone} />
+        <Field label={t("auth.phoneInternational")} name="phone" type="tel" autoComplete="tel" placeholder="+21620123456" value={phone} onChange={(event) => setPhone(event.target.value)} required={!email} pattern="\+[1-9]\d{7,14}" />
+        <Field label={t("auth.passwordMinimum")} name="password" type="password" autoComplete="new-password" value={password} onChange={(event) => setPassword(event.target.value)} minLength={12} maxLength={128} required />
         <Button type="submit" disabled={busy} style={{ width: "100%" }}>
-          {busy ? "Création…" : "Créer mon espace"}
+          {busy ? t("employees.creating") : t("auth.register")}
         </Button>
         <p className="t-muted" style={{ fontSize: 12 }}>
-          Déjà inscrit ? <Link href="/login">Se connecter</Link>
+          {t("auth.alreadyRegistered")} <Link href="/login">{t("auth.login")}</Link>
         </p>
       </form>
     </div>

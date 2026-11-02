@@ -53,12 +53,17 @@ async function request<T = unknown>(
       },
     });
   } catch {
-    throw new ApiError("Le serveur Booking est injoignable.", undefined, "NETWORK_ERROR");
+    throw new ApiError(
+      "Le serveur Booking est injoignable.",
+      undefined,
+      "NETWORK_ERROR",
+    );
   }
 
-  const body = (await response.json().catch(() => null)) as
-    | { message?: string | string[]; code?: string }
-    | null;
+  const body = (await response.json().catch(() => null)) as {
+    message?: string | string[];
+    code?: string;
+  } | null;
 
   if (!response.ok) {
     const message = Array.isArray(body?.message)
@@ -115,12 +120,7 @@ async function authed<T = unknown>(
 
 /* ---------- Types de domaine (partiels) ---------- */
 export type BookingStatus =
-  | "PENDING"
-  | "CONFIRMED"
-  | "COMPLETED"
-  | "CANCELLED"
-  | "NO_SHOW"
-  | "REJECTED";
+  "PENDING" | "CONFIRMED" | "COMPLETED" | "CANCELLED" | "NO_SHOW" | "REJECTED";
 
 export interface BookingListItem {
   id: string;
@@ -243,7 +243,10 @@ export const api = {
   },
 
   /* Admin */
-  dashboardSummary(establishmentId: string, range: { from?: string; to?: string } = {}) {
+  dashboardSummary(
+    establishmentId: string,
+    range: { from?: string; to?: string } = {},
+  ) {
     const q = new URLSearchParams({ establishmentId });
     if (range.from) q.set("from", range.from);
     if (range.to) q.set("to", range.to);
@@ -251,7 +254,13 @@ export const api = {
   },
   bookings(
     establishmentId: string,
-    opts: { limit?: number; offset?: number; from?: string; to?: string; status?: BookingStatus } = {},
+    opts: {
+      limit?: number;
+      offset?: number;
+      from?: string;
+      to?: string;
+      status?: BookingStatus;
+    } = {},
   ) {
     const q = new URLSearchParams({ establishmentId });
     q.set("limit", String(opts.limit ?? 100));
@@ -276,24 +285,38 @@ export const api = {
 
   /* Services */
   listServices(establishmentId: string) {
-    return authed<ManagedService[]>(`/establishments/${establishmentId}/services`);
+    return authed<ManagedService[]>(
+      `/establishments/${establishmentId}/services`,
+    );
   },
   createService(
     establishmentId: string,
-    body: { name: string; durationMinutes: number; description?: string; price?: number },
+    body: {
+      name: string;
+      durationMinutes: number;
+      description?: string;
+      price?: number;
+    },
   ) {
-    return authed<ManagedService>(`/establishments/${establishmentId}/services`, {
-      method: "POST",
-      body: JSON.stringify(body),
-    });
+    return authed<ManagedService>(
+      `/establishments/${establishmentId}/services`,
+      {
+        method: "POST",
+        body: JSON.stringify(body),
+      },
+    );
   },
   deactivateService(establishmentId: string, serviceId: string) {
-    return authed(`/establishments/${establishmentId}/services/${serviceId}`, { method: "DELETE" });
+    return authed(`/establishments/${establishmentId}/services/${serviceId}`, {
+      method: "DELETE",
+    });
   },
 
   /* Employés */
   listEmployees(establishmentId: string) {
-    return authed<ManagedEmployee[]>(`/establishments/${establishmentId}/employees`);
+    return authed<ManagedEmployee[]>(
+      `/establishments/${establishmentId}/employees`,
+    );
   },
   inviteEmployee(
     establishmentId: string,
@@ -321,7 +344,10 @@ export const api = {
   },
 
   /* Clients */
-  listCustomers(establishmentId: string, opts: { q?: string; cursor?: string; limit?: number } = {}) {
+  listCustomers(
+    establishmentId: string,
+    opts: { q?: string; cursor?: string; limit?: number } = {},
+  ) {
     const q = new URLSearchParams();
     if (opts.q) q.set("q", opts.q);
     if (opts.cursor) q.set("cursor", opts.cursor);
@@ -342,15 +368,24 @@ export const api = {
   },
   subscribe(establishmentId: string, planCode: string) {
     const q = new URLSearchParams({ establishmentId });
-    return authed(`/subscriptions?${q}`, { method: "POST", body: JSON.stringify({ planCode }) });
+    return authed(`/subscriptions?${q}`, {
+      method: "POST",
+      body: JSON.stringify({ planCode }),
+    });
   },
   changePlan(establishmentId: string, planCode: string) {
     const q = new URLSearchParams({ establishmentId });
-    return authed(`/subscriptions/change-plan?${q}`, { method: "POST", body: JSON.stringify({ planCode }) });
+    return authed(`/subscriptions/change-plan?${q}`, {
+      method: "POST",
+      body: JSON.stringify({ planCode }),
+    });
   },
 
   /* Notifications */
-  listNotifications(establishmentId: string, opts: { status?: string; limit?: number; offset?: number } = {}) {
+  listNotifications(
+    establishmentId: string,
+    opts: { status?: string; limit?: number; offset?: number } = {},
+  ) {
     const q = new URLSearchParams({ establishmentId });
     if (opts.status) q.set("status", opts.status);
     q.set("limit", String(opts.limit ?? 50));
@@ -361,7 +396,10 @@ export const api = {
     const q = new URLSearchParams({ establishmentId });
     return authed<NotificationSettings>(`/notification-settings?${q}`);
   },
-  updateNotificationSettings(establishmentId: string, body: Partial<NotificationSettings>) {
+  updateNotificationSettings(
+    establishmentId: string,
+    body: Partial<NotificationSettings>,
+  ) {
     const q = new URLSearchParams({ establishmentId });
     return authed<NotificationSettings>(`/notification-settings?${q}`, {
       method: "PATCH",
@@ -373,7 +411,10 @@ export const api = {
   establishmentProfile(establishmentId: string) {
     return authed<EstablishmentProfile>(`/establishments/${establishmentId}`);
   },
-  updateEstablishment(establishmentId: string, body: Partial<EstablishmentProfile>) {
+  updateEstablishment(
+    establishmentId: string,
+    body: Partial<EstablishmentProfile>,
+  ) {
     return authed<EstablishmentProfile>(`/establishments/${establishmentId}`, {
       method: "PATCH",
       body: JSON.stringify(body),
@@ -382,7 +423,9 @@ export const api = {
 
   /* Public */
   establishment(slug: string) {
-    return request<PublicEstablishment>(`/public/establishments/${encodeURIComponent(slug)}`);
+    return request<PublicEstablishment>(
+      `/public/establishments/${encodeURIComponent(slug)}`,
+    );
   },
   services(slug: string) {
     return request<{ currency: string; services: PublicService[] }>(
@@ -395,19 +438,69 @@ export const api = {
       `/public/establishments/${encodeURIComponent(slug)}/employees?${q}`,
     );
   },
-  availability(slug: string, serviceId: string, date: string, employeeId?: string) {
+  availability(
+    slug: string,
+    serviceId: string,
+    date: string,
+    employeeId?: string,
+  ) {
     const q = new URLSearchParams({ serviceId, date });
     if (employeeId) q.set("employeeId", employeeId);
-    return request<{ date: string; timezone: string; serviceId: string; durationMinutes: number; slots: AvailabilitySlot[] }>(
-      `/public/establishments/${encodeURIComponent(slug)}/availability?${q}`,
+    return request<{
+      date: string;
+      timezone: string;
+      serviceId: string;
+      durationMinutes: number;
+      slots: AvailabilitySlot[];
+    }>(`/public/establishments/${encodeURIComponent(slug)}/availability?${q}`);
+  },
+  createBooking(
+    slug: string,
+    payload: CreateBookingPayload,
+    idempotencyKey: string,
+  ) {
+    return request<CreateBookingResult>(
+      `/public/establishments/${encodeURIComponent(slug)}/bookings`,
+      {
+        method: "POST",
+        headers: { "Idempotency-Key": idempotencyKey },
+        body: JSON.stringify(payload),
+      },
     );
   },
-  createBooking(slug: string, payload: CreateBookingPayload, idempotencyKey: string) {
-    return request<CreateBookingResult>(`/public/establishments/${encodeURIComponent(slug)}/bookings`, {
-      method: "POST",
-      headers: { "Idempotency-Key": idempotencyKey },
-      body: JSON.stringify(payload),
-    });
+  requestReschedule(
+    bookingId: string,
+    customerAccessToken: string,
+    requestedStartsAt: string,
+    requestedEmployeeId: string,
+  ) {
+    return request<RescheduleRequestResult>(
+      `/bookings/public/${bookingId}/reschedule-requests`,
+      {
+        method: "POST",
+        headers: { Authorization: `Bearer ${customerAccessToken}` },
+        body: JSON.stringify({ requestedStartsAt, requestedEmployeeId }),
+      },
+    );
+  },
+  rescheduleRequests(establishmentId: string) {
+    const q = new URLSearchParams({ establishmentId });
+    return authed<RescheduleRequestItem[]>(
+      `/bookings/reschedule-requests?${q}`,
+    );
+  },
+  decideRescheduleRequest(
+    establishmentId: string,
+    bookingId: string,
+    requestId: string,
+    decision: "ACCEPTED" | "REJECTED",
+    reason?: string,
+  ) {
+    const q = new URLSearchParams({ establishmentId });
+    return authed<RescheduleRequestResult>(
+      `/bookings/${bookingId}/reschedule-requests/${requestId}/decision?${q}`,
+      { method: "POST", body: JSON.stringify({ decision, reason }) },
+    );
   },
 };
 
@@ -438,6 +531,7 @@ export interface CreateBookingPayload {
   customerPhone: string;
   customerEmail?: string;
   consentToReminders: boolean;
+  locale?: "fr" | "ar";
 }
 export interface CreateBookingResult {
   booking: {
@@ -449,6 +543,28 @@ export interface CreateBookingResult {
     employee?: { displayName: string };
   };
   establishment: { name: string };
+  customerAccessToken: string;
+}
+
+export interface RescheduleRequestResult {
+  id: string;
+  status: "PENDING" | "ACCEPTED" | "REJECTED" | "CANCELLED";
+  originalStartsAt: string;
+  requestedStartsAt: string;
+  createdAt: string;
+}
+
+export interface RescheduleRequestItem extends RescheduleRequestResult {
+  bookingId: string;
+  requestedEmployeeId: string;
+  requestedEmployee: { displayName: string };
+  booking: {
+    publicReference: string;
+    status: BookingStatus;
+    customerNameSnapshot: string;
+    serviceNameSnapshot: string;
+    employee: { displayName: string };
+  };
 }
 
 export interface ManagedService {

@@ -5,8 +5,10 @@ import Link from "next/link";
 import { api, ApiError } from "@/lib/api";
 import { Button } from "@/components/ui/Button";
 import { Field } from "@/components/ui/Field";
+import { LanguageToggle, useI18n } from "@/lib/i18n";
 
 export default function ForgotPasswordPage() {
+  const { t } = useI18n();
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -18,13 +20,13 @@ export default function ForgotPasswordPage() {
     setError(null);
     setMessage(null);
     try {
-      const result = await api.requestPasswordReset(email.trim());
-      setMessage(result.message);
+      await api.requestPasswordReset(email.trim());
+      setMessage(t("auth.resetRequestSent"));
     } catch (reason) {
       setError(
         reason instanceof ApiError
           ? reason.message
-          : "La demande de réinitialisation a échoué.",
+          : t("auth.resetRequestFailed"),
       );
     } finally {
       setBusy(false);
@@ -34,19 +36,20 @@ export default function ForgotPasswordPage() {
   return (
     <div className="center-screen">
       <form className="auth-pane stack" onSubmit={onSubmit}>
+        <div className="row" style={{ justifyContent: "flex-end" }}><LanguageToggle /></div>
         <div>
-          <h1 className="t-h2">Mot de passe oublié</h1>
+          <h1 className="t-h2">{t("auth.forgotTitle")}</h1>
           <p className="t-muted" style={{ fontSize: 12 }}>
-            Saisissez l’e-mail associé à votre compte.
+            {t("auth.forgotHint")}
           </p>
         </div>
         {error && <p className="api-error">{error}</p>}
         {message && <p className="status confirmed">{message}</p>}
-        <Field label="Adresse e-mail" name="email" type="email" autoComplete="email" value={email} onChange={(event) => setEmail(event.target.value)} required />
+        <Field label={t("auth.email")} name="email" type="email" autoComplete="email" value={email} onChange={(event) => setEmail(event.target.value)} required />
         <Button type="submit" disabled={busy} style={{ width: "100%" }}>
-          {busy ? "Envoi…" : "Envoyer le lien"}
+          {busy ? t("auth.sending") : t("auth.send")}
         </Button>
-        <Link href="/login">Retour à la connexion</Link>
+        <Link href="/login">{t("auth.backToLogin")}</Link>
       </form>
     </div>
   );

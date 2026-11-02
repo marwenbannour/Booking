@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useAuth } from "@/lib/auth";
 import { api, ApiError, type BookingListItem } from "@/lib/api";
 import { AppShell } from "@/components/shell/AppShell";
+import { useI18n } from "@/lib/i18n";
 import { CalendarCheck, Clock, Hourglass, CheckCircle2 } from "lucide-react";
 import { MetricCard } from "@/components/ui/MetricCard";
 import { StatusBadge } from "@/components/ui/StatusBadge";
@@ -23,6 +24,7 @@ const ACCENTS = ["", "teal", "orange", "rose"] as const;
 
 export default function DashboardPage() {
   const { establishmentId, establishmentSlug } = useAuth();
+  const { t, lang } = useI18n();
   const [items, setItems] = useState<BookingListItem[]>([]);
   const [isExample, setIsExample] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -72,30 +74,30 @@ export default function DashboardPage() {
 
   return (
     <AppShell
-      title="Tableau de bord"
-      subtitle="Vue d'ensemble de votre activité"
+      title={t("dashboard.title")}
+      subtitle={t("dashboard.subtitle")}
       actions={
         <Link href="/bookings">
-          <Button>Voir tous les rendez-vous</Button>
+          <Button>{t("dashboard.viewBookings")}</Button>
         </Link>
       }
     >
       {isExample && (
         <p style={{ marginBottom: 14 }}>
-          <span className="example-note">Données d&apos;exemple — API injoignable</span>
+          <span className="example-note">{t("dashboard.exampleData")}</span>
         </p>
       )}
 
       <div className="metrics-grid">
-        <MetricCard label="Rendez-vous (total)" value={metrics.total} tone="brand" icon={<CalendarCheck size={16} />} />
-        <MetricCard label="Aujourd'hui" value={metrics.todayCount} tone="teal" icon={<Clock size={16} />} />
-        <MetricCard label="En attente" value={metrics.pending} tone="orange" icon={<Hourglass size={16} />} />
+        <MetricCard label={t("dashboard.totalBookings")} value={metrics.total} tone="brand" icon={<CalendarCheck size={16} />} />
+        <MetricCard label={t("dashboard.today")} value={metrics.todayCount} tone="teal" icon={<Clock size={16} />} />
+        <MetricCard label={t("dashboard.pending")} value={metrics.pending} tone="orange" icon={<Hourglass size={16} />} />
         <MetricCard
-          label="Taux de confirmation"
+          label={t("dashboard.confirmationRate")}
           value={`${metrics.rate} %`}
           tone="rose"
           icon={<CheckCircle2 size={16} />}
-          trend={{ direction: "up", value: `${metrics.rate} %`, caption: "des rendez-vous" }}
+          trend={{ direction: "up", value: `${metrics.rate} %`, caption: t("dashboard.bookings") }}
         />
       </div>
 
@@ -103,8 +105,8 @@ export default function DashboardPage() {
         <div className="panel">
           <div className="panel-head">
             <div>
-              <h2 className="t-title">Réservations cette semaine</h2>
-              <p className="panel-subtitle">Par jour</p>
+              <h2 className="t-title">{t("dashboard.bookingsThisWeek")}</h2>
+              <p className="panel-subtitle">{t("dashboard.byDay")}</p>
             </div>
           </div>
           <DashboardChart items={items} />
@@ -113,8 +115,8 @@ export default function DashboardPage() {
       <div className="panel">
         <div className="panel-head">
           <div>
-            <h2 className="t-title">Prochains rendez-vous</h2>
-            <p className="panel-subtitle">Les 6 créneaux à venir</p>
+            <h2 className="t-title">{t("dashboard.upcoming")}</h2>
+            <p className="panel-subtitle">{t("dashboard.nextSix")}</p>
           </div>
         </div>
 
@@ -124,18 +126,18 @@ export default function DashboardPage() {
           </div>
         ) : upcoming.length === 0 ? (
           <p className="t-muted" style={{ fontSize: 11, padding: "18px 0" }}>
-            Aucun rendez-vous à venir.
+            {t("dashboard.noUpcoming")}
           </p>
         ) : (
           <div className="today-list">
             {upcoming.map((b, i) => (
               <div className="appointment-row" key={b.id}>
-                <span className="time-col">{formatTime(b.startsAt)}</span>
+                <span className="time-col">{formatTime(b.startsAt, undefined, lang)}</span>
                 <span className={`row-accent ${ACCENTS[i % ACCENTS.length]}`} />
                 <div className="client-line">
                   <strong>{b.customerNameSnapshot}</strong>
                   <small>
-                    {b.service?.name ?? "Service"} · {b.employee?.displayName ?? "—"}
+                    {b.service?.name ?? t("bookings.service")} · {b.employee?.displayName ?? "—"}
                   </small>
                 </div>
                 <StatusBadge status={b.status} />

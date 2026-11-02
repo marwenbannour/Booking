@@ -7,9 +7,11 @@ import { Button } from "@/components/ui/Button";
 import { Field, SelectField } from "@/components/ui/Field";
 import { ApiError, api, type ManagedEmployee } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
+import { useI18n } from "@/lib/i18n";
 
 export default function AccountPage() {
   const router = useRouter();
+  const { t, setLang } = useI18n();
   const { me, refreshMe, signOut } = useAuth();
   const [email, setEmail] = useState(me?.email ?? "");
   const [phone, setPhone] = useState(me?.phoneNormalized ?? "");
@@ -53,10 +55,10 @@ export default function AccountPage() {
         setError(
           reason instanceof ApiError
             ? reason.message
-            : "Impossible de charger les membres pour le transfert.",
+            : t("account.membersLoadFailed"),
         ),
       );
-  }, [me]);
+  }, [me, t]);
 
   function showError(reason: unknown, fallback: string) {
     setError(reason instanceof ApiError ? reason.message : fallback);
@@ -68,7 +70,7 @@ export default function AccountPage() {
     setError(null);
     setMessage(null);
     try {
-      const result = await api.updateAccount({
+      await api.updateAccount({
         email: email.trim() || null,
         phone: phone.trim() || null,
         preferredLocale: locale,
@@ -76,9 +78,9 @@ export default function AccountPage() {
       });
       setProfilePassword("");
       await refreshMe();
-      setMessage(result.message);
+      setMessage(t("account.saved"));
     } catch (reason) {
-      showError(reason, "Impossible d’enregistrer le compte.");
+      showError(reason, t("account.saveFailed"));
     } finally {
       setBusy(false);
     }
@@ -89,7 +91,7 @@ export default function AccountPage() {
     setError(null);
     setMessage(null);
     if (newPassword !== passwordConfirmation) {
-      setError("Les nouveaux mots de passe ne correspondent pas.");
+      setError(t("account.passwordMismatch"));
       return;
     }
     setBusy(true);
@@ -99,7 +101,7 @@ export default function AccountPage() {
       await signOut();
       router.replace("/login");
     } catch (reason) {
-      showError(reason, "Impossible de modifier le mot de passe.");
+      showError(reason, t("account.passwordChangeFailed"));
     } finally {
       setBusy(false);
     }
@@ -109,7 +111,7 @@ export default function AccountPage() {
     event.preventDefault();
     setError(null);
     if (closeConfirmation !== "FERMER") {
-      setError('Saisissez "FERMER" pour confirmer la fermeture du compte.');
+      setError(t("account.closeConfirmationError"));
       return;
     }
     setBusy(true);
@@ -118,7 +120,7 @@ export default function AccountPage() {
       await signOut();
       router.replace("/login");
     } catch (reason) {
-      showError(reason, "Impossible de fermer le compte.");
+      showError(reason, t("account.closeFailed"));
     } finally {
       setBusy(false);
     }
@@ -133,51 +135,55 @@ export default function AccountPage() {
     try {
       await api.transferOwnership(establishmentId, targetMembershipId);
       await refreshMe();
-      setMessage("Propriété transférée. Vous pouvez maintenant fermer votre compte.");
+      setMessage(t("account.ownershipTransferred"));
     } catch (reason) {
-      showError(reason, "Impossible de transférer la propriété.");
+      showError(reason, t("account.transferFailed"));
     } finally {
       setBusy(false);
     }
   }
 
   return (
-    <AppShell title="Mon compte" subtitle="Coordonnées, sécurité et fermeture du compte">
+    <AppShell title={t("nav.account")} subtitle={t("account.subtitle")}>
       {error && <p className="api-error" style={{ marginBottom: 14 }}>{error}</p>}
       {message && <p className="status confirmed" style={{ marginBottom: 14 }}>{message}</p>}
       <div className="dashboard-grid">
         <form className="panel stack" onSubmit={saveAccount}>
-          <h2 className="t-title">Coordonnées</h2>
-          <Field label="Adresse e-mail" name="accountEmail" type="email" autoComplete="email" value={email} onChange={(event) => setEmail(event.target.value)} />
-          <Field label="Téléphone (format international)" name="accountPhone" type="tel" autoComplete="tel" placeholder="+21620123456" value={phone} onChange={(event) => setPhone(event.target.value)} pattern="\+[1-9]\d{7,14}" />
-          <SelectField label="Langue" value={locale} onChange={(value) => setLocale(value as "fr" | "ar")}>
+          <h2 className="t-title">{t("account.contact")}</h2>
+          <Field label={t("auth.email")} name="accountEmail" type="email" autoComplete="email" value={email} onChange={(event) => setEmail(event.target.value)} />
+          <Field label={t("account.phoneInternational")} name="accountPhone" type="tel" autoComplete="tel" placeholder="+21620123456" value={phone} onChange={(event) => setPhone(event.target.value)} pattern="\+[1-9]\d{7,14}" />
+          <SelectField label={t("account.language")} value={locale} onChange={(value) => {
+            if (value !== "fr" && value !== "ar") return;
+            setLocale(value);
+            setLang(value);
+          }}>
             <option value="fr">Français</option>
             <option value="ar">العربية</option>
           </SelectField>
-          <Field label="Mot de passe actuel (confirmation)" name="profilePassword" type="password" autoComplete="current-password" value={profilePassword} onChange={(event) => setProfilePassword(event.target.value)} minLength={12} maxLength={128} required />
+          <Field label={t("account.currentPasswordConfirm")} name="profilePassword" type="password" autoComplete="current-password" value={profilePassword} onChange={(event) => setProfilePassword(event.target.value)} minLength={12} maxLength={128} required />
           <p className="t-muted" style={{ fontSize: 11 }}>
-            Une nouvelle adresse e-mail ne sera activée qu’après vérification du lien envoyé à cette adresse.
+            {t("account.emailVerificationHint")}
           </p>
-          <Button type="submit" disabled={busy}>Enregistrer les coordonnées</Button>
+          <Button type="submit" disabled={busy}>{t("account.saveContact")}</Button>
         </form>
 
         <form className="panel stack" onSubmit={updatePassword}>
-          <h2 className="t-title">Changer le mot de passe</h2>
-          <Field label="Mot de passe actuel" name="currentPassword" type="password" autoComplete="current-password" value={currentPassword} onChange={(event) => setCurrentPassword(event.target.value)} minLength={12} maxLength={128} required />
-          <Field label="Nouveau mot de passe" name="newPassword" type="password" autoComplete="new-password" value={newPassword} onChange={(event) => setNewPassword(event.target.value)} minLength={12} maxLength={128} required />
-          <Field label="Confirmer le nouveau mot de passe" name="passwordConfirmation" type="password" autoComplete="new-password" value={passwordConfirmation} onChange={(event) => setPasswordConfirmation(event.target.value)} minLength={12} maxLength={128} required />
-          <p className="t-muted" style={{ fontSize: 11 }}>Toutes les sessions seront révoquées après le changement.</p>
-          <Button type="submit" disabled={busy}>Changer le mot de passe</Button>
+          <h2 className="t-title">{t("account.changePassword")}</h2>
+          <Field label={t("account.currentPasswordConfirm")} name="currentPassword" type="password" autoComplete="current-password" value={currentPassword} onChange={(event) => setCurrentPassword(event.target.value)} minLength={12} maxLength={128} required />
+          <Field label={t("account.newPassword")} name="newPassword" type="password" autoComplete="new-password" value={newPassword} onChange={(event) => setNewPassword(event.target.value)} minLength={12} maxLength={128} required />
+          <Field label={t("account.confirmNewPassword")} name="passwordConfirmation" type="password" autoComplete="new-password" value={passwordConfirmation} onChange={(event) => setPasswordConfirmation(event.target.value)} minLength={12} maxLength={128} required />
+          <p className="t-muted" style={{ fontSize: 11 }}>{t("account.sessionsRevoked")}</p>
+          <Button type="submit" disabled={busy}>{t("account.changePassword")}</Button>
         </form>
 
         <form className="panel stack" onSubmit={closeAccount}>
-          <h2 className="t-title">Fermer le compte</h2>
+          <h2 className="t-title">{t("account.close")}</h2>
           <p className="t-muted" style={{ fontSize: 12 }}>
-            Le compte sera désactivé et les sessions révoquées. Les rendez-vous, établissements et journaux d’audit seront conservés. Transférez d’abord la propriété de tout établissement actif dont vous êtes le seul propriétaire.
+            {t("account.closeHint")}
           </p>
-          <Field label="Mot de passe actuel" name="closePassword" type="password" autoComplete="current-password" value={closePassword} onChange={(event) => setClosePassword(event.target.value)} minLength={12} maxLength={128} required />
-          <Field label={'Saisissez "FERMER" pour confirmer'} name="closeConfirmation" value={closeConfirmation} onChange={(event) => setCloseConfirmation(event.target.value)} required />
-          <Button type="submit" disabled={busy}>Fermer définitivement l’accès au compte</Button>
+          <Field label={t("account.currentPasswordConfirm")} name="closePassword" type="password" autoComplete="current-password" value={closePassword} onChange={(event) => setClosePassword(event.target.value)} minLength={12} maxLength={128} required />
+          <Field label={t("account.closeConfirmation")} name="closeConfirmation" value={closeConfirmation} onChange={(event) => setCloseConfirmation(event.target.value)} required />
+          <Button type="submit" disabled={busy}>{t("account.closeAccess")}</Button>
         </form>
 
         {me?.memberships
@@ -195,12 +201,12 @@ export default function AccountPage() {
                   void transferOwnership(establishment.id);
                 }}
               >
-                <h2 className="t-title">Transférer la propriété · {establishment.name}</h2>
+                <h2 className="t-title">{t("account.transferTitle")} {establishment.name}</h2>
                 <p className="t-muted" style={{ fontSize: 12 }}>
-                  Le transfert vous attribue le rôle Manager et permet la fermeture du compte si vous le souhaitez.
+                  {t("account.transferHint")}
                 </p>
                 <SelectField
-                  label="Nouveau propriétaire"
+                  label={t("account.newOwner")}
                   value={transferTargets[establishment.id] ?? ""}
                   onChange={(value) =>
                     setTransferTargets((targets) => ({
@@ -209,7 +215,7 @@ export default function AccountPage() {
                     }))
                   }
                 >
-                  <option value="">Choisir un employé actif</option>
+                  <option value="">{t("account.chooseEmployee")}</option>
                   {candidates
                     .filter((employee) => employee.isActive)
                     .map((employee) => (
@@ -222,7 +228,7 @@ export default function AccountPage() {
                   type="submit"
                   disabled={busy || !transferTargets[establishment.id]}
                 >
-                  Transférer la propriété
+                  {t("account.transfer")}
                 </Button>
               </form>
             );

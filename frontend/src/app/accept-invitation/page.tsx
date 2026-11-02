@@ -7,9 +7,11 @@ import { useAuth } from "@/lib/auth";
 import { api, ApiError, saveTokens } from "@/lib/api";
 import { Button } from "@/components/ui/Button";
 import { Field } from "@/components/ui/Field";
+import { LanguageToggle, useI18n } from "@/lib/i18n";
 
 export default function AcceptInvitationPage() {
   const router = useRouter();
+  const { t } = useI18n();
   const { signIn, refreshMe } = useAuth();
   const [token, setToken] = useState("");
   const [existingAccount, setExistingAccount] = useState(false);
@@ -27,11 +29,11 @@ export default function AcceptInvitationPage() {
     event.preventDefault();
     setError(null);
     if (!token) {
-      setError("Le lien d’invitation est incomplet.");
+      setError(t("auth.invitationIncomplete"));
       return;
     }
     if (!existingAccount && password !== confirmation) {
-      setError("Les mots de passe ne correspondent pas.");
+      setError(t("auth.passwordMismatch"));
       return;
     }
     setBusy(true);
@@ -51,7 +53,7 @@ export default function AcceptInvitationPage() {
           ? reason.message
           : reason instanceof Error
             ? reason.message
-            : "Impossible d’accepter cette invitation.",
+            : t("auth.invitationFailed"),
       );
     } finally {
       setBusy(false);
@@ -61,27 +63,28 @@ export default function AcceptInvitationPage() {
   return (
     <div className="center-screen">
       <form className="auth-pane stack" onSubmit={onSubmit}>
-        <h1 className="t-h2">Accepter l’invitation</h1>
+        <div className="row" style={{ justifyContent: "flex-end" }}><LanguageToggle /></div>
+        <h1 className="t-h2">{t("auth.invitationTitle")}</h1>
         <p className="t-muted" style={{ fontSize: 12 }}>
           {existingAccount
-            ? "Connectez-vous avec le compte invité pour rejoindre l’établissement."
-            : "Choisissez un mot de passe pour créer votre compte employé."}
+            ? t("auth.invitationExistingHint")
+            : t("auth.invitationNewHint")}
         </p>
         {error && <p className="api-error">{error}</p>}
         {existingAccount && (
-          <Field label="E-mail ou téléphone" name="identifier" autoComplete="username" value={identifier} onChange={(event) => setIdentifier(event.target.value)} required />
+          <Field label={t("auth.identifier")} name="identifier" autoComplete="username" value={identifier} onChange={(event) => setIdentifier(event.target.value)} required />
         )}
-        <Field label="Mot de passe" name="password" type="password" autoComplete={existingAccount ? "current-password" : "new-password"} value={password} onChange={(event) => setPassword(event.target.value)} minLength={12} maxLength={128} required />
+        <Field label={t("auth.password")} name="password" type="password" autoComplete={existingAccount ? "current-password" : "new-password"} value={password} onChange={(event) => setPassword(event.target.value)} minLength={12} maxLength={128} required />
         {!existingAccount && (
-          <Field label="Confirmer le mot de passe" name="confirmation" type="password" autoComplete="new-password" value={confirmation} onChange={(event) => setConfirmation(event.target.value)} minLength={12} maxLength={128} required />
+          <Field label={t("auth.confirmPassword")} name="confirmation" type="password" autoComplete="new-password" value={confirmation} onChange={(event) => setConfirmation(event.target.value)} minLength={12} maxLength={128} required />
         )}
         <Button type="submit" disabled={busy || !token} style={{ width: "100%" }}>
-          {busy ? "Validation…" : "Accepter l’invitation"}
+          {busy ? t("auth.invitationValidating") : t("auth.acceptInvitation")}
         </Button>
         <Button type="button" variant="quiet" onClick={() => setExistingAccount((value) => !value)}>
-          {existingAccount ? "Créer un nouveau compte" : "J’ai déjà un compte"}
+          {existingAccount ? t("auth.createNewAccount") : t("auth.haveAccount")}
         </Button>
-        <Link href="/login">Retour à la connexion</Link>
+        <Link href="/login">{t("auth.backToLogin")}</Link>
       </form>
     </div>
   );

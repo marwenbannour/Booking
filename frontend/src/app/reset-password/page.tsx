@@ -5,8 +5,10 @@ import Link from "next/link";
 import { api, ApiError } from "@/lib/api";
 import { Button } from "@/components/ui/Button";
 import { Field } from "@/components/ui/Field";
+import { LanguageToggle, useI18n } from "@/lib/i18n";
 
 export default function ResetPasswordPage() {
+  const { t } = useI18n();
   const [token, setToken] = useState("");
   const [password, setPassword] = useState("");
   const [confirmation, setConfirmation] = useState("");
@@ -22,18 +24,18 @@ export default function ResetPasswordPage() {
     event.preventDefault();
     setError(null);
     if (password !== confirmation) {
-      setError("Les mots de passe ne correspondent pas.");
+      setError(t("auth.passwordMismatch"));
       return;
     }
     setBusy(true);
     try {
-      const result = await api.resetPassword(token, password);
-      setMessage(result.message);
+      await api.resetPassword(token, password);
+      setMessage(t("auth.passwordResetDone"));
     } catch (reason) {
       setError(
         reason instanceof ApiError
           ? reason.message
-          : "La réinitialisation du mot de passe a échoué.",
+          : t("auth.resetFailed"),
       );
     } finally {
       setBusy(false);
@@ -43,16 +45,17 @@ export default function ResetPasswordPage() {
   return (
     <div className="center-screen">
       <form className="auth-pane stack" onSubmit={onSubmit}>
-        <h1 className="t-h2">Choisir un nouveau mot de passe</h1>
+        <div className="row" style={{ justifyContent: "flex-end" }}><LanguageToggle /></div>
+        <h1 className="t-h2">{t("auth.newPasswordTitle")}</h1>
         {error && <p className="api-error">{error}</p>}
         {message ? (
-          <p className="status confirmed">{message} <Link href="/login">Se connecter</Link></p>
+          <p className="status confirmed">{message} <Link href="/login">{t("auth.login")}</Link></p>
         ) : (
           <>
-            <Field label="Nouveau mot de passe (12 caractères minimum)" name="password" type="password" autoComplete="new-password" value={password} onChange={(event) => setPassword(event.target.value)} minLength={12} maxLength={128} required />
-            <Field label="Confirmer le mot de passe" name="confirmation" type="password" autoComplete="new-password" value={confirmation} onChange={(event) => setConfirmation(event.target.value)} minLength={12} maxLength={128} required />
+            <Field label={t("auth.newPassword")} name="password" type="password" autoComplete="new-password" value={password} onChange={(event) => setPassword(event.target.value)} minLength={12} maxLength={128} required />
+            <Field label={t("auth.confirmPassword")} name="confirmation" type="password" autoComplete="new-password" value={confirmation} onChange={(event) => setConfirmation(event.target.value)} minLength={12} maxLength={128} required />
             <Button type="submit" disabled={busy || !token} style={{ width: "100%" }}>
-              {busy ? "Mise à jour…" : "Réinitialiser"}
+              {busy ? t("auth.updatingPassword") : t("auth.updatePassword")}
             </Button>
           </>
         )}

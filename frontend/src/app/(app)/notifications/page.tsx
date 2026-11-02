@@ -8,22 +8,6 @@ import { api, ApiError, type NotificationJobRow } from "@/lib/api";
 import { AppShell } from "@/components/shell/AppShell";
 import { formatDate, formatTime } from "@/lib/format";
 
-const EVENT_LABELS: Record<string, string> = {
-  BOOKING_CONFIRMED: "Confirmation",
-  BOOKING_REMINDER_DUE: "Rappel",
-  BOOKING_CANCELLED: "Annulation",
-};
-
-const STATUS_LABELS: Record<string, string> = {
-  PENDING: "En file",
-  PROCESSING: "En cours",
-  SENT: "Envoyé",
-  DELIVERED: "Remis",
-  FAILED: "Échec",
-  UNKNOWN: "Inconnu",
-  CANCELLED: "Annulé",
-};
-
 function badgeClass(status: string): string {
   if (status === "SENT" || status === "DELIVERED") return "confirmed";
   if (status === "PENDING" || status === "PROCESSING") return "pending";
@@ -33,7 +17,7 @@ function badgeClass(status: string): string {
 
 export default function NotificationsPage() {
   const { establishmentId } = useAuth();
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
   const [rows, setRows] = useState<NotificationJobRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -45,14 +29,14 @@ export default function NotificationsPage() {
     api
       .listNotifications(establishmentId, { limit: 100 })
       .then((res) => setRows(res.items))
-      .catch((err) => setError(err instanceof ApiError ? err.message : "Chargement impossible."))
+      .catch((err) => setError(err instanceof ApiError ? err.message : t("common.loadFailed")))
       .finally(() => setLoading(false));
-  }, [establishmentId]);
+  }, [establishmentId, t]);
 
   useEffect(load, [load]);
 
   return (
-    <AppShell title={t("nav.notifications")} subtitle="Historique des rappels et messages WhatsApp">
+    <AppShell title={t("nav.notifications")} subtitle={t("notifications.subtitle")}>
       {error && <p className="api-error" style={{ marginBottom: 14 }}>{error}</p>}
 
       <div className="panel">
@@ -67,26 +51,26 @@ export default function NotificationsPage() {
             <table className="table">
               <thead>
                 <tr>
-                  <th>Type</th>
-                  <th>Canal</th>
-                  <th>Programmé</th>
-                  <th>Statut</th>
-                  <th>Tentatives</th>
+                  <th>{t("notifications.type")}</th>
+                  <th>{t("notifications.channel")}</th>
+                  <th>{t("notifications.scheduled")}</th>
+                  <th>{t("notifications.status")}</th>
+                  <th>{t("notifications.attempts")}</th>
                 </tr>
               </thead>
               <tbody>
                 {rows.map((n) => (
                   <tr key={n.id}>
-                    <td><strong>{EVENT_LABELS[n.eventType] ?? n.eventType}</strong></td>
+                    <td><strong>{t(`notification.event.${n.eventType}`)}</strong></td>
                     <td>
                       <span className="row" style={{ gap: 5 }}>
                         <MessageCircle size={13} style={{ color: "var(--teal)" }} />
                         {n.channel}
                       </span>
                     </td>
-                    <td>{formatDate(n.scheduledAt)} · {formatTime(n.scheduledAt)}</td>
+                    <td>{formatDate(n.scheduledAt, undefined, lang)} · {formatTime(n.scheduledAt, undefined, lang)}</td>
                     <td>
-                      <span className={`status ${badgeClass(n.status)}`}>{STATUS_LABELS[n.status] ?? n.status}</span>
+                      <span className={`status ${badgeClass(n.status)}`}>{t(`notification.status.${n.status}`)}</span>
                       {n.errorCode && <div className="t-muted" style={{ fontSize: 8, marginTop: 3 }}>{n.errorCode}</div>}
                     </td>
                     <td style={{ fontVariantNumeric: "tabular-nums" }}>{n.attempts}</td>
