@@ -2,9 +2,11 @@ name: CI/CD
 
 on:
   pull_request:
-    branches: [main]
   push:
-    branches: [main]
+    branches:
+      - main
+      - "feat/**"
+      - "Dev-booking-**"
 
 permissions:
   contents: read
@@ -84,9 +86,39 @@ jobs:
           NEXT_PUBLIC_API_URL: https://booking-api-rosy.vercel.app/api/v1
         run: npm run build
 
+  mobile:
+    name: Mobile checks
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: mobile/package-lock.json
+
+      - name: Install dependencies
+        working-directory: mobile
+        run: npm ci
+
+      - name: Check Expo dependencies
+        working-directory: mobile
+        run: npx expo install --check
+
+      - name: Type-check
+        working-directory: mobile
+        run: npm run typecheck
+
+      - name: Export Android and iOS bundles
+        working-directory: mobile
+        run: npm run build
+
   migrate-production:
     name: Apply Neon production migrations
-    needs: [backend, frontend]
+    needs: [backend, frontend, mobile]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     environment: production
@@ -113,8 +145,8 @@ jobs:
 
   deploy-frontend-preview:
     name: Deploy frontend preview
-    needs: [backend, frontend]
-    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
+    needs: [backend, frontend, mobile]
+    if: github.event_name == 'pull_request' && github.base_ref == 'main' && github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -150,8 +182,8 @@ jobs:
 
   deploy-backend-preview:
     name: Deploy API preview
-    needs: [backend, frontend]
-    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
+    needs: [backend, frontend, mobile]
+    if: github.event_name == 'pull_request' && github.base_ref == 'main' && github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -187,7 +219,7 @@ jobs:
 
   deploy-frontend-production:
     name: Deploy frontend production
-    needs: [backend, frontend, migrate-production]
+    needs: [backend, frontend, mobile, migrate-production]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     environment: production
@@ -225,7 +257,7 @@ jobs:
 
   deploy-backend-production:
     name: Deploy API production
-    needs: [backend, frontend, migrate-production]
+    needs: [backend, frontend, mobile, migrate-production]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     environment: production
