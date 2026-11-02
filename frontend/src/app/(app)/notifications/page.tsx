@@ -61,7 +61,14 @@ export default function NotificationsPage() {
               <tbody>
                 {rows.map((n) => (
                   <tr key={n.id}>
-                    <td><strong>{t(`notification.event.${n.eventType}`)}</strong></td>
+                    <td>
+                      <div className="cell-user">
+                        <span className="ava" aria-hidden style={{ background: "var(--success)" }}>
+                          <MessageCircle size={15} />
+                        </span>
+                        <div className="nm"><strong>{t(`notification.event.${n.eventType}`)}</strong></div>
+                      </div>
+                    </td>
                     <td>
                       <span className="row" style={{ gap: 5 }}>
                         <MessageCircle size={13} style={{ color: "var(--teal)" }} />
