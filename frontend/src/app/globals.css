@@ -281,6 +281,26 @@ h1, h2, h3, p { margin: 0; }
   flex: 0 0 auto;
 }
 
+/* ====== Entity cards (services / employés) ====== */
+.entity-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(236px, 1fr)); gap: 13px; }
+.entity-card { display: flex; flex-direction: column; background: var(--surface); border: 1px solid var(--line);
+  border-radius: var(--radius-lg); padding: 17px; box-shadow: var(--shadow-sm); transition: transform 0.14s ease, box-shadow 0.18s ease; }
+.entity-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-card); }
+.entity-card.inactive { opacity: 0.6; }
+.entity-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 13px; }
+.entity-ic { display: grid; place-items: center; width: 42px; height: 42px; border-radius: var(--radius-md);
+  background: var(--grad); color: var(--on-brand); font-family: var(--font-display); font-weight: 800; font-size: 15px;
+  box-shadow: 0 6px 14px -6px color-mix(in srgb, var(--teal) 55%, transparent); }
+.entity-name { font-size: 15px; font-weight: 700; letter-spacing: -0.3px; }
+.entity-desc { color: var(--muted); font-size: 11px; margin-top: 4px; }
+.entity-meta { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 13px; color: var(--muted); font-size: 11px; }
+.entity-meta .dur { display: inline-flex; align-items: center; gap: 5px; }
+.entity-price { color: var(--teal); font-weight: 800; font-size: 17px; font-family: var(--font-display); letter-spacing: -0.4px; }
+.entity-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 11px; }
+.tag-chip { background: var(--surface-sunken); color: var(--muted); font-size: 10px; font-weight: 600; padding: 4px 9px; border-radius: var(--radius-pill); }
+.entity-foot { margin-top: 13px; padding-top: 11px; border-top: 1px solid var(--line); display: flex; justify-content: flex-end; }
+@media (max-width: 500px) { .entity-grid { grid-template-columns: 1fr; } }
+
 /* ====== Utilities ====== */
 .stack { display: grid; gap: var(--space-3); }
 .row { display: flex; align-items: center; gap: var(--space-2); }

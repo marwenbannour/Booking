@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth";
 import { useI18n } from "@/lib/i18n";
+import { Clock } from "lucide-react";
 import { api, ApiError, type ManagedService } from "@/lib/api";
 import { AppShell } from "@/components/shell/AppShell";
 import { Button } from "@/components/ui/Button";
@@ -11,7 +12,7 @@ import { formatPrice } from "@/lib/format";
 
 export default function ServicesPage() {
   const { establishmentId } = useAuth();
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
   const [rows, setRows] = useState<ManagedService[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -28,9 +29,9 @@ export default function ServicesPage() {
     api
       .listServices(establishmentId)
       .then(setRows)
-      .catch((err) => setError(err instanceof ApiError ? err.message : "Chargement impossible."))
+      .catch((err) => setError(err instanceof ApiError ? err.message : t("common.loadFailed")))
       .finally(() => setLoading(false));
-  }, [establishmentId]);
+  }, [establishmentId, t]);
 
   useEffect(load, [load]);
 
@@ -51,7 +52,7 @@ export default function ServicesPage() {
       setShowForm(false);
       load();
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Création impossible.");
+      setError(err instanceof ApiError ? err.message : t("services.createFailed"));
     } finally {
       setSaving(false);
     }
@@ -63,77 +64,67 @@ export default function ServicesPage() {
       await api.deactivateService(establishmentId, id);
       load();
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Action impossible.");
+      setError(err instanceof ApiError ? err.message : t("common.actionFailed"));
     }
   }
 
   return (
     <AppShell
       title={t("nav.services")}
-      subtitle="Prestations proposées à la réservation"
-      actions={<Button onClick={() => setShowForm((s) => !s)}>{showForm ? t("common.back") : "Nouveau service"}</Button>}
+      subtitle={t("services.subtitle")}
+      actions={<Button onClick={() => setShowForm((s) => !s)}>{showForm ? t("common.back") : t("services.new")}</Button>}
     >
       {error && <p className="api-error" style={{ marginBottom: 14 }}>{error}</p>}
 
       {showForm && (
         <form className="panel" onSubmit={create} style={{ marginBottom: 16 }}>
-          <h2 className="t-title" style={{ marginBottom: 12 }}>Nouveau service</h2>
+          <h2 className="t-title" style={{ marginBottom: 12 }}>{t("services.new")}</h2>
           <div className="form-grid">
-            <Field label="Nom" value={name} onChange={(e) => setName(e.target.value)} required />
-            <Field label="Durée (min)" type="number" min={1} value={duration} onChange={(e) => setDuration(e.target.value)} required />
-            <Field label="Prix (optionnel)" type="number" min={0} step="0.001" value={price} onChange={(e) => setPrice(e.target.value)} />
+            <Field label={t("services.name")} value={name} onChange={(e) => setName(e.target.value)} required />
+            <Field label={t("services.duration")} type="number" min={1} value={duration} onChange={(e) => setDuration(e.target.value)} required />
+            <Field label={t("services.priceOptional")} type="number" min={0} step="0.001" value={price} onChange={(e) => setPrice(e.target.value)} />
           </div>
           <div className="row" style={{ marginTop: 14, justifyContent: "flex-end" }}>
-            <Button type="submit" disabled={saving}>{saving ? "Enregistrement…" : "Créer le service"}</Button>
+            <Button type="submit" disabled={saving}>{saving ? t("common.saving") : t("services.create")}</Button>
           </div>
         </form>
       )}
 
-      <div className="panel">
-        {loading ? (
+      {loading ? (
+        <div className="panel">
           <div className="row" style={{ justifyContent: "center", padding: 24 }}>
             <div className="spin" />
           </div>
-        ) : rows.length === 0 ? (
+        </div>
+      ) : rows.length === 0 ? (
+        <div className="panel">
           <p className="t-muted" style={{ fontSize: 11, padding: "18px 0" }}>{t("common.none")}</p>
-        ) : (
-          <div style={{ overflowX: "auto" }}>
-            <table className="table">
-              <thead>
-                <tr>
-                  <th>Service</th>
-                  <th>Durée</th>
-                  <th>Prix</th>
-                  <th>État</th>
-                  <th style={{ textAlign: "end" }}>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {rows.map((s) => (
-                  <tr key={s.id} style={{ opacity: s.isActive ? 1 : 0.55 }}>
-                    <td>
-                      <strong>{s.name}</strong>
-                      {s.description && <div className="t-muted" style={{ fontSize: 8 }}>{s.description}</div>}
-                    </td>
-                    <td>{s.durationMinutes} min</td>
-                    <td>{formatPrice(s.price)}</td>
-                    <td>
-                      <span className={`status ${s.isActive ? "confirmed" : "cancelled"}`}>
-                        {s.isActive ? "Actif" : "Inactif"}
-                      </span>
-                    </td>
-                    <td style={{ textAlign: "end" }}>
-                      {s.isActive && (
-                        <Button variant="text" onClick={() => deactivate(s.id)}>Désactiver</Button>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
+        </div>
+      ) : (
+        <div className="entity-grid">
+          {rows.map((s) => (
+            <article key={s.id} className={`entity-card ${s.isActive ? "" : "inactive"}`}>
+              <div className="entity-head">
+                <span className="entity-ic" aria-hidden>{s.name.trim().charAt(0).toUpperCase() || "•"}</span>
+                <span className={`status ${s.isActive ? "confirmed" : "cancelled"}`}>
+                  {s.isActive ? t("services.active") : t("services.inactive")}
+                </span>
+              </div>
+              <h3 className="entity-name">{s.name}</h3>
+              {s.description && <p className="entity-desc">{s.description}</p>}
+              <div className="entity-meta">
+                <span className="dur"><Clock size={13} /> {s.durationMinutes} {t("services.minuteUnit")}</span>
+                <span className="entity-price">{formatPrice(s.price, undefined, lang)}</span>
+              </div>
+              {s.isActive && (
+                <div className="entity-foot">
+                  <Button variant="text" onClick={() => deactivate(s.id)}>{t("services.deactivate")}</Button>
+                </div>
+              )}
+            </article>
+          ))}
+        </div>
+      )}
     </AppShell>
   );
 }

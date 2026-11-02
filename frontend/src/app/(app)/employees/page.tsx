@@ -28,9 +28,9 @@ export default function EmployeesPage() {
         setEmployees(emp);
         setServices(svc);
       })
-      .catch((err) => setError(err instanceof ApiError ? err.message : "Chargement impossible."))
+      .catch((err) => setError(err instanceof ApiError ? err.message : t("common.loadFailed")))
       .finally(() => setLoading(false));
-  }, [establishmentId]);
+  }, [establishmentId, t]);
 
   const serviceName = useMemo(() => {
     const map = new Map(services.map((s) => [s.id, s.name]));
@@ -59,83 +59,74 @@ export default function EmployeesPage() {
       setInviteName("");
       setInviteEmail("");
     } catch (reason) {
-      setError(reason instanceof ApiError ? reason.message : "Invitation impossible.");
+      setError(reason instanceof ApiError ? reason.message : t("employees.inviteFailed"));
     } finally {
       setInviting(false);
     }
   }
 
   return (
-    <AppShell title={t("nav.employees")} subtitle="Équipe et prestations assignées">
+    <AppShell title={t("nav.employees")} subtitle={t("employees.subtitle")}>
       {error && <p className="api-error" style={{ marginBottom: 14 }}>{error}</p>}
 
       {canInvite && <form className="panel" onSubmit={submitInvitation} style={{ marginBottom: 16 }}>
-        <h2 className="t-title" style={{ marginBottom: 12 }}>Inviter un employé</h2>
+        <h2 className="t-title" style={{ marginBottom: 12 }}>{t("employees.invite")}</h2>
         <div className="form-grid">
-          <Field label="Nom affiché" name="inviteName" value={inviteName} onChange={(event) => setInviteName(event.target.value)} minLength={2} maxLength={120} required />
-          <Field label="Adresse e-mail" name="inviteEmail" type="email" value={inviteEmail} onChange={(event) => setInviteEmail(event.target.value)} maxLength={254} required />
+          <Field label={t("employees.displayName")} name="inviteName" value={inviteName} onChange={(event) => setInviteName(event.target.value)} minLength={2} maxLength={120} required />
+          <Field label={t("employees.email")} name="inviteEmail" type="email" value={inviteEmail} onChange={(event) => setInviteEmail(event.target.value)} maxLength={254} required />
         </div>
         <div className="row" style={{ justifyContent: "flex-end", marginTop: 12 }}>
-          <Button type="submit" disabled={inviting}>{inviting ? "Création…" : "Créer l’invitation"}</Button>
+          <Button type="submit" disabled={inviting}>{inviting ? t("employees.creating") : t("employees.createInvitation")}</Button>
         </div>
         {inviteLink && (
           <p className="status confirmed" style={{ display: "block", overflowWrap: "anywhere", marginTop: 10 }}>
-            Lien à transmettre à l’employé : <a href={inviteLink}>{inviteLink}</a>
+            {t("employees.invitationLink")} <a href={inviteLink}>{inviteLink}</a>
           </p>
         )}
       </form>}
 
-      <div className="panel">
-        {loading ? (
+      {loading ? (
+        <div className="panel">
           <div className="row" style={{ justifyContent: "center", padding: 24 }}>
             <div className="spin" />
           </div>
-        ) : employees.length === 0 ? (
+        </div>
+      ) : employees.length === 0 ? (
+        <div className="panel">
           <p className="t-muted" style={{ fontSize: 11, padding: "18px 0" }}>{t("common.none")}</p>
-        ) : (
-          <div style={{ overflowX: "auto" }}>
-            <table className="table">
-              <thead>
-                <tr>
-                  <th>Employé</th>
-                  <th>Services</th>
-                  <th>État</th>
-                </tr>
-              </thead>
-              <tbody>
-                {employees.map((e) => {
-                  const initials = e.displayName
-                    .split(" ")
-                    .map((w) => w[0])
-                    .slice(0, 2)
-                    .join("")
-                    .toUpperCase();
-                  return (
-                    <tr key={e.id} style={{ opacity: e.isActive ? 1 : 0.55 }}>
-                      <td>
-                        <div className="row" style={{ gap: 8 }}>
-                          <span className="avatar teal" style={{ width: 29, height: 29, fontSize: 9 }}>{initials}</span>
-                          <strong>{e.displayName}</strong>
-                        </div>
-                      </td>
-                      <td>
-                        {e.services.length === 0
-                          ? "—"
-                          : e.services.map((s) => serviceName(s.serviceId)).join(", ")}
-                      </td>
-                      <td>
-                        <span className={`status ${e.isActive ? "confirmed" : "cancelled"}`}>
-                          {e.isActive ? "Actif" : "Inactif"}
-                        </span>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
+        </div>
+      ) : (
+        <div className="entity-grid">
+          {employees.map((e) => {
+            const initials = e.displayName
+              .split(" ")
+              .map((w) => w[0])
+              .slice(0, 2)
+              .join("")
+              .toUpperCase();
+            return (
+              <article key={e.id} className={`entity-card ${e.isActive ? "" : "inactive"}`}>
+                <div className="entity-head">
+                  <span className="entity-ic" aria-hidden>{initials}</span>
+                  <span className={`status ${e.isActive ? "confirmed" : "cancelled"}`}>
+                    {e.isActive ? t("services.active") : t("services.inactive")}
+                  </span>
+                </div>
+                <h3 className="entity-name">{e.displayName}</h3>
+                <div className="entity-tags">
+                  {e.services.length === 0 ? (
+                    <span className="tag-chip">—</span>
+                  ) : (
+                    e.services.map((s) => (
+                      <span key={s.serviceId} className="tag-chip">{serviceName(s.serviceId)}</span>
+                    ))
+                  )}
+                </div>
+              </article>
+            );
+          })}
+        </div>
+      )}
     </AppShell>
   );
 }
