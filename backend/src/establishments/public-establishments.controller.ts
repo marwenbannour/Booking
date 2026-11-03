@@ -14,6 +14,7 @@ import {
   IsBoolean,
   IsDateString,
   IsEmail,
+  IsIn,
   IsOptional,
   IsString,
   IsUUID,
@@ -54,6 +55,10 @@ class PublicBookingDto {
 
   @IsBoolean()
   consentToReminders!: boolean;
+
+  @IsIn(['fr', 'ar'])
+  @IsOptional()
+  locale?: 'fr' | 'ar';
 }
 
 class PublicEmployeesQueryDto {
@@ -189,6 +194,7 @@ export class PublicEstablishmentsController {
       customerPhone: body.customerPhone,
       customerEmail: body.customerEmail,
       consentToReminders: body.consentToReminders,
+      locale: body.locale,
       idempotencyKey,
     });
   }

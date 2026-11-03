@@ -1,6 +1,6 @@
 FROM node:24-alpine AS build
 WORKDIR /app
-COPY package*.json ./
+COPY package*.json .npmrc ./
 RUN npm ci
 COPY . .
 # `prisma generate` loads prisma.config.ts, which resolves env('DATABASE_URL').

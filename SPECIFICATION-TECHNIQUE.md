@@ -1,31 +1,46 @@
 # Spécification technique — Rendez-vous
 
-**Version :** 1.0  
-**Date :** 28 octobre 2026  
-**Statut :** Base de conception proposée pour le MVP  
+**Version :** 3.0  
+**Date :** 2 novembre 2026  
+**Statut :** Référence V3.0 alignée sur l’implémentation actuelle et ses écarts  
 **Marché :** Tunisie — français et arabe (RTL)  
 **Périmètre :** SaaS multi-établissement, réservation Web/mobile, espace professionnel, calendrier, clients, notifications et administration de base.
 
 > Cette spécification transforme le cahier des charges produit en base d’architecture. Les données d’exemple et métriques du prototype ne sont pas des données métier réelles. Les règles juridiques, le fournisseur WhatsApp, l’hébergement et le paiement d’abonnement restent à valider avant la production.
+
+## État de réalisation V3.0
+
+| Objectif | État dans le dépôt |
+|---|---|
+| Portail professionnel et réservation publique mobile-first | Portail Next.js et application Expo présents ; parcours public Web/mobile connectés à l’API |
+| Architecture Next.js, NestJS, PostgreSQL, Prisma, Redis et BullMQ | Implémentée ; Prisma Migrate, outbox transactionnelle et worker persistant séparé inclus |
+| Réservation sécurisée | Idempotence, validation transactionnelle des créneaux, prévention des conflits et quotas serveur implémentés |
+| WhatsApp Business fiable | Consentement, reprises BullMQ, journal, webhooks Meta signés et suivi de livraison présents ; l’envoi de production exige un worker long-running et les secrets du fournisseur |
+| Français, arabe, RTL et charte | Parcours professionnels, authentification, réservation publique et application mobile traduits ; la langue client est persistée pour les notifications |
+| SaaS multi-établissements | Membres, rôles, plans, abonnements et quotas serveur implémentés ; l’encaissement réel des abonnements reste à connecter à un prestataire de paiement |
+| Tests et déploiement | CI valide backend, Web et bundles mobiles ; Docker Compose démarre API/worker/PostgreSQL/Redis ; l’API Web est déployée via Vercel |
+| Supervision | Liveness et readiness PostgreSQL disponibles ; métriques, traces distribuées et alertes externes non configurées |
+
+Le worker ne doit pas être hébergé dans une fonction Vercel : le relais d’outbox et le traitement différé BullMQ nécessitent un processus persistant. Le dépôt fournit son point d’entrée (`npm run start:worker`) et son service Docker Compose ; le runtime de production et ses secrets doivent être fournis par l’environnement d’hébergement.
 
 ## 1. Décisions techniques
 
 | Domaine | Choix MVP |
 |---|---|
 | API | NestJS + TypeScript, REST versionnée sous `/api/v1` |
-| Runtime | Version LTS de Node.js supportée au démarrage |
+| Runtime | Node.js 24 dans les images et pipelines actuels |
 | Base de données | PostgreSQL, UUID, migrations versionnées |
 | Accès aux données | Prisma ORM et Prisma Migrate pour le schéma et les migrations usuelles ; SQL de migration explicite pour les extensions et contraintes PostgreSQL spécifiques (notamment `btree_gist` et l’exclusion de chevauchement). Requêtes brutes uniquement paramétrées. |
 | Authentification | JWT + Passport (`@nestjs/passport`, stratégie JWT) pour les professionnels ; access token court gardé en mémoire dans le Web, refresh token rotatif révocable dans un cookie `HttpOnly`, `Secure` en production, `SameSite=Lax`. Les clients n’ont pas à créer de compte ; leur jeton limité à une réservation est aléatoire, à durée limitée et stocké sous forme hachée. |
-| Web professionnel et réservation publique | React + TypeScript + Vite, réutilisation progressive du prototype |
-| Application mobile | React Native + Expo + TypeScript, mêmes API et règles métier |
+| Web professionnel et réservation publique | Next.js 14 + React 18 + TypeScript, app router |
+| Application mobile | React Native 0.88 + Expo SDK 58 + React 19 + TypeScript, mêmes API et règles métier |
 | Tâches asynchrones | Redis + BullMQ (`@nestjs/bullmq`) pour les files, rappels différés, reprises et workers. Outbox PostgreSQL transactionnelle comme relais fiable entre réservation et enfilement Redis. |
 | Notifications | Adaptateurs e-mail / WhatsApp Business Platform ou fournisseur officiellement autorisé. Aucun envoi via WhatsApp Web automatisé. |
 | Documentation API | Swagger / OpenAPI généré depuis les contrôleurs et DTO NestJS (`@nestjs/swagger`) |
 | Validation | `class-validator`/`class-transformer` sur les DTO NestJS ; validation métier dans les services de domaine |
 | Tests | Jest pour tests unitaires/intégration ; Supertest pour tests HTTP e2e NestJS avec PostgreSQL de test isolé |
-| Observabilité | Logs structurés avec identifiant de corrélation, métriques et traces OpenTelemetry |
-| Environnement reproductible | Docker et Docker Compose pour API, worker, PostgreSQL, Redis et outils locaux ; environnements development/test/staging/production séparés |
+| Observabilité | Liveness, readiness PostgreSQL et journaux NestJS ; métriques/traces/alertes à intégrer avant exploitation à grande échelle |
+| Environnement reproductible | Docker et Docker Compose pour API, worker, PostgreSQL, Redis et mailpit ; CI/CD Web et validation de bundles mobiles |
 
 ### Organisation NestJS suggérée
 
@@ -810,12 +825,14 @@ Un identifiant d’employé renseigné filtre les disponibilités ; l’absence 
 | `POST /api/v1/public/establishments/{slug}/bookings` | Public, anti-abus + idempotence | Réservation sans création de compte |
 | `GET /api/v1/public/bookings/{bookingId}` | Jeton d’accès client limité | Consultation de la réservation détenue |
 | `POST /api/v1/public/bookings/{bookingId}/cancel` | Jeton d’accès client + idempotence | Annulation selon politique établissement |
+| `POST /api/v1/bookings/public/{bookingId}/reschedule-requests` | Jeton client `booking:reschedule` | Demande un créneau disponible sans modifier le rendez-vous avant décision |
+| `GET /api/v1/bookings/reschedule-requests?establishmentId=...` | Permission `bookings.read` | Liste les demandes en attente |
+| `POST /api/v1/bookings/{bookingId}/reschedule-requests/{requestId}/decision?establishmentId=...` | Permission `bookings.write` | Accepte après revalidation du créneau, ou refuse avec motif |
 | `GET /api/v1/establishments/{establishmentId}/bookings?from=...&to=...&employeeId=...&status=...&cursor=...` | Membre autorisé | Liste/calendrier du tenant, pagination curseur |
 | `POST /api/v1/establishments/{establishmentId}/bookings` | Permission `bookings.write` | Création manuelle par l’équipe |
 | `GET /api/v1/establishments/{establishmentId}/bookings/{bookingId}` | Membre autorisé | Détail et événements accessibles |
 | `PATCH /api/v1/establishments/{establishmentId}/bookings/{bookingId}` | Permission `bookings.write` | Modification conditionnelle avec `If-Match`/version |
 | `POST /api/v1/establishments/{establishmentId}/bookings/{bookingId}/cancel` | Permission `bookings.write` | Annulation professionnelle |
-| `POST /api/v1/establishments/{establishmentId}/bookings/{bookingId}/confirm` | Permission `bookings.confirm` | Confirmation si le workflow utilise `PENDING` |
 | `POST /api/v1/establishments/{establishmentId}/bookings/{bookingId}/complete` | Permission `bookings.complete` | Marquer comme terminé |
 | `POST /api/v1/establishments/{establishmentId}/bookings/{bookingId}/no-show` | Permission `bookings.complete` | Marquer l’absence avec acteur et date |
 
@@ -945,9 +962,10 @@ CONFIRMED -> COMPLETED | NO_SHOW | CANCELLED
 COMPLETED, NO_SHOW, REJECTED, CANCELLED -> terminaux
 ```
 
-- Par défaut, une réservation publique valide est `CONFIRMED`. `PENDING` n’est activé que si l’établissement configure une validation manuelle.
+- Au MVP, toute réservation publique valide est confirmée immédiatement (`CONFIRMED`). La validation manuelle par établissement n’est pas prise en charge.
 - `PENDING` et `CONFIRMED` occupent un créneau et sont couverts par l’exclusion SQL.
 - Une annulation vérifie la politique, conserve l’historique, libère le créneau et annule les notifications futures non envoyées dans la même transaction.
+- Une demande de déplacement reste `PENDING` sans bloquer le créneau demandé ; le rendez-vous existant reste confirmé. L’acceptation vérifie à nouveau la disponibilité, met à jour le rendez-vous de façon optimiste, historise l’ancien et le nouveau créneau et replanifie les notifications dans la même transaction. Une seule demande peut être en attente par rendez-vous.
 - La réattribution à un employé ou à un nouvel horaire exige disponibilité recalculée et transaction ; elle n’efface jamais les rendez-vous existants.
 - La modification du statut écrit un `booking_event` immuable avec acteur, date, transition et motif lorsque nécessaire.
 
@@ -967,7 +985,7 @@ COMPLETED, NO_SHOW, REJECTED, CANCELLED -> terminaux
 ### Environnements et migrations
 
 - `development`, `test`, `staging`, `production` utilisent des secrets et données séparés ; aucune donnée personnelle de production en test non contrôlé.
-- Docker Compose local orchestre `api`, `worker`, `postgres` et `redis` avec volumes nommés, healthchecks, versions d’images épinglées et réseau privé. Une commande d’initialisation attend la santé de PostgreSQL, applique les migrations Prisma puis démarre l’API/worker. Les ports et identifiants par défaut restent locaux ; les secrets de production sont fournis par l’environnement, jamais intégrés à l’image.
+- Docker Compose local orchestre `api`, `worker`, `postgres`, `redis` et Mailpit avec volumes nommés et healthchecks. L’API applique les migrations Prisma avant de devenir prête ; le worker séparé attend l’état prêt de l’API, de PostgreSQL et de Redis. Les identifiants par défaut restent locaux ; les secrets de production sont fournis par l’environnement, jamais intégrés à l’image.
 - Les tests Jest unitaires ne nécessitent pas de services externes ; les tests d’intégration et e2e Jest/Supertest utilisent PostgreSQL et Redis de test isolés, appliquent les migrations Prisma, puis nettoient les données. Les tests de queues emploient des queues préfixées par exécution pour éviter les collisions parallèles.
 - Les migrations sont versionnées, relues et exécutées avant que le nouveau code ne dépende du schéma. Appliquer le modèle expand/migrate/contract pour les changements risqués.
 - Les migrations avec `CREATE INDEX CONCURRENTLY` ne doivent pas être exécutées dans une transaction PostgreSQL ordinaire.
@@ -995,7 +1013,7 @@ COMPLETED, NO_SHOW, REJECTED, CANCELLED -> terminaux
 ## 11. Décisions et questions de lancement
 
 1. Session décidée : cookie `HttpOnly` pour le refresh Web, access token en mémoire et stockage système sécurisé pour mobile. La fermeture de compte est une désactivation réversible ; un propriétaire unique doit transférer la propriété avant fermeture. La nouvelle adresse e-mail n’est activée qu’après vérification.
-2. Les réservations sont-elles toujours confirmées immédiatement au MVP, ou certains établissements exigent-ils une validation manuelle (`PENDING`) ?
+2. Décision MVP : les réservations publiques sont confirmées immédiatement ; la validation manuelle par établissement est hors périmètre.
 3. Quels canaux et consentements sont requis au MVP (WhatsApp, e-mail, les deux) et quel fournisseur officiel sera utilisé ?
 4. Quelle politique de conservation/suppression et quel mécanisme d’export des données personnelles ?
 5. Les abonnements sont-ils activés manuellement au pilote ou faut-il déjà intégrer un prestataire de paiement disponible en Tunisie ?

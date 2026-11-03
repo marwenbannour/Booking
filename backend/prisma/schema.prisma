@@ -145,20 +145,20 @@ model EmailChangeToken {
 }
 
 model Establishment {
-  id                          String                @id @default(uuid()) @db.Uuid
-  slug                        String                @unique
+  id                          String                     @id @default(uuid()) @db.Uuid
+  slug                        String                     @unique
   name                        String
   description                 String?
   address                     String?
-  timezone                    String                @default("Africa/Tunis")
-  currency                    String                @default("TND") @db.Char(3)
-  locale                      String                @default("fr")
-  minimumBookingNoticeMinutes Int                   @default(60) @map("minimum_booking_notice_minutes")
-  maximumBookingDays          Int                   @default(60) @map("maximum_booking_days")
-  cancellationNoticeHours     Int                   @default(24) @map("cancellation_notice_hours")
-  status                      EstablishmentStatus   @default(ACTIVE)
-  createdAt                   DateTime              @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt                   DateTime              @updatedAt @map("updated_at") @db.Timestamptz(6)
+  timezone                    String                     @default("Africa/Tunis")
+  currency                    String                     @default("TND") @db.Char(3)
+  locale                      String                     @default("fr")
+  minimumBookingNoticeMinutes Int                        @default(60) @map("minimum_booking_notice_minutes")
+  maximumBookingDays          Int                        @default(60) @map("maximum_booking_days")
+  cancellationNoticeHours     Int                        @default(24) @map("cancellation_notice_hours")
+  status                      EstablishmentStatus        @default(ACTIVE)
+  createdAt                   DateTime                   @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt                   DateTime                   @updatedAt @map("updated_at") @db.Timestamptz(6)
   memberships                 EstablishmentMember[]
   employeeInvitations         EmployeeInvitation[]
   services                    Service[]
@@ -175,6 +175,7 @@ model Establishment {
   payments                    Payment[]
   auditLogs                   AuditLog[]
   bookingEvents               BookingEvent[]
+  rescheduleRequests          BookingRescheduleRequest[]
 
   @@map("establishments")
 }
@@ -197,18 +198,19 @@ model EstablishmentMember {
 }
 
 model Employee {
-  id              String              @id @default(uuid()) @db.Uuid
-  establishmentId String              @map("establishment_id") @db.Uuid
-  memberId        String              @unique @map("member_id") @db.Uuid
-  displayName     String              @map("display_name")
-  isActive        Boolean             @default(true) @map("is_active")
-  createdAt       DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
-  establishment   Establishment       @relation(fields: [establishmentId], references: [id], onDelete: Cascade)
-  member          EstablishmentMember @relation(fields: [memberId], references: [id], onDelete: Cascade)
-  services        EmployeeService[]
-  businessHours   BusinessHour[]
-  timeOffs        TimeOff[]
-  bookings        Booking[]
+  id                 String                     @id @default(uuid()) @db.Uuid
+  establishmentId    String                     @map("establishment_id") @db.Uuid
+  memberId           String                     @unique @map("member_id") @db.Uuid
+  displayName        String                     @map("display_name")
+  isActive           Boolean                    @default(true) @map("is_active")
+  createdAt          DateTime                   @default(now()) @map("created_at") @db.Timestamptz(6)
+  establishment      Establishment              @relation(fields: [establishmentId], references: [id], onDelete: Cascade)
+  member             EstablishmentMember        @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  services           EmployeeService[]
+  businessHours      BusinessHour[]
+  timeOffs           TimeOff[]
+  bookings           Booking[]
+  rescheduleRequests BookingRescheduleRequest[]
 
   @@unique([establishmentId, id])
   @@index([establishmentId, isActive])
@@ -300,6 +302,7 @@ model Customer {
   name            String
   phoneNormalized String?       @map("phone_normalized")
   email           String?
+  preferredLocale String        @default("fr") @map("preferred_locale")
   notes           String?
   createdAt       DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt       DateTime      @updatedAt @map("updated_at") @db.Timestamptz(6)
@@ -313,34 +316,36 @@ model Customer {
 }
 
 model Booking {
-  id                      String            @id @default(uuid()) @db.Uuid
-  establishmentId         String            @map("establishment_id") @db.Uuid
-  publicReference         String            @map("public_reference")
-  customerId              String            @map("customer_id") @db.Uuid
-  serviceId               String            @map("service_id") @db.Uuid
-  employeeId              String            @map("employee_id") @db.Uuid
-  startsAt                DateTime          @map("starts_at") @db.Timestamptz(6)
-  endsAt                  DateTime          @map("ends_at") @db.Timestamptz(6)
-  status                  BookingStatus     @default(CONFIRMED)
+  id                      String                     @id @default(uuid()) @db.Uuid
+  establishmentId         String                     @map("establishment_id") @db.Uuid
+  publicReference         String                     @map("public_reference")
+  customerId              String                     @map("customer_id") @db.Uuid
+  serviceId               String                     @map("service_id") @db.Uuid
+  employeeId              String                     @map("employee_id") @db.Uuid
+  startsAt                DateTime                   @map("starts_at") @db.Timestamptz(6)
+  endsAt                  DateTime                   @map("ends_at") @db.Timestamptz(6)
+  status                  BookingStatus              @default(CONFIRMED)
   source                  BookingSource
-  customerNameSnapshot    String            @map("customer_name_snapshot")
-  customerPhoneSnapshot   String?           @map("customer_phone_snapshot")
-  customerEmailSnapshot   String?           @map("customer_email_snapshot")
-  serviceNameSnapshot     String            @map("service_name_snapshot")
-  durationMinutesSnapshot Int               @map("duration_minutes_snapshot")
-  priceSnapshot           Decimal?          @map("price_snapshot") @db.Decimal(12, 3)
-  currency                String            @default("TND") @db.Char(3)
-  remindersConsent        Boolean           @default(false) @map("reminders_consent")
-  cancellationReason      String?           @map("cancellation_reason")
-  version                 Int               @default(1)
-  createdAt               DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt               DateTime          @updatedAt @map("updated_at") @db.Timestamptz(6)
-  establishment           Establishment     @relation(fields: [establishmentId], references: [id], onDelete: Restrict)
-  customer                Customer          @relation(fields: [customerId], references: [id], onDelete: Restrict)
-  service                 Service           @relation(fields: [serviceId], references: [id], onDelete: Restrict)
-  employee                Employee          @relation(fields: [employeeId], references: [id], onDelete: Restrict)
+  customerNameSnapshot    String                     @map("customer_name_snapshot")
+  customerPhoneSnapshot   String?                    @map("customer_phone_snapshot")
+  customerEmailSnapshot   String?                    @map("customer_email_snapshot")
+  serviceNameSnapshot     String                     @map("service_name_snapshot")
+  durationMinutesSnapshot Int                        @map("duration_minutes_snapshot")
+  priceSnapshot           Decimal?                   @map("price_snapshot") @db.Decimal(12, 3)
+  currency                String                     @default("TND") @db.Char(3)
+  remindersConsent        Boolean                    @default(false) @map("reminders_consent")
+  cancellationReason      String?                    @map("cancellation_reason")
+  version                 Int                        @default(1)
+  createdAt               DateTime                   @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt               DateTime                   @updatedAt @map("updated_at") @db.Timestamptz(6)
+  establishment           Establishment              @relation(fields: [establishmentId], references: [id], onDelete: Restrict)
+  customer                Customer                   @relation(fields: [customerId], references: [id], onDelete: Restrict)
+  service                 Service                    @relation(fields: [serviceId], references: [id], onDelete: Restrict)
+  employee                Employee                   @relation(fields: [employeeId], references: [id], onDelete: Restrict)
   notificationJobs        NotificationJob[]
   bookingEvents           BookingEvent[]
+  accessTokens            BookingAccessToken[]
+  rescheduleRequests      BookingRescheduleRequest[]
 
   @@unique([establishmentId, id])
   @@unique([establishmentId, publicReference])
@@ -356,13 +361,37 @@ model BookingAccessToken {
   establishmentId String    @map("establishment_id") @db.Uuid
   bookingId       String    @map("booking_id") @db.Uuid
   tokenHash       Bytes     @unique @map("token_hash")
-  scopes          String[]  @default(["booking:read", "booking:cancel"])
+  scopes          String[]  @default(["booking:read", "booking:cancel", "booking:reschedule"])
   expiresAt       DateTime  @map("expires_at") @db.Timestamptz(6)
   revokedAt       DateTime? @map("revoked_at") @db.Timestamptz(6)
   createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  booking         Booking   @relation(fields: [bookingId], references: [id], onDelete: Cascade)
 
   @@index([establishmentId, bookingId])
   @@map("booking_access_tokens")
+}
+
+model BookingRescheduleRequest {
+  id                  String        @id @default(uuid()) @db.Uuid
+  establishmentId     String        @map("establishment_id") @db.Uuid
+  bookingId           String        @map("booking_id") @db.Uuid
+  originalStartsAt    DateTime      @map("original_starts_at") @db.Timestamptz(6)
+  originalEmployeeId  String        @map("original_employee_id") @db.Uuid
+  requestedStartsAt   DateTime      @map("requested_starts_at") @db.Timestamptz(6)
+  requestedEmployeeId String        @map("requested_employee_id") @db.Uuid
+  status              String        @default("PENDING")
+  decisionReason      String?       @map("decision_reason")
+  decidedByUserId     String?       @map("decided_by_user_id") @db.Uuid
+  decidedAt           DateTime?     @map("decided_at") @db.Timestamptz(6)
+  createdAt           DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt           DateTime      @updatedAt @map("updated_at") @db.Timestamptz(6)
+  establishment       Establishment @relation(fields: [establishmentId], references: [id], onDelete: Cascade)
+  booking             Booking       @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  requestedEmployee   Employee      @relation(fields: [requestedEmployeeId], references: [id], onDelete: Restrict)
+
+  @@index([establishmentId, status, createdAt])
+  @@index([bookingId, createdAt])
+  @@map("booking_reschedule_requests")
 }
 
 model BookingEvent {

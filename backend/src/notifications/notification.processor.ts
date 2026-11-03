@@ -48,6 +48,7 @@ export class NotificationProcessor extends WorkerHost {
             serviceNameSnapshot: true,
             cancellationReason: true,
             remindersConsent: true,
+            customer: { select: { preferredLocale: true } },
           },
         },
         establishment: {
@@ -57,7 +58,9 @@ export class NotificationProcessor extends WorkerHost {
     });
 
     if (!record) {
-      this.logger.warn(`Notification job ${notificationJobId} no longer exists`);
+      this.logger.warn(
+        `Notification job ${notificationJobId} no longer exists`,
+      );
       return;
     }
 
@@ -98,7 +101,8 @@ export class NotificationProcessor extends WorkerHost {
     // booking to actually be cancelled.
     if (
       eventType === 'BOOKING_CONFIRMED' ||
-      eventType === 'BOOKING_REMINDER_DUE'
+      eventType === 'BOOKING_REMINDER_DUE' ||
+      eventType === 'BOOKING_UPDATED'
     ) {
       if (booking.status !== 'CONFIRMED') {
         await this.finalizeSkipped(
@@ -130,7 +134,11 @@ export class NotificationProcessor extends WorkerHost {
     }
 
     // Monthly notification quota: skip sending once the plan limit is reached.
-    if (await this.subscriptions.isNotificationQuotaExceeded(record.establishmentId)) {
+    if (
+      await this.subscriptions.isNotificationQuotaExceeded(
+        record.establishmentId,
+      )
+    ) {
       await this.finalizeSkipped(
         record.id,
         record.establishmentId,
@@ -163,7 +171,7 @@ export class NotificationProcessor extends WorkerHost {
     });
 
     const message = buildBookingMessage(eventType, {
-      locale: record.establishment.locale,
+      locale: booking.customer.preferredLocale || record.establishment.locale,
       timezone: record.establishment.timezone,
       establishmentName: record.establishment.name,
       customerName: booking.customerNameSnapshot,
