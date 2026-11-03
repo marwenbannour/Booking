@@ -22,7 +22,7 @@ export function MobileNav() {
   const bookHref = establishmentSlug ? `/book/${establishmentSlug}` : "/bookings";
 
   return (
-    <nav className="mobile-bottom-nav" aria-label="Navigation mobile">
+    <nav className="mobile-bottom-nav" aria-label={t("navigation.mobile")}>
       {left.map((it) => (
         <Link key={it.href} href={it.href} className={`mobile-nav-item ${pathname === it.href ? "active" : ""}`}>
           <it.Icon size={20} strokeWidth={1.9} />

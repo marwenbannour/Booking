@@ -8,9 +8,21 @@ import { AppShell } from "@/components/shell/AppShell";
 import { Button } from "@/components/ui/Button";
 import { formatDate } from "@/lib/format";
 
+function initials(name: string) {
+  return (
+    name
+      .trim()
+      .split(/\s+/)
+      .map((w) => w[0])
+      .slice(0, 2)
+      .join("")
+      .toUpperCase() || "•"
+  );
+}
+
 export default function CustomersPage() {
   const { establishmentId } = useAuth();
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
   const [rows, setRows] = useState<CustomerRow[]>([]);
   const [q, setQ] = useState("");
   const [cursor, setCursor] = useState<string | null>(null);
@@ -28,10 +40,10 @@ export default function CustomersPage() {
           setRows((prev) => (append ? [...prev, ...res.items] : res.items));
           setCursor(res.nextCursor);
         })
-        .catch((err) => setError(err instanceof ApiError ? err.message : "Chargement impossible."))
+        .catch((err) => setError(err instanceof ApiError ? err.message : t("common.loadFailed")))
         .finally(() => setLoading(false));
     },
-    [establishmentId],
+    [establishmentId, t],
   );
 
   useEffect(() => {
@@ -46,7 +58,7 @@ export default function CustomersPage() {
   return (
     <AppShell
       title={t("nav.customers")}
-      subtitle="Historique et coordonnées de vos clients"
+      subtitle={t("customers.subtitle")}
       actions={
         <form className="row" onSubmit={onSearch} style={{ gap: 8 }}>
           <input
@@ -73,19 +85,24 @@ export default function CustomersPage() {
             <table className="table">
               <thead>
                 <tr>
-                  <th>Client</th>
-                  <th>Téléphone</th>
-                  <th>Email</th>
-                  <th>Depuis</th>
+                  <th>{t("customers.client")}</th>
+                  <th>{t("customers.phone")}</th>
+                  <th>{t("customers.email")}</th>
+                  <th>{t("customers.since")}</th>
                 </tr>
               </thead>
               <tbody>
                 {rows.map((c) => (
                   <tr key={c.id}>
-                    <td><strong>{c.name}</strong></td>
+                    <td>
+                      <div className="cell-user">
+                        <span className="ava" aria-hidden>{initials(c.name)}</span>
+                        <div className="nm"><strong>{c.name}</strong></div>
+                      </div>
+                    </td>
                     <td style={{ fontVariantNumeric: "tabular-nums" }}>{c.phoneNormalized ?? "—"}</td>
                     <td>{c.email ?? "—"}</td>
-                    <td>{formatDate(c.createdAt)}</td>
+                    <td>{formatDate(c.createdAt, undefined, lang)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -96,7 +113,7 @@ export default function CustomersPage() {
         {cursor && (
           <div className="row" style={{ justifyContent: "center", marginTop: 14 }}>
             <Button variant="quiet" disabled={loading} onClick={() => load(q, cursor, true)}>
-              Charger plus
+              {t("common.loadMore")}
             </Button>
           </div>
         )}

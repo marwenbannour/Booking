@@ -2,6 +2,7 @@
 
 import { useMemo } from "react";
 import type { BookingListItem } from "@/lib/api";
+import { useI18n } from "@/lib/i18n";
 
 function startOfWeek(d: Date): Date {
   const date = new Date(d);
@@ -13,6 +14,7 @@ function startOfWeek(d: Date): Date {
 
 /** Barres « réservations par jour » sur la semaine courante (SVG, sans lib). */
 export function DashboardChart({ items }: { items: BookingListItem[] }) {
+  const { t, lang } = useI18n();
   const { days, counts, max } = useMemo(() => {
     const start = startOfWeek(new Date());
     const ds = Array.from({ length: 7 }, (_, i) => {
@@ -41,7 +43,7 @@ export function DashboardChart({ items }: { items: BookingListItem[] }) {
   const ticks = [0, Math.round(max / 2), max].filter((v, i, a) => a.indexOf(v) === i);
 
   return (
-    <svg viewBox={`0 0 ${W} ${H}`} width="100%" role="img" aria-label="Réservations par jour" style={{ display: "block" }}>
+    <svg viewBox={`0 0 ${W} ${H}`} width="100%" role="img" aria-label={t("dashboard.chartAria")} style={{ display: "block" }}>
       {/* grille + axe Y */}
       {ticks.map((v) => {
         const y = padT + plotH - (v / max) * plotH;
@@ -79,7 +81,7 @@ export function DashboardChart({ items }: { items: BookingListItem[] }) {
               strokeWidth={isToday ? 0 : 1}
             />
             <text x={x + barW / 2} y={H - 8} textAnchor="middle" fontSize="8" fill="var(--muted)" fontFamily="var(--font-body)">
-              {days[i].toLocaleDateString("fr-FR", { weekday: "short" }).slice(0, 3)}
+              {days[i].toLocaleDateString(lang === "ar" ? "ar-TN" : "fr-FR", { weekday: "short" }).slice(0, 3)}
             </text>
           </g>
         );

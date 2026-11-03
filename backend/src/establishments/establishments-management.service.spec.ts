@@ -12,6 +12,59 @@ const subscriptions = {
 };
 
 describe('EstablishmentsManagementService', () => {
+  it('transfers ownership to an active member and audits the change', async () => {
+    const tx = {
+      establishmentMember: {
+        findFirst: jest.fn().mockResolvedValue({
+          id: 'owner-membership',
+        }),
+        update: jest.fn().mockResolvedValue({}),
+      },
+      auditLog: { create: jest.fn().mockResolvedValue({}) },
+      $queryRaw: jest.fn().mockResolvedValue([]),
+    };
+    const prisma = {
+      establishmentMember: {
+        findFirst: jest.fn().mockResolvedValue({
+          role: 'OWNER',
+          permissions: {},
+        }),
+      },
+      $transaction: jest.fn(async (callback) => callback(tx)),
+    };
+    tx.establishmentMember.findFirst.mockResolvedValueOnce({
+      id: 'target-membership',
+      userId: 'target-user',
+    });
+    const service = new EstablishmentsManagementService(
+      prisma as any,
+      subscriptions as any,
+    );
+
+    await service.transferOwnership(
+      'owner-user',
+      'establishment-a',
+      'target-membership',
+    );
+
+    expect(tx.establishmentMember.update).toHaveBeenNthCalledWith(1, {
+      where: { id: 'target-membership' },
+      data: { role: 'OWNER' },
+    });
+    expect(tx.establishmentMember.update).toHaveBeenNthCalledWith(2, {
+      where: { id: 'owner-membership' },
+      data: { role: 'MANAGER' },
+    });
+    expect(tx.auditLog.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          actorUserId: 'owner-user',
+          action: 'ownership.transferred',
+        }),
+      }),
+    );
+  });
+
   it('scopes profile edits and audit records to the authorized establishment', async () => {
     const tx = {
       establishment: {

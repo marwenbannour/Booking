@@ -40,7 +40,7 @@ export function ThemeToggle() {
   }
 
   return (
-    <button className="btn-quiet" onClick={toggle} aria-label="Theme">
+    <button className="btn-quiet" onClick={toggle} aria-label={t("theme.toggle")}>
       {theme === "dark" ? t("common.theme.light") : t("common.theme.dark")}
     </button>
   );

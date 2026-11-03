@@ -30,6 +30,7 @@ import { SetBusinessHoursDto } from './dto/business-hours.dto.js';
 import { UpdateEmployeeDto } from './dto/update-employee.dto.js';
 import { UpdateEstablishmentDto } from './dto/update-establishment.dto.js';
 import { UpdateServiceDto } from './dto/update-service.dto.js';
+import { TransferOwnershipDto } from './dto/transfer-ownership.dto.js';
 import { EstablishmentsManagementService } from './establishments-management.service.js';
 
 @ApiTags('establishments')
@@ -302,6 +303,20 @@ export class EstablishmentsManagementController {
       actor.userId,
       establishmentId,
       invitationId,
+    );
+  }
+
+  @Post('ownership/transfer')
+  @ApiOperation({ summary: 'Transfer establishment ownership to an active member' })
+  transferOwnership(
+    @Param('establishmentId', new ParseUUIDPipe()) establishmentId: string,
+    @Body() body: TransferOwnershipDto,
+    @CurrentActor() actor: AuthenticatedActor,
+  ) {
+    return this.managementService.transferOwnership(
+      actor.userId,
+      establishmentId,
+      body.targetMembershipId,
     );
   }
 

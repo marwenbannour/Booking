@@ -36,7 +36,7 @@ function UsageBar({ label, metric }: { label: string; metric: UsageMetric }) {
 
 export default function SubscriptionsPage() {
   const { establishmentId } = useAuth();
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
   const [current, setCurrent] = useState<CurrentSubscription | null>(null);
   const [plans, setPlans] = useState<SubscriptionPlan[]>([]);
   const [loading, setLoading] = useState(true);
@@ -52,9 +52,9 @@ export default function SubscriptionsPage() {
         setCurrent(cur);
         setPlans(pl.items);
       })
-      .catch((err) => setError(err instanceof ApiError ? err.message : "Chargement impossible."))
+      .catch((err) => setError(err instanceof ApiError ? err.message : t("common.loadFailed")))
       .finally(() => setLoading(false));
-  }, [establishmentId]);
+  }, [establishmentId, t]);
 
   useEffect(load, [load]);
 
@@ -68,7 +68,7 @@ export default function SubscriptionsPage() {
       else await api.subscribe(establishmentId, plan.code);
       load();
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Action impossible.");
+      setError(err instanceof ApiError ? err.message : t("common.actionFailed"));
     } finally {
       setActing(null);
     }
@@ -77,7 +77,7 @@ export default function SubscriptionsPage() {
   const currentCode = current?.plan?.code;
 
   return (
-    <AppShell title={t("nav.subscriptions")} subtitle="Formule, quotas et facturation">
+    <AppShell title={t("nav.subscriptions")} subtitle={t("subscriptions.subtitle")}>
       {error && <p className="api-error" style={{ marginBottom: 14 }}>{error}</p>}
 
       {loading ? (
@@ -90,42 +90,42 @@ export default function SubscriptionsPage() {
             <div className="panel">
               <div className="panel-head">
                 <div>
-                  <h2 className="t-title">Formule actuelle</h2>
+                  <h2 className="t-title">{t("subscriptions.currentPlan")}</h2>
                   <p className="panel-subtitle">
-                    {current?.plan?.name ?? "Gratuit"}
-                    {current?.plan?.isImplicitFree ? " (implicite)" : ""}
+                    {current?.plan?.name ?? t("subscriptions.free")}
+                    {current?.plan?.isImplicitFree ? ` ${t("subscriptions.implicit")}` : ""}
                   </p>
                 </div>
                 {current?.subscription && <StatusBadge status={current.subscription.status} />}
               </div>
               {current && (
                 <>
-                  <UsageBar label="Employés actifs" metric={current.usage.employees} />
-                  <UsageBar label="Rendez-vous ce mois" metric={current.usage.bookings} />
-                  <UsageBar label="Notifications ce mois" metric={current.usage.notifications} />
+                  <UsageBar label={t("subscriptions.activeEmployees")} metric={current.usage.employees} />
+                  <UsageBar label={t("subscriptions.bookingsThisMonth")} metric={current.usage.bookings} />
+                  <UsageBar label={t("subscriptions.notificationsThisMonth")} metric={current.usage.notifications} />
                 </>
               )}
             </div>
 
             <div className="panel">
-              <h2 className="t-title" style={{ marginBottom: 12 }}>Période</h2>
+              <h2 className="t-title" style={{ marginBottom: 12 }}>{t("subscriptions.period")}</h2>
               {current?.subscription ? (
                 <>
-                  <div className="summary-row"><span>Début</span><strong>{new Date(current.subscription.currentPeriodStart).toLocaleDateString("fr-FR")}</strong></div>
-                  <div className="summary-row"><span>Fin</span><strong>{new Date(current.subscription.currentPeriodEnd).toLocaleDateString("fr-FR")}</strong></div>
+                  <div className="summary-row"><span>{t("subscriptions.start")}</span><strong>{new Date(current.subscription.currentPeriodStart).toLocaleDateString(lang === "ar" ? "ar-TN" : "fr-FR")}</strong></div>
+                  <div className="summary-row"><span>{t("subscriptions.end")}</span><strong>{new Date(current.subscription.currentPeriodEnd).toLocaleDateString(lang === "ar" ? "ar-TN" : "fr-FR")}</strong></div>
                   {current.subscription.trialEndsAt && (
-                    <div className="summary-row"><span>Fin d&apos;essai</span><strong>{new Date(current.subscription.trialEndsAt).toLocaleDateString("fr-FR")}</strong></div>
+                    <div className="summary-row"><span>{t("subscriptions.trialEnd")}</span><strong>{new Date(current.subscription.trialEndsAt).toLocaleDateString(lang === "ar" ? "ar-TN" : "fr-FR")}</strong></div>
                   )}
-                  <div className="summary-row" style={{ borderBottom: 0 }}><span>Renouvellement</span><strong>{current.subscription.cancelAtPeriodEnd ? "Non" : "Automatique"}</strong></div>
+                  <div className="summary-row" style={{ borderBottom: 0 }}><span>{t("subscriptions.renewal")}</span><strong>{current.subscription.cancelAtPeriodEnd ? t("subscriptions.no") : t("subscriptions.automatic")}</strong></div>
                 </>
               ) : (
-                <p className="t-muted" style={{ fontSize: 11 }}>Aucun abonnement actif — formule gratuite appliquée.</p>
+                <p className="t-muted" style={{ fontSize: 11 }}>{t("subscriptions.noActive")}</p>
               )}
             </div>
           </div>
 
           <div className="panel">
-            <h2 className="t-title" style={{ marginBottom: 14 }}>Formules disponibles</h2>
+            <h2 className="t-title" style={{ marginBottom: 14 }}>{t("subscriptions.available")}</h2>
             <div className="metrics-grid" style={{ marginBottom: 0 }}>
               {plans.map((p) => {
                 const isCurrent = p.code === currentCode;
@@ -133,19 +133,19 @@ export default function SubscriptionsPage() {
                   <div className="card" key={p.id} style={{ padding: 17 }}>
                     <div className="row" style={{ justifyContent: "space-between" }}>
                       <strong className="t-title">{p.name}</strong>
-                      {isCurrent && <span className="status confirmed">Actuel</span>}
+                      {isCurrent && <span className="status confirmed">{t("subscriptions.current")}</span>}
                     </div>
                     <div className="t-metric" style={{ margin: "10px 0 2px" }}>
-                      {formatPrice(p.priceAmount, p.currency)}
+                      {formatPrice(p.priceAmount, p.currency, lang)}
                     </div>
                     <p className="t-muted" style={{ fontSize: 9 }}>
-                      / {p.interval === "YEAR" ? "an" : "mois"}
-                      {p.trialDays > 0 ? ` · ${p.trialDays} j d'essai` : ""}
+                      / {p.interval === "YEAR" ? t("subscriptions.year") : t("subscriptions.month")}
+                      {p.trialDays > 0 ? ` · ${p.trialDays} ${t("subscriptions.trialDays")}` : ""}
                     </p>
                     <ul style={{ listStyle: "none", padding: 0, margin: "12px 0", display: "grid", gap: 5, fontSize: 10 }}>
-                      <li className="t-muted">Employés : {p.maxEmployees ?? "illimité"}</li>
-                      <li className="t-muted">Rendez-vous/mois : {p.maxBookingsPerMonth ?? "illimité"}</li>
-                      <li className="t-muted">Notifications/mois : {p.maxNotificationsPerMonth ?? "illimité"}</li>
+                      <li className="t-muted">{t("subscriptions.employees")} {p.maxEmployees ?? t("subscriptions.unlimited")}</li>
+                      <li className="t-muted">{t("subscriptions.bookings")} {p.maxBookingsPerMonth ?? t("subscriptions.unlimited")}</li>
+                      <li className="t-muted">{t("subscriptions.notifications")} {p.maxNotificationsPerMonth ?? t("subscriptions.unlimited")}</li>
                     </ul>
                     <Button
                       variant={isCurrent ? "quiet" : "primary"}
@@ -153,7 +153,7 @@ export default function SubscriptionsPage() {
                       onClick={() => choose(p)}
                       style={{ width: "100%" }}
                     >
-                      {isCurrent ? "Plan actuel" : current?.subscription ? "Changer" : "Souscrire"}
+                      {isCurrent ? t("subscriptions.currentPlanButton") : current?.subscription ? t("subscriptions.change") : t("subscriptions.subscribe")}
                     </Button>
                   </div>
                 );

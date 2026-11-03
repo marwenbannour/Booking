@@ -1,0 +1,35 @@
+{
+  "expo": {
+    "name": "Booking+",
+    "slug": "book-and-whats",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "scheme": "bookandwhats",
+    "icon": "./assets/icon.png",
+    "experiments": {
+      "typedRoutes": true
+    },
+    "userInterfaceStyle": "light",
+    "ios": {
+      "bundleIdentifier": "com.bookandwhats.mobile",
+      "supportsTablet": true
+    },
+    "android": {
+      "package": "com.bookandwhats.mobile",
+      "adaptiveIcon": {
+        "backgroundColor": "#0A1B2E",
+        "foregroundImage": "./assets/icon.png"
+      },
+      "predictiveBackGestureEnabled": false
+    },
+    "web": {
+      "favicon": "./assets/icon.png"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-status-bar",
+      "expo-secure-store",
+      "./plugins/withWindowsAndroidCmake"
+    ]
+  }
+}

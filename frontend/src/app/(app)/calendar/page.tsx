@@ -18,7 +18,7 @@ function startOfWeek(d: Date): Date {
 
 export default function CalendarPage() {
   const { establishmentId } = useAuth();
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
   const [weekStart, setWeekStart] = useState<Date>(() => startOfWeek(new Date()));
   const [items, setItems] = useState<BookingListItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -42,9 +42,9 @@ export default function CalendarPage() {
     api
       .bookings(establishmentId, { from: from.toISOString(), to: to.toISOString(), limit: 200 })
       .then((res) => setItems(res.items))
-      .catch((err) => setError(err instanceof ApiError ? err.message : "Chargement impossible."))
+      .catch((err) => setError(err instanceof ApiError ? err.message : t("common.loadFailed")))
       .finally(() => setLoading(false));
-  }, [establishmentId, weekStart]);
+  }, [establishmentId, weekStart, t]);
 
   useEffect(load, [load]);
 
@@ -67,7 +67,8 @@ export default function CalendarPage() {
   }
 
   const todayKey = new Date().toDateString();
-  const rangeLabel = `${days[0].toLocaleDateString("fr-FR", { day: "2-digit", month: "short" })} – ${days[6].toLocaleDateString("fr-FR", { day: "2-digit", month: "short", year: "numeric" })}`;
+  const dateLocale = lang === "ar" ? "ar-TN" : "fr-FR";
+  const rangeLabel = `${days[0].toLocaleDateString(dateLocale, { day: "2-digit", month: "short" })} – ${days[6].toLocaleDateString(dateLocale, { day: "2-digit", month: "short", year: "numeric" })}`;
 
   return (
     <AppShell
@@ -75,9 +76,9 @@ export default function CalendarPage() {
       subtitle={rangeLabel}
       actions={
         <div className="row" style={{ gap: 8 }}>
-          <Button variant="quiet" onClick={() => shift(-1)}>‹</Button>
-          <Button variant="quiet" onClick={() => setWeekStart(startOfWeek(new Date()))}>Aujourd&apos;hui</Button>
-          <Button variant="quiet" onClick={() => shift(1)}>›</Button>
+          <Button variant="quiet" aria-label={t("calendar.previousWeek")} onClick={() => shift(-1)}>{lang === "ar" ? "›" : "‹"}</Button>
+          <Button variant="quiet" onClick={() => setWeekStart(startOfWeek(new Date()))}>{t("calendar.today")}</Button>
+          <Button variant="quiet" aria-label={t("calendar.nextWeek")} onClick={() => shift(1)}>{lang === "ar" ? "‹" : "›"}</Button>
         </div>
       }
     >
@@ -98,7 +99,7 @@ export default function CalendarPage() {
                 <div key={key} className="panel" style={{ padding: 12, minHeight: 320 }}>
                   <div style={{ textAlign: "center", marginBottom: 10 }}>
                     <div className="t-muted" style={{ fontSize: 9, textTransform: "uppercase", letterSpacing: "0.6px" }}>
-                      {d.toLocaleDateString("fr-FR", { weekday: "short" })}
+                      {d.toLocaleDateString(dateLocale, { weekday: "short" })}
                     </div>
                     <div
                       className="t-title"
@@ -129,7 +130,7 @@ export default function CalendarPage() {
                           className={`cal-event ${statusClass(b.status)}`}
                         >
                           <div style={{ fontSize: 9, fontWeight: 700, fontVariantNumeric: "tabular-nums" }}>
-                            {formatTime(b.startsAt)}
+                            {formatTime(b.startsAt, undefined, lang)}
                           </div>
                           <div style={{ fontSize: 9, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                             {b.customerNameSnapshot}

@@ -1,0 +1,921 @@
+<title>Booking+ Dashboard</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Noto+Sans+Arabic:wght@400;500;600;700&display=swap">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/lucide/0.344.0/lucide.min.js"></script>
+<style>
+/* Layout: fixed navy sidebar + topbar + swappable content views, dense SaaS surfaces on a tinted canvas. */
+:root{
+  --ink:#0A1B2E; --ink-2:#102A43; --teal:#14B8A6; --green:#22C55E; --mist:#F1F5F9; --white:#FFFFFF;
+  --bg:#F3F6FA; --card:#FFFFFF; --fg:#0A1B2E; --muted:#5A6B82; --faint:#8294AC; --border:#E5ECF4;
+  --side:#0A1B2E; --side-fg:#9FB2C9; --side-active:#14B8A6;
+  --ring:rgba(20,184,166,.25);
+  --amber:#F59E0B; --red:#EF4444; --blue:#3B82F6; --violet:#8B5CF6;
+  --shadow:0 1px 2px rgba(10,27,46,.04),0 10px 26px -14px rgba(10,27,46,.16);
+  --grad:linear-gradient(135deg,var(--teal),var(--green));
+  --r:16px; --r-sm:10px;
+  color-scheme:light;
+}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#071020; --card:#0E1F33; --fg:#E7EFF8; --muted:#9BAEC6; --faint:#6E85A1; --border:#1B3350;
+  --side:#060F1C; --side-fg:#8DA2BC; --mist:#0E1F33;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 12px 30px -14px rgba(0,0,0,.6); color-scheme:dark;
+}}
+:root[data-theme="dark"]{
+  --bg:#071020; --card:#0E1F33; --fg:#E7EFF8; --muted:#9BAEC6; --faint:#6E85A1; --border:#1B3350;
+  --side:#060F1C; --side-fg:#8DA2BC; --mist:#0E1F33;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 12px 30px -14px rgba(0,0,0,.6); color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{background:var(--bg);color:var(--fg);font-family:"Sora",system-ui,-apple-system,"Segoe UI",sans-serif;line-height:1.5;-webkit-font-smoothing:antialiased}
+[dir="rtl"]{font-family:"Noto Sans Arabic","Sora",sans-serif}
+h1,h2,h3,h4{margin:0;font-weight:700;letter-spacing:-.02em;line-height:1.2}
+p{margin:0}
+a{color:inherit;text-decoration:none}
+button{font-family:inherit;cursor:pointer}
+img{max-width:100%}
+:focus-visible{outline:2px solid var(--teal);outline-offset:2px}
+::-webkit-scrollbar{width:9px;height:9px}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:10px}
+
+/* ---------- shell ---------- */
+.shell{display:grid;grid-template-columns:248px 1fr;min-height:100%}
+.sidebar{background:var(--side);color:var(--side-fg);display:flex;flex-direction:column;position:sticky;top:0;height:100vh;
+  padding-top:env(safe-area-inset-top,0px);z-index:50}
+.side-brand{display:flex;align-items:center;gap:11px;padding:20px 18px;color:#fff;font-weight:800;font-size:18px}
+.side-brand .logo{width:36px;height:36px;border-radius:10px;background:var(--grad);display:grid;place-items:center;color:#042018}
+.side-brand .logo i{width:20px;height:20px}
+.side-brand small{display:block;font-size:10px;color:var(--teal);font-weight:500;margin-top:-3px}
+.estab{margin:0 12px 10px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:12px;
+  padding:10px 12px;display:flex;align-items:center;gap:10px;cursor:pointer}
+.estab .av{width:32px;height:32px;border-radius:8px;background:var(--grad);display:grid;place-items:center;color:#042018;font-weight:700;font-size:13px}
+.estab b{color:#fff;font-size:13.5px;display:block}
+.estab small{font-size:11px;color:var(--side-fg)}
+.estab i{margin-inline-start:auto;width:16px;height:16px}
+.side-scroll{flex:1;overflow-y:auto;padding:6px 12px}
+.nav-label{font-size:10.5px;text-transform:uppercase;letter-spacing:.08em;color:#55708f;padding:14px 10px 6px;font-weight:600}
+.nav-item{display:flex;align-items:center;gap:12px;padding:9px 12px;border-radius:10px;color:var(--side-fg);font-size:14px;font-weight:500;cursor:pointer;margin-bottom:2px;position:relative}
+.nav-item i{width:18px;height:18px;flex:0 0 auto}
+.nav-item:hover{background:rgba(255,255,255,.06);color:#fff}
+.nav-item.active{background:rgba(20,184,166,.14);color:#fff}
+.nav-item.active::before{content:"";position:absolute;inset-inline-start:0;top:8px;bottom:8px;width:3px;border-radius:3px;background:var(--teal)}
+.nav-item .badge{margin-inline-start:auto;background:var(--teal);color:#042018;font-size:10.5px;font-weight:700;padding:2px 7px;border-radius:20px}
+.side-user{padding:12px;border-top:1px solid rgba(255,255,255,.08);display:flex;align-items:center;gap:10px}
+.side-user .av{width:34px;height:34px;border-radius:9px;background:var(--grad);display:grid;place-items:center;color:#042018;font-weight:700;font-size:13px}
+.side-user b{color:#fff;font-size:13px;display:block}
+.side-user small{font-size:11px;color:var(--side-fg)}
+.side-user i{margin-inline-start:auto;width:16px;height:16px;cursor:pointer}
+
+/* topbar */
+.main{min-width:0;display:flex;flex-direction:column}
+.topbar{position:sticky;top:0;z-index:40;background:color-mix(in srgb,var(--bg) 85%,transparent);backdrop-filter:blur(12px);
+  border-bottom:1px solid var(--border);padding:12px max(16px,env(safe-area-inset-right,0px)) 12px max(16px,env(safe-area-inset-left,0px));
+  display:flex;align-items:center;gap:14px;min-height:62px}
+.burger{display:none;width:40px;height:40px;border-radius:10px;border:1px solid var(--border);background:var(--card);color:var(--muted);display:grid;place-items:center}
+.pagetitle h1{font-size:19px}
+.pagetitle p{font-size:12.5px;color:var(--faint)}
+.search{margin-inline-start:auto;position:relative;display:flex;align-items:center;max-width:300px;flex:1}
+.search i{position:absolute;inset-inline-start:12px;width:17px;height:17px;color:var(--faint)}
+.search input{width:100%;padding:9px 12px 9px 38px;border:1px solid var(--border);border-radius:10px;background:var(--card);color:var(--fg);font-size:13.5px;font-family:inherit}
+.search input:focus{outline:none;border-color:var(--teal);box-shadow:0 0 0 3px var(--ring)}
+[dir="rtl"] .search input{padding:9px 38px 9px 12px}
+.top-ic{width:40px;height:40px;border-radius:10px;border:1px solid var(--border);background:var(--card);color:var(--muted);display:grid;place-items:center;position:relative;flex:0 0 auto}
+.top-ic:hover{color:var(--teal);border-color:var(--teal)}
+.top-ic i{width:18px;height:18px}
+.top-ic .dot{position:absolute;top:8px;inset-inline-end:9px;width:8px;height:8px;border-radius:50%;background:var(--red);border:2px solid var(--card)}
+@media(max-width:640px){.search{display:none}}
+
+.content{padding:22px max(16px,env(safe-area-inset-right,0px)) 40px max(16px,env(safe-area-inset-left,0px));flex:1}
+.view{display:none;animation:fade .35s ease}
+.view.active{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+@media(prefers-reduced-motion:reduce){.view{animation:none}}
+
+/* ---------- sidebar responsive ---------- */
+@media(max-width:1000px){
+  .shell{grid-template-columns:1fr}
+  .sidebar{position:fixed;inset-inline-start:0;top:0;width:264px;transform:translateX(-110%);transition:transform .28s ease}
+  [dir="rtl"] .sidebar{transform:translateX(110%)}
+  .sidebar.open{transform:none;box-shadow:0 0 0 100vmax rgba(0,0,0,.45)}
+  .burger{display:grid}
+}
+
+/* ---------- common ui ---------- */
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--shadow)}
+.pad{padding:20px}
+.row{display:flex;align-items:center;gap:12px}
+.btn{display:inline-flex;align-items:center;gap:8px;border:0;font-weight:600;font-size:13.5px;border-radius:10px;padding:10px 16px;white-space:nowrap;transition:transform .12s,box-shadow .18s}
+.btn i{width:16px;height:16px}
+.btn-primary{background:var(--grad);color:#042018;box-shadow:0 8px 18px -10px rgba(20,184,166,.7)}
+.btn-primary:hover{transform:translateY(-1px)}
+.btn-ghost{background:transparent;color:var(--fg);border:1px solid var(--border)}
+.btn-ghost:hover{border-color:var(--teal);color:var(--teal)}
+.btn-sm{padding:7px 12px;font-size:12.5px}
+.chip{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;padding:4px 10px;border-radius:20px}
+.chip i{width:12px;height:12px}
+.chip.ok{background:color-mix(in srgb,var(--green) 15%,transparent);color:var(--green)}
+.chip.wait{background:color-mix(in srgb,var(--amber) 17%,transparent);color:#C57C04}
+.chip.no{background:color-mix(in srgb,var(--red) 14%,transparent);color:var(--red)}
+.chip.info{background:color-mix(in srgb,var(--blue) 14%,transparent);color:var(--blue)}
+.chip.neu{background:var(--mist);color:var(--muted)}
+.avatar{border-radius:50%;background:var(--grad);display:grid;place-items:center;color:#042018;font-weight:700;flex:0 0 auto}
+.view-head{display:flex;align-items:center;gap:14px;margin-bottom:20px;flex-wrap:wrap}
+.view-head .ht h2{font-size:22px}
+.view-head .ht p{color:var(--muted);font-size:13.5px;margin-top:2px}
+.view-head .sp{margin-inline-start:auto;display:flex;gap:10px;flex-wrap:wrap}
+.section-title{font-size:15px;font-weight:700;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.section-title i{width:17px;height:17px;color:var(--teal)}
+
+/* KPI */
+.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:20px}
+@media(max-width:1200px){.kpi-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:480px){.kpi-grid{grid-template-columns:1fr}}
+.kpi{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:18px;box-shadow:var(--shadow)}
+.kpi .top{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.kpi .ic{width:40px;height:40px;border-radius:11px;display:grid;place-items:center}
+.kpi .ic i{width:20px;height:20px}
+.kpi .val{font-size:28px;font-weight:800;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.kpi .lbl{color:var(--muted);font-size:13px;margin-top:2px}
+.kpi .delta{font-size:12px;font-weight:600;display:inline-flex;align-items:center;gap:3px;margin-top:8px}
+.kpi .delta i{width:13px;height:13px}
+.up{color:var(--green)}.down{color:var(--red)}
+
+.grid-2{display:grid;grid-template-columns:1.6fr 1fr;gap:16px;margin-bottom:20px}
+.grid-2b{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px}
+@media(max-width:980px){.grid-2,.grid-2b{grid-template-columns:1fr}}
+
+/* chart */
+.chart-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
+.legend{display:flex;gap:16px;font-size:12px;color:var(--muted)}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend .sw{width:10px;height:10px;border-radius:3px}
+.area-wrap{position:relative}
+.y-ax{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:space-between;pointer-events:none}
+.y-ax .gl{border-top:1px dashed var(--border);font-size:10px;color:var(--faint);padding-inline-start:2px}
+
+/* donut */
+.donut-wrap{display:flex;align-items:center;gap:22px;flex-wrap:wrap}
+.donut{width:150px;height:150px;border-radius:50%;flex:0 0 auto;position:relative;
+  background:conic-gradient(var(--teal) 0 38%,var(--green) 38% 63%,var(--blue) 63% 82%,var(--violet) 82% 100%)}
+.donut::after{content:"";position:absolute;inset:26px;border-radius:50%;background:var(--card)}
+.donut .ctr{position:absolute;inset:0;display:grid;place-content:center;text-align:center;z-index:1}
+.donut .ctr b{font-size:24px;font-weight:800}
+.donut .ctr small{font-size:11px;color:var(--muted)}
+.dleg{display:grid;gap:10px;flex:1;min-width:140px}
+.dleg-row{display:flex;align-items:center;gap:10px;font-size:13px}
+.dleg-row .sw{width:11px;height:11px;border-radius:3px;flex:0 0 auto}
+.dleg-row b{margin-inline-start:auto;font-variant-numeric:tabular-nums}
+
+/* bars */
+.hbar{display:grid;gap:14px}
+.hbar-row{display:grid;grid-template-columns:120px 1fr 40px;align-items:center;gap:12px;font-size:13px}
+.hbar .track{height:9px;background:var(--mist);border-radius:6px;overflow:hidden}
+.hbar .fill{height:100%;background:var(--grad);border-radius:6px}
+.hbar b{text-align:end;font-variant-numeric:tabular-nums}
+
+/* list rows */
+.lrow{display:flex;align-items:center;gap:13px;padding:13px 4px;border-bottom:1px solid var(--border)}
+.lrow:last-child{border-bottom:0}
+.lrow .avatar{width:38px;height:38px;font-size:13px}
+.lrow .nm b{font-size:14px;display:block}
+.lrow .nm small{font-size:12px;color:var(--muted)}
+.lrow .meta{margin-inline-start:auto;text-align:end;flex:0 0 auto}
+.lrow .meta .t{font-weight:600;font-size:13.5px}
+
+/* table */
+.tbl-wrap{overflow-x:auto;border-radius:var(--r);border:1px solid var(--border)}
+table{width:100%;border-collapse:collapse;background:var(--card);min-width:640px}
+thead th{text-align:start;font-size:11.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--faint);font-weight:600;padding:13px 16px;border-bottom:1px solid var(--border);white-space:nowrap}
+tbody td{padding:13px 16px;border-bottom:1px solid var(--border);font-size:13.5px;vertical-align:middle}
+tbody tr:last-child td{border-bottom:0}
+tbody tr:hover{background:color-mix(in srgb,var(--teal) 4%,transparent)}
+.td-user{display:flex;align-items:center;gap:11px}
+.td-user .avatar{width:34px;height:34px;font-size:12px}
+.td-user b{font-size:13.5px}
+.td-user small{color:var(--muted);font-size:11.5px;display:block}
+.t-actions{display:flex;gap:6px}
+.t-ic{width:30px;height:30px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--muted);display:grid;place-items:center}
+.t-ic:hover{color:var(--teal);border-color:var(--teal)}
+.t-ic i{width:15px;height:15px}
+
+/* filter bar */
+.filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+.fbtn{padding:8px 14px;border:1px solid var(--border);background:var(--card);border-radius:20px;font-size:13px;font-weight:600;color:var(--muted)}
+.fbtn.active{background:var(--ink);color:#fff;border-color:var(--ink)}
+:root[data-theme="dark"] .fbtn.active,:root:not([data-theme="light"]) .fbtn.active{background:var(--teal);color:#042018;border-color:var(--teal)}
+
+/* calendar week */
+.cal-toolbar{display:flex;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap}
+.seg{display:inline-flex;background:var(--mist);border-radius:10px;padding:3px}
+.seg button{border:0;background:transparent;padding:7px 16px;border-radius:8px;font-size:13px;font-weight:600;color:var(--muted)}
+.seg button.active{background:var(--card);color:var(--fg);box-shadow:var(--shadow)}
+.cal-nav{display:flex;align-items:center;gap:6px}
+.cal-nav button{width:34px;height:34px;border-radius:9px;border:1px solid var(--border);background:var(--card);color:var(--muted);display:grid;place-items:center}
+.cal-now{font-weight:700;font-size:15px}
+.week{overflow-x:auto}
+.week-grid{min-width:760px;display:grid;grid-template-columns:56px repeat(7,1fr);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;background:var(--card)}
+.week-grid .wh{padding:10px 6px;text-align:center;font-size:12px;border-bottom:1px solid var(--border);border-inline-start:1px solid var(--border)}
+.week-grid .wh:first-child{border-inline-start:0}
+.week-grid .wh b{display:block;font-size:15px}
+.week-grid .wh small{color:var(--faint)}
+.week-grid .wh.today b{color:var(--teal)}
+.hour{padding:6px;font-size:11px;color:var(--faint);border-top:1px solid var(--border);text-align:end}
+.cell{border-top:1px solid var(--border);border-inline-start:1px solid var(--border);min-height:46px;padding:3px;position:relative}
+.ev{border-radius:7px;padding:5px 7px;font-size:11px;font-weight:600;margin-bottom:3px;color:#083043;line-height:1.25;cursor:pointer}
+.ev small{display:block;font-weight:500;opacity:.8;font-size:10px}
+.ev.teal{background:#bff0e9;border-inline-start:3px solid var(--teal)}
+.ev.green{background:#c7f0d3;border-inline-start:3px solid var(--green)}
+.ev.blue{background:#cfe0fb;border-inline-start:3px solid var(--blue)}
+.ev.amber{background:#fbe6c0;border-inline-start:3px solid var(--amber)}
+.ev.violet{background:#e2d8fb;border-inline-start:3px solid var(--violet)}
+
+/* services / employees cards */
+.cards-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:16px}
+.svc{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:18px;box-shadow:var(--shadow)}
+.svc .ic{width:46px;height:46px;border-radius:12px;background:color-mix(in srgb,var(--teal) 12%,transparent);color:var(--teal);display:grid;place-items:center;margin-bottom:12px}
+.svc .ic i{width:22px;height:22px}
+.svc h3{font-size:16px}
+.svc .m{display:flex;gap:14px;color:var(--muted);font-size:12.5px;margin-top:8px}
+.svc .m span{display:inline-flex;align-items:center;gap:5px}
+.svc .m i{width:13px;height:13px}
+.svc .foot{display:flex;align-items:center;justify-content:space-between;margin-top:14px;padding-top:14px;border-top:1px solid var(--border)}
+.svc .price{font-size:18px;font-weight:800;color:var(--teal)}
+
+.emp-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:20px;box-shadow:var(--shadow);text-align:center}
+.emp-card .avatar{width:64px;height:64px;font-size:20px;margin:0 auto 12px}
+.emp-card h3{font-size:16px}
+.emp-card .role{color:var(--muted);font-size:13px;margin-top:2px}
+.emp-card .tags{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;margin-top:12px}
+.tag{font-size:11px;background:var(--mist);color:var(--muted);padding:3px 9px;border-radius:20px}
+.emp-card .stats{display:flex;justify-content:center;gap:20px;margin-top:14px;padding-top:14px;border-top:1px solid var(--border)}
+.emp-card .stats b{display:block;font-size:16px}
+.emp-card .stats small{font-size:11px;color:var(--muted)}
+
+/* availability */
+.avail-row{display:grid;grid-template-columns:120px 1fr auto;align-items:center;gap:14px;padding:14px 0;border-bottom:1px solid var(--border)}
+.avail-row:last-child{border-bottom:0}
+.avail-row .day{font-weight:600;font-size:14px}
+.slots-mini{display:flex;gap:8px;flex-wrap:wrap}
+.slot-pill{background:color-mix(in srgb,var(--teal) 10%,transparent);color:var(--teal);font-size:12.5px;font-weight:600;padding:6px 12px;border-radius:9px;display:flex;align-items:center;gap:7px}
+.slot-pill.pause{background:color-mix(in srgb,var(--amber) 13%,transparent);color:#C57C04}
+.slot-pill.closed{background:var(--mist);color:var(--faint)}
+.switch{width:42px;height:24px;border-radius:20px;background:var(--border);position:relative;cursor:pointer;flex:0 0 auto;transition:background .2s;border:0}
+.switch::after{content:"";position:absolute;top:3px;inset-inline-start:3px;width:18px;height:18px;border-radius:50%;background:#fff;transition:transform .2s}
+.switch.on{background:var(--teal)}
+.switch.on::after{transform:translateX(18px)}
+[dir="rtl"] .switch.on::after{transform:translateX(-18px)}
+
+/* whatsapp templates */
+.wa-tpl{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:18px;box-shadow:var(--shadow)}
+.wa-tpl .h{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.wa-tpl .h .ic{width:38px;height:38px;border-radius:10px;background:var(--green);color:#042018;display:grid;place-items:center}
+.wa-tpl .h .ic i{width:19px;height:19px}
+.wa-bubble{background:#dcf8c6;color:#0b2e13;border-radius:12px;border-top-inline-start-radius:3px;padding:12px 14px;font-size:13px;position:relative;max-width:100%}
+:root[data-theme="dark"] .wa-bubble,:root:not([data-theme="light"]) .wa-bubble{background:#1f3d26;color:#d7f5df}
+.wa-bubble .time{display:block;text-align:end;font-size:10px;opacity:.6;margin-top:6px}
+
+/* quotas */
+.quota{margin-bottom:18px}
+.quota .qh{display:flex;justify-content:space-between;font-size:13.5px;margin-bottom:7px}
+.quota .qh b{font-variant-numeric:tabular-nums}
+.qtrack{height:10px;background:var(--mist);border-radius:6px;overflow:hidden}
+.qfill{height:100%;border-radius:6px;background:var(--grad)}
+.qfill.warn{background:linear-gradient(90deg,var(--amber),var(--red))}
+
+/* settings tabs */
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--border);margin-bottom:22px;overflow-x:auto}
+.tab{padding:12px 16px;font-size:14px;font-weight:600;color:var(--muted);border-bottom:2px solid transparent;white-space:nowrap}
+.tab.active{color:var(--teal);border-bottom-color:var(--teal)}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;max-width:680px}
+@media(max-width:620px){.form-grid{grid-template-columns:1fr}}
+.field label{display:block;font-size:13px;font-weight:600;margin-bottom:6px}
+.field input,.field select,.field textarea{width:100%;padding:11px 13px;border:1px solid var(--border);border-radius:10px;background:var(--bg);color:var(--fg);font-family:inherit;font-size:14px}
+.field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:var(--teal);box-shadow:0 0 0 3px var(--ring)}
+.field.full{grid-column:1/-1}
+
+/* drawer */
+.drawer-back{position:fixed;inset:0;background:rgba(10,27,46,.5);z-index:60;opacity:0;pointer-events:none;transition:opacity .25s}
+.drawer-back.open{opacity:1;pointer-events:auto}
+.drawer{position:fixed;top:0;inset-inline-end:0;height:100%;width:420px;max-width:92vw;background:var(--card);z-index:61;
+  transform:translateX(105%);transition:transform .3s ease;display:flex;flex-direction:column;box-shadow:-20px 0 50px -20px rgba(0,0,0,.4)}
+[dir="rtl"] .drawer{transform:translateX(-105%)}
+.drawer.open{transform:none}
+.drawer-head{padding:18px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px}
+.drawer-head h3{font-size:17px}
+.drawer-head .x{margin-inline-start:auto;width:34px;height:34px;border-radius:9px;border:1px solid var(--border);background:transparent;color:var(--muted);display:grid;place-items:center}
+.drawer-body{padding:20px;overflow-y:auto;flex:1}
+.drawer-foot{padding:16px 20px;border-top:1px solid var(--border);display:flex;gap:10px}
+.dl-item{display:flex;justify-content:space-between;gap:12px;padding:12px 0;border-bottom:1px solid var(--border);font-size:14px}
+.dl-item:last-child{border-bottom:0}
+.dl-item span{color:var(--muted)}
+.dl-item b{text-align:end}
+
+/* toast */
+#toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(140%);background:var(--ink);color:#fff;padding:12px 20px;border-radius:12px;font-size:13.5px;font-weight:600;box-shadow:var(--shadow);z-index:100;transition:transform .35s cubic-bezier(.2,1.2,.4,1)}
+:root[data-theme="dark"] #toast,:root:not([data-theme="light"]) #toast{background:var(--teal);color:#042018}
+
+.mt0{margin-top:0}.mb0{margin-bottom:0}
+.muted{color:var(--muted)}
+.audit{display:flex;gap:12px;padding:12px 0;border-bottom:1px solid var(--border);font-size:13px}
+.audit:last-child{border-bottom:0}
+.audit .ic{width:32px;height:32px;border-radius:9px;background:var(--mist);display:grid;place-items:center;color:var(--muted);flex:0 0 auto}
+.audit .ic i{width:15px;height:15px}
+.audit time{color:var(--faint);font-size:12px;margin-inline-start:auto;white-space:nowrap}
+</style>
+
+<div class="shell">
+  <!-- ============ SIDEBAR ============ -->
+  <aside class="sidebar" id="sidebar">
+    <div class="side-brand"><span class="logo"><i data-lucide="calendar-check-2"></i></span><span>Booking+<small>WhatsApp Reminders</small></span></div>
+    <div class="estab" onclick="toast('Changer d\'établissement')">
+      <span class="av">BS</span>
+      <div><b>Beauty Studio</b><small>Plan Pro</small></div>
+      <i data-lucide="chevrons-up-down"></i>
+    </div>
+    <div class="side-scroll">
+      <div class="nav-label">Gestion</div>
+      <div class="nav-item active" data-v="dashboard" onclick="nav('dashboard')"><i data-lucide="layout-dashboard"></i> Tableau de bord</div>
+      <div class="nav-item" data-v="calendrier" onclick="nav('calendrier')"><i data-lucide="calendar-days"></i> Calendrier</div>
+      <div class="nav-item" data-v="rdv" onclick="nav('rdv')"><i data-lucide="clipboard-list"></i> Rendez-vous <span class="badge">8</span></div>
+      <div class="nav-item" data-v="clients" onclick="nav('clients')"><i data-lucide="users"></i> Clients</div>
+      <div class="nav-item" data-v="services" onclick="nav('services')"><i data-lucide="scissors"></i> Services</div>
+      <div class="nav-item" data-v="employes" onclick="nav('employes')"><i data-lucide="user-cog"></i> Employés</div>
+      <div class="nav-item" data-v="dispo" onclick="nav('dispo')"><i data-lucide="clock"></i> Disponibilités</div>
+      <div class="nav-label">Communication</div>
+      <div class="nav-item" data-v="whatsapp" onclick="nav('whatsapp')"><i data-lucide="message-circle"></i> WhatsApp</div>
+      <div class="nav-label">Compte</div>
+      <div class="nav-item" data-v="abonnement" onclick="nav('abonnement')"><i data-lucide="credit-card"></i> Abonnement</div>
+      <div class="nav-item" data-v="parametres" onclick="nav('parametres')"><i data-lucide="settings"></i> Paramètres</div>
+      <div class="nav-item" data-v="admin" onclick="nav('admin')"><i data-lucide="shield"></i> Administration</div>
+    </div>
+    <div class="side-user">
+      <span class="av">SB</span>
+      <div><b>Sarah Ben Ali</b><small>Administratrice</small></div>
+      <i data-lucide="log-out" onclick="toast('Déconnexion (démo)')"></i>
+    </div>
+  </aside>
+
+  <!-- ============ MAIN ============ -->
+  <div class="main">
+    <div class="topbar">
+      <button class="burger" onclick="document.getElementById('sidebar').classList.toggle('open')"><i data-lucide="menu"></i></button>
+      <div class="pagetitle"><h1 id="ptTitle">Tableau de bord</h1><p id="ptSub">Bonjour Sarah 👋 Voici l'activité du jour.</p></div>
+      <div class="search"><i data-lucide="search"></i><input placeholder="Rechercher un client, un RDV…"></div>
+      <button class="top-ic" onclick="nav('whatsapp')" title="Notifications"><i data-lucide="bell"></i><span class="dot"></span></button>
+      <button class="top-ic" onclick="toggleTheme()" title="Thème"><i data-lucide="moon" id="themeIcon"></i></button>
+      <button class="top-ic lang" onclick="toggleLang()" title="AR/FR" style="font-weight:700;font-size:12px" id="langBtn">AR</button>
+    </div>
+
+    <div class="content">
+
+      <!-- ===== DASHBOARD ===== -->
+      <section class="view active" id="v-dashboard">
+        <div class="kpi-grid">
+          <div class="kpi"><div class="top"><div><div class="val">128</div><div class="lbl">Rendez-vous ce mois</div></div><div class="ic" style="background:color-mix(in srgb,var(--teal) 13%,transparent);color:var(--teal)"><i data-lucide="calendar-check"></i></div></div><span class="delta up"><i data-lucide="trending-up"></i> +12% vs mois dernier</span></div>
+          <div class="kpi"><div class="top"><div><div class="val">256</div><div class="lbl">Clients actifs</div></div><div class="ic" style="background:color-mix(in srgb,var(--blue) 13%,transparent);color:var(--blue)"><i data-lucide="users"></i></div></div><span class="delta up"><i data-lucide="trending-up"></i> +6% vs mois dernier</span></div>
+          <div class="kpi"><div class="top"><div><div class="val">4 580 DT</div><div class="lbl">Chiffre d'affaires</div></div><div class="ic" style="background:color-mix(in srgb,var(--green) 13%,transparent);color:var(--green)"><i data-lucide="wallet"></i></div></div><span class="delta up"><i data-lucide="trending-up"></i> +8% vs mois dernier</span></div>
+          <div class="kpi"><div class="top"><div><div class="val">89%</div><div class="lbl">Taux de confirmation</div></div><div class="ic" style="background:color-mix(in srgb,var(--violet) 13%,transparent);color:var(--violet)"><i data-lucide="check-check"></i></div></div><span class="delta up"><i data-lucide="trending-up"></i> +4% vs mois dernier</span></div>
+        </div>
+
+        <div class="grid-2">
+          <div class="card pad">
+            <div class="chart-head"><div class="section-title mb0"><i data-lucide="activity"></i> Rendez-vous par jour</div><div class="legend"><span><span class="sw" style="background:var(--teal)"></span> Confirmés</span><span><span class="sw" style="background:var(--border)"></span> En attente</span></div></div>
+            <p class="muted" style="font-size:12.5px;margin-bottom:10px">30 derniers jours</p>
+            <div class="area-wrap" id="areaChart"></div>
+          </div>
+          <div class="card pad">
+            <div class="section-title"><i data-lucide="pie-chart"></i> Répartition par service</div>
+            <div class="donut-wrap">
+              <div class="donut"><div class="ctr"><b>128</b><small>RDV</small></div></div>
+              <div class="dleg">
+                <div class="dleg-row"><span class="sw" style="background:var(--teal)"></span> Coupe + Brushing <b>38%</b></div>
+                <div class="dleg-row"><span class="sw" style="background:var(--green)"></span> Coloration <b>25%</b></div>
+                <div class="dleg-row"><span class="sw" style="background:var(--blue)"></span> Soin du visage <b>19%</b></div>
+                <div class="dleg-row"><span class="sw" style="background:var(--violet)"></span> Autres <b>18%</b></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid-2b">
+          <div class="card pad">
+            <div class="section-title"><i data-lucide="bar-chart-3"></i> Charge par employé <span class="muted" style="font-weight:400;font-size:12px">· 30 j</span></div>
+            <div class="hbar">
+              <div class="hbar-row"><span>Carla Gómez</span><div class="track"><div class="fill" style="width:92%"></div></div><b>92</b></div>
+              <div class="hbar-row"><span>Melina Rojas</span><div class="track"><div class="fill" style="width:74%"></div></div><b>74</b></div>
+              <div class="hbar-row"><span>Sofía Díaz</span><div class="track"><div class="fill" style="width:61%"></div></div><b>61</b></div>
+              <div class="hbar-row"><span>Agustina López</span><div class="track"><div class="fill" style="width:47%"></div></div><b>47</b></div>
+              <div class="hbar-row"><span>Iván Torres</span><div class="track"><div class="fill" style="width:31%"></div></div><b>31</b></div>
+            </div>
+          </div>
+          <div class="card pad">
+            <div class="chart-head"><div class="section-title mb0"><i data-lucide="clock"></i> Prochains rendez-vous</div><a class="muted" style="font-size:12.5px;cursor:pointer" onclick="nav('rdv')">Voir tout →</a></div>
+            <div style="margin-top:6px">
+              <div class="lrow"><span class="avatar" style="width:38px;height:38px;font-size:13px">VR</span><div class="nm"><b>Valentina Ruiz</b><small>Manucure</small></div><div class="meta"><div class="t">10:00</div><span class="chip ok" style="margin-top:4px">Confirmé</span></div></div>
+              <div class="lrow"><span class="avatar" style="width:38px;height:38px;font-size:13px">LF</span><div class="nm"><b>Luciana Ferreyra</b><small>Épilation</small></div><div class="meta"><div class="t">11:00</div><span class="chip ok" style="margin-top:4px">Confirmé</span></div></div>
+              <div class="lrow"><span class="avatar" style="width:38px;height:38px;font-size:13px">CB</span><div class="nm"><b>Camila Beltrán</b><small>Coloration</small></div><div class="meta"><div class="t">11:30</div><span class="chip ok" style="margin-top:4px">Confirmé</span></div></div>
+              <div class="lrow"><span class="avatar" style="width:38px;height:38px;font-size:13px">MG</span><div class="nm"><b>Martina Giordano</b><small>Coupe + Brushing</small></div><div class="meta"><div class="t">16:00</div><span class="chip wait" style="margin-top:4px">En attente</span></div></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== CALENDRIER ===== -->
+      <section class="view" id="v-calendrier">
+        <div class="cal-toolbar">
+          <div class="cal-nav"><button onclick="toast('Semaine précédente')"><i data-lucide="chevron-left"></i></button><button onclick="toast('Semaine suivante')"><i data-lucide="chevron-right"></i></button></div>
+          <span class="cal-now">11 — 17 Mai 2026</span>
+          <div class="seg" style="margin-inline-start:auto">
+            <button onclick="calView('jour',this)">Jour</button>
+            <button class="active" onclick="calView('semaine',this)">Semaine</button>
+            <button onclick="calView('mois',this)">Mois</button>
+          </div>
+          <button class="btn btn-primary btn-sm" onclick="openNewRdv()"><i data-lucide="plus"></i> Nouveau RDV</button>
+        </div>
+        <div class="week" id="calWeek"></div>
+        <div id="calMonth" style="display:none"></div>
+      </section>
+
+      <!-- ===== RENDEZ-VOUS ===== -->
+      <section class="view" id="v-rdv">
+        <div class="view-head">
+          <div class="ht"><h2>Rendez-vous</h2><p>42 rendez-vous ce mois · 8 à venir aujourd'hui</p></div>
+          <div class="sp"><button class="btn btn-ghost btn-sm"><i data-lucide="download"></i> Exporter</button><button class="btn btn-primary btn-sm" onclick="openNewRdv()"><i data-lucide="plus"></i> Nouveau RDV</button></div>
+        </div>
+        <div class="filters">
+          <button class="fbtn active" onclick="fRdv(this,'all')">Tous</button>
+          <button class="fbtn" onclick="fRdv(this,'ok')">Confirmés</button>
+          <button class="fbtn" onclick="fRdv(this,'wait')">En attente</button>
+          <button class="fbtn" onclick="fRdv(this,'no')">Annulés</button>
+        </div>
+        <div class="tbl-wrap">
+          <table id="rdvTable">
+            <thead><tr><th>Client</th><th>Service</th><th>Employé</th><th>Date & heure</th><th>Statut</th><th></th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ===== CLIENTS ===== -->
+      <section class="view" id="v-clients">
+        <div class="view-head">
+          <div class="ht"><h2>Clients</h2><p>256 clients enregistrés</p></div>
+          <div class="sp"><button class="btn btn-ghost btn-sm"><i data-lucide="upload"></i> Importer</button><button class="btn btn-primary btn-sm" onclick="toast('Nouveau client')"><i data-lucide="user-plus"></i> Nouveau client</button></div>
+        </div>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>Client</th><th>Téléphone</th><th>Total RDV</th><th>Dernier RDV</th><th>Statut</th><th></th></tr></thead>
+            <tbody id="clientsBody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ===== SERVICES ===== -->
+      <section class="view" id="v-services">
+        <div class="view-head">
+          <div class="ht"><h2>Services</h2><p>16 services actifs</p></div>
+          <div class="sp"><button class="btn btn-primary btn-sm" onclick="toast('Nouveau service')"><i data-lucide="plus"></i> Ajouter un service</button></div>
+        </div>
+        <div class="cards-grid" id="servicesGrid"></div>
+      </section>
+
+      <!-- ===== EMPLOYÉS ===== -->
+      <section class="view" id="v-employes">
+        <div class="view-head">
+          <div class="ht"><h2>Employés</h2><p>8 membres de l'équipe</p></div>
+          <div class="sp"><button class="btn btn-primary btn-sm" onclick="toast('Inviter un employé')"><i data-lucide="user-plus"></i> Inviter</button></div>
+        </div>
+        <div class="cards-grid" id="empGrid"></div>
+      </section>
+
+      <!-- ===== DISPONIBILITÉS ===== -->
+      <section class="view" id="v-dispo">
+        <div class="view-head">
+          <div class="ht"><h2>Disponibilités</h2><p>Horaires d'ouverture, pauses et congés</p></div>
+          <div class="sp"><select class="field" style="width:auto;padding:9px 13px"><option>Toute l'équipe</option><option>Carla Gómez</option><option>Melina Rojas</option></select><button class="btn btn-primary btn-sm" onclick="toast('Modifications enregistrées ✓')"><i data-lucide="save"></i> Enregistrer</button></div>
+        </div>
+        <div class="grid-2">
+          <div class="card pad">
+            <div class="section-title"><i data-lucide="clock"></i> Horaires hebdomadaires</div>
+            <div id="availBody"></div>
+          </div>
+          <div class="card pad">
+            <div class="section-title"><i data-lucide="palmtree"></i> Congés & fermetures</div>
+            <div class="lrow"><span class="avatar" style="width:36px;height:36px;background:color-mix(in srgb,var(--amber) 16%,transparent);color:#C57C04"><i data-lucide="calendar-x" style="width:17px;height:17px"></i></span><div class="nm"><b>Congé annuel</b><small>Carla Gómez</small></div><div class="meta"><div class="t" style="font-size:12.5px">1 — 15 août</div></div></div>
+            <div class="lrow"><span class="avatar" style="width:36px;height:36px;background:color-mix(in srgb,var(--red) 14%,transparent);color:var(--red)"><i data-lucide="calendar-x" style="width:17px;height:17px"></i></span><div class="nm"><b>Jour férié</b><small>Fête du Travail</small></div><div class="meta"><div class="t" style="font-size:12.5px">1 mai</div></div></div>
+            <div class="lrow"><span class="avatar" style="width:36px;height:36px;background:color-mix(in srgb,var(--amber) 16%,transparent);color:#C57C04"><i data-lucide="calendar-x" style="width:17px;height:17px"></i></span><div class="nm"><b>Formation équipe</b><small>Établissement fermé</small></div><div class="meta"><div class="t" style="font-size:12.5px">22 mai</div></div></div>
+            <button class="btn btn-ghost btn-sm" style="margin-top:14px;width:100%;justify-content:center" onclick="toast('Ajouter un congé')"><i data-lucide="plus"></i> Ajouter un congé</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== WHATSAPP ===== -->
+      <section class="view" id="v-whatsapp">
+        <div class="view-head">
+          <div class="ht"><h2>WhatsApp</h2><p>Modèles, programmation et historique des rappels</p></div>
+          <div class="sp"><button class="btn btn-primary btn-sm" onclick="toast('Nouveau modèle')"><i data-lucide="plus"></i> Nouveau message</button></div>
+        </div>
+        <div class="kpi-grid" style="grid-template-columns:repeat(3,1fr)">
+          <div class="kpi"><div class="val">1 248</div><div class="lbl">Messages envoyés ce mois</div></div>
+          <div class="kpi"><div class="val" style="color:var(--green)">94%</div><div class="lbl">Taux de livraison</div></div>
+          <div class="kpi"><div class="val">∞</div><div class="lbl">Quota restant (Pro)</div></div>
+        </div>
+        <div class="grid-2b" style="margin-top:4px">
+          <div class="wa-tpl">
+            <div class="h"><span class="ic"><i data-lucide="bell"></i></span><div><b style="font-size:14.5px">Rappel 24h avant</b><div class="muted" style="font-size:12px">Programmé automatiquement</div></div><button class="switch on" style="margin-inline-start:auto" onclick="this.classList.toggle('on')"></button></div>
+            <div class="wa-bubble">Bonjour {nom} 👋, rappel de votre rendez-vous demain à {heure} chez Beauty Studio. Merci de confirmer votre présence.<span class="time">Envoyé · 24h avant</span></div>
+          </div>
+          <div class="wa-tpl">
+            <div class="h"><span class="ic"><i data-lucide="check-check"></i></span><div><b style="font-size:14.5px">Confirmation de réservation</b><div class="muted" style="font-size:12px">À la prise de RDV</div></div><button class="switch on" style="margin-inline-start:auto" onclick="this.classList.toggle('on')"></button></div>
+            <div class="wa-bubble">Votre rendez-vous du {date} à {heure} est confirmé ✅. À très bientôt chez Beauty Studio !<span class="time">Envoyé · à la réservation</span></div>
+          </div>
+          <div class="wa-tpl">
+            <div class="h"><span class="ic"><i data-lucide="clock"></i></span><div><b style="font-size:14.5px">Rappel 2h avant</b><div class="muted" style="font-size:12px">Programmé automatiquement</div></div><button class="switch on" style="margin-inline-start:auto" onclick="this.classList.toggle('on')"></button></div>
+            <div class="wa-bubble">Bonjour {nom}, votre rendez-vous est dans 2h à {heure}. À tout à l'heure !<span class="time">Envoyé · 2h avant</span></div>
+          </div>
+          <div class="wa-tpl">
+            <div class="h"><span class="ic" style="background:var(--amber)"><i data-lucide="rotate-ccw"></i></span><div><b style="font-size:14.5px">Relance no-show</b><div class="muted" style="font-size:12px">Après absence</div></div><button class="switch" style="margin-inline-start:auto" onclick="this.classList.toggle('on')"></button></div>
+            <div class="wa-bubble">Bonjour {nom}, nous vous avons manqué aujourd'hui. Souhaitez-vous reprogrammer votre rendez-vous ?<span class="time">Désactivé</span></div>
+          </div>
+        </div>
+        <div class="card pad" style="margin-top:20px">
+          <div class="section-title"><i data-lucide="history"></i> Historique récent</div>
+          <div class="audit"><span class="ic" style="color:var(--green)"><i data-lucide="check-check"></i></span><div><b>Rappel 24h → Valentina Ruiz</b><div class="muted">Livré · Manucure, demain 10:00</div></div><time>Il y a 2 min</time></div>
+          <div class="audit"><span class="ic" style="color:var(--green)"><i data-lucide="check-check"></i></span><div><b>Confirmation → Camila Beltrán</b><div class="muted">Livré · Coloration</div></div><time>Il y a 18 min</time></div>
+          <div class="audit"><span class="ic" style="color:var(--amber)"><i data-lucide="clock"></i></span><div><b>Rappel 2h → Martina Giordano</b><div class="muted">Programmé · 14:00</div></div><time>Dans 2h</time></div>
+        </div>
+      </section>
+
+      <!-- ===== ABONNEMENT ===== -->
+      <section class="view" id="v-abonnement">
+        <div class="view-head"><div class="ht"><h2>Abonnement</h2><p>Votre formule, vos quotas et votre facturation</p></div></div>
+        <div class="grid-2">
+          <div class="card pad" style="background:linear-gradient(160deg,#0C2138,#0A1B2E);color:#fff;border:0">
+            <div class="row" style="justify-content:space-between"><span class="chip" style="background:rgba(20,184,166,.2);color:var(--teal)"><i data-lucide="zap"></i> Plan Pro</span><span class="chip ok">Actif</span></div>
+            <div style="font-size:40px;font-weight:800;margin:16px 0 2px">59 DT<span style="font-size:16px;font-weight:500;color:#AFC3DA"> / mois</span></div>
+            <p style="color:#AFC3DA;font-size:13.5px">Prochaine facturation le 1er juin 2026</p>
+            <div style="display:flex;gap:10px;margin-top:20px"><button class="btn btn-primary btn-sm" onclick="toast('Changer de formule')">Changer de formule</button><button class="btn btn-ghost btn-sm" style="color:#fff;border-color:rgba(255,255,255,.25)" onclick="toast('Annuler')">Annuler</button></div>
+          </div>
+          <div class="card pad">
+            <div class="section-title"><i data-lucide="gauge"></i> Quotas d'utilisation</div>
+            <div class="quota"><div class="qh"><span>Employés</span><b>8 / 10</b></div><div class="qtrack"><div class="qfill" style="width:80%"></div></div></div>
+            <div class="quota"><div class="qh"><span>Rappels WhatsApp</span><b>Illimité</b></div><div class="qtrack"><div class="qfill" style="width:100%"></div></div></div>
+            <div class="quota"><div class="qh"><span>Services</span><b>16 / 30</b></div><div class="qtrack"><div class="qfill" style="width:53%"></div></div></div>
+            <div class="quota mb0"><div class="qh"><span>Stockage</span><b>1.8 / 5 Go</b></div><div class="qtrack"><div class="qfill" style="width:36%"></div></div></div>
+          </div>
+        </div>
+        <div class="card pad">
+          <div class="section-title"><i data-lucide="receipt"></i> Historique de facturation</div>
+          <div class="tbl-wrap" style="border:0">
+            <table style="min-width:520px">
+              <thead><tr><th>Facture</th><th>Date</th><th>Montant</th><th>Statut</th><th></th></tr></thead>
+              <tbody>
+                <tr><td><b>#FAC-2026-05</b></td><td>1 mai 2026</td><td>59 DT</td><td><span class="chip ok">Payée</span></td><td><button class="t-ic"><i data-lucide="download"></i></button></td></tr>
+                <tr><td><b>#FAC-2026-04</b></td><td>1 avr. 2026</td><td>59 DT</td><td><span class="chip ok">Payée</span></td><td><button class="t-ic"><i data-lucide="download"></i></button></td></tr>
+                <tr><td><b>#FAC-2026-03</b></td><td>1 mars 2026</td><td>59 DT</td><td><span class="chip ok">Payée</span></td><td><button class="t-ic"><i data-lucide="download"></i></button></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== PARAMÈTRES ===== -->
+      <section class="view" id="v-parametres">
+        <div class="view-head"><div class="ht"><h2>Paramètres</h2><p>Profil, établissement et utilisateurs</p></div></div>
+        <div class="tabs">
+          <div class="tab active" onclick="setTab(this,'profil')">Profil</div>
+          <div class="tab" onclick="setTab(this,'etab')">Établissement</div>
+          <div class="tab" onclick="setTab(this,'users')">Utilisateurs & rôles</div>
+          <div class="tab" onclick="setTab(this,'notif')">Notifications</div>
+        </div>
+        <div id="tab-profil" class="tabpane">
+          <div class="card pad" style="max-width:720px">
+            <div class="row" style="margin-bottom:20px"><span class="avatar" style="width:64px;height:64px;font-size:22px">SB</span><div><b style="font-size:16px">Sarah Ben Ali</b><div class="muted" style="font-size:13px">Administratrice</div></div><button class="btn btn-ghost btn-sm" style="margin-inline-start:auto" onclick="toast('Changer la photo')"><i data-lucide="camera"></i> Photo</button></div>
+            <div class="form-grid">
+              <div class="field"><label>Prénom</label><input value="Sarah"></div>
+              <div class="field"><label>Nom</label><input value="Ben Ali"></div>
+              <div class="field"><label>Email</label><input value="sarah@beautystudio.tn"></div>
+              <div class="field"><label>Téléphone</label><input value="+216 50 123 456"></div>
+              <div class="field full"><label>Langue de l'interface</label><select><option>Français</option><option>العربية</option></select></div>
+            </div>
+            <button class="btn btn-primary btn-sm" style="margin-top:18px" onclick="toast('Profil enregistré ✓')"><i data-lucide="save"></i> Enregistrer</button>
+          </div>
+        </div>
+        <div id="tab-etab" class="tabpane" style="display:none">
+          <div class="card pad" style="max-width:720px">
+            <div class="form-grid">
+              <div class="field full"><label>Nom de l'établissement</label><input value="Beauty Studio"></div>
+              <div class="field full"><label>Adresse</label><input value="Rue du Lac, Les Berges du Lac, Tunis"></div>
+              <div class="field"><label>Catégorie</label><select><option>Salon de beauté</option><option>Spa</option><option>Clinique</option></select></div>
+              <div class="field"><label>Lien de réservation</label><input value="booking.tn/beauty-studio"></div>
+              <div class="field full"><label>Description</label><textarea rows="3">Salon de coiffure et esthétique au cœur des Berges du Lac.</textarea></div>
+            </div>
+            <button class="btn btn-primary btn-sm" style="margin-top:18px" onclick="toast('Établissement enregistré ✓')"><i data-lucide="save"></i> Enregistrer</button>
+          </div>
+        </div>
+        <div id="tab-users" class="tabpane" style="display:none">
+          <div class="tbl-wrap">
+            <table>
+              <thead><tr><th>Utilisateur</th><th>Email</th><th>Rôle</th><th>Statut</th><th></th></tr></thead>
+              <tbody>
+                <tr><td><div class="td-user"><span class="avatar">SB</span><div><b>Sarah Ben Ali</b></div></div></td><td>sarah@beautystudio.tn</td><td><span class="chip info">Admin</span></td><td><span class="chip ok">Actif</span></td><td><button class="t-ic"><i data-lucide="more-horizontal"></i></button></td></tr>
+                <tr><td><div class="td-user"><span class="avatar">CG</span><div><b>Carla Gómez</b></div></div></td><td>carla@beautystudio.tn</td><td><span class="chip neu">Employé</span></td><td><span class="chip ok">Actif</span></td><td><button class="t-ic"><i data-lucide="more-horizontal"></i></button></td></tr>
+                <tr><td><div class="td-user"><span class="avatar">MR</span><div><b>Melina Rojas</b></div></div></td><td>melina@beautystudio.tn</td><td><span class="chip neu">Employé</span></td><td><span class="chip wait">Invité</span></td><td><button class="t-ic"><i data-lucide="more-horizontal"></i></button></td></tr>
+              </tbody>
+            </table>
+          </div>
+          <button class="btn btn-primary btn-sm" style="margin-top:16px" onclick="toast('Inviter un utilisateur')"><i data-lucide="user-plus"></i> Inviter un utilisateur</button>
+        </div>
+        <div id="tab-notif" class="tabpane" style="display:none">
+          <div class="card pad" style="max-width:600px">
+            <div class="avail-row" style="grid-template-columns:1fr auto"><div><b style="font-size:14px">Nouvelles réservations</b><div class="muted" style="font-size:12.5px">Recevoir une alerte à chaque RDV</div></div><button class="switch on" onclick="this.classList.toggle('on')"></button></div>
+            <div class="avail-row" style="grid-template-columns:1fr auto"><div><b style="font-size:14px">Annulations</b><div class="muted" style="font-size:12.5px">Alerte en cas d'annulation</div></div><button class="switch on" onclick="this.classList.toggle('on')"></button></div>
+            <div class="avail-row" style="grid-template-columns:1fr auto"><div><b style="font-size:14px">Rapport quotidien</b><div class="muted" style="font-size:12.5px">Résumé chaque matin par email</div></div><button class="switch" onclick="this.classList.toggle('on')"></button></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== ADMINISTRATION ===== -->
+      <section class="view" id="v-admin">
+        <div class="view-head"><div class="ht"><h2>Administration</h2><p>Supervision multi-tenant · organisations, utilisateurs, plans, audit</p></div><div class="sp"><span class="chip info"><i data-lucide="shield"></i> Super-admin</span></div></div>
+        <div class="kpi-grid">
+          <div class="kpi"><div class="val">512</div><div class="lbl">Organisations</div><span class="delta up"><i data-lucide="trending-up"></i> +24 ce mois</span></div>
+          <div class="kpi"><div class="val">3 480</div><div class="lbl">Utilisateurs</div><span class="delta up"><i data-lucide="trending-up"></i> +112 ce mois</span></div>
+          <div class="kpi"><div class="val">28 900 DT</div><div class="lbl">MRR</div><span class="delta up"><i data-lucide="trending-up"></i> +9%</span></div>
+          <div class="kpi"><div class="val" style="color:var(--amber)">7</div><div class="lbl">Tickets ouverts</div><span class="delta down"><i data-lucide="trending-down"></i> -2</span></div>
+        </div>
+        <div class="grid-2">
+          <div class="card pad">
+            <div class="section-title"><i data-lucide="building-2"></i> Organisations récentes</div>
+            <div class="tbl-wrap" style="border:0">
+              <table style="min-width:520px">
+                <thead><tr><th>Organisation</th><th>Plan</th><th>Employés</th><th>Statut</th></tr></thead>
+                <tbody>
+                  <tr><td><div class="td-user"><span class="avatar">BS</span><div><b>Beauty Studio</b><small>Tunis</small></div></div></td><td><span class="chip info">Pro</span></td><td>8</td><td><span class="chip ok">Actif</span></td></tr>
+                  <tr><td><div class="td-user"><span class="avatar">CN</span><div><b>Clinique Nour</b><small>Sfax</small></div></div></td><td><span class="chip" style="background:color-mix(in srgb,var(--violet) 15%,transparent);color:var(--violet)">Business</span></td><td>22</td><td><span class="chip ok">Actif</span></td></tr>
+                  <tr><td><div class="td-user"><span class="avatar">SJ</span><div><b>Spa Jasmin</b><small>Sousse</small></div></div></td><td><span class="chip neu">Starter</span></td><td>3</td><td><span class="chip wait">Essai</span></td></tr>
+                  <tr><td><div class="td-user"><span class="avatar">FZ</span><div><b>FitZone</b><small>Tunis</small></div></div></td><td><span class="chip info">Pro</span></td><td>6</td><td><span class="chip no">Suspendu</span></td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <div class="card pad">
+            <div class="section-title"><i data-lucide="scroll-text"></i> Journal d'audit</div>
+            <div class="audit"><span class="ic"><i data-lucide="log-in"></i></span><div><b>Connexion admin</b><div class="muted">sarah@beautystudio.tn</div></div><time>10:42</time></div>
+            <div class="audit"><span class="ic"><i data-lucide="credit-card"></i></span><div><b>Upgrade → Business</b><div class="muted">Clinique Nour</div></div><time>09:30</time></div>
+            <div class="audit"><span class="ic"><i data-lucide="user-plus"></i></span><div><b>Nouvelle organisation</b><div class="muted">Dental Care, Monastir</div></div><time>08:15</time></div>
+            <div class="audit"><span class="ic" style="color:var(--red)"><i data-lucide="ban"></i></span><div><b>Suspension</b><div class="muted">FitZone · paiement échoué</div></div><time>Hier</time></div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</div>
+
+<!-- drawer: détails RDV -->
+<div class="drawer-back" id="drawerBack" onclick="closeDrawer()"></div>
+<aside class="drawer" id="drawer">
+  <div class="drawer-head"><span class="avatar" style="width:40px;height:40px" id="dwAv">VR</span><div><h3 id="dwName">Valentina Ruiz</h3><div class="muted" style="font-size:12.5px" id="dwService">Manucure</div></div><button class="x" onclick="closeDrawer()"><i data-lucide="x"></i></button></div>
+  <div class="drawer-body">
+    <div class="chip ok" id="dwStatus" style="margin-bottom:16px"><i data-lucide="check"></i> Confirmé</div>
+    <div class="dl-item"><span>Date</span><b id="dwDate">Jeu. 14 mai 2026</b></div>
+    <div class="dl-item"><span>Heure</span><b id="dwTime">10:00 — 10:40</b></div>
+    <div class="dl-item"><span>Employé</span><b id="dwEmp">Agustina López</b></div>
+    <div class="dl-item"><span>Durée</span><b id="dwDur">40 min</b></div>
+    <div class="dl-item"><span>Prix</span><b id="dwPrice">35 DT</b></div>
+    <div class="dl-item"><span>Téléphone</span><b>+216 50 220 118</b></div>
+    <div class="wa-note" style="display:flex;gap:11px;align-items:center;background:color-mix(in srgb,var(--green) 10%,transparent);border:1px solid color-mix(in srgb,var(--green) 28%,transparent);border-radius:12px;padding:12px;margin-top:16px">
+      <span style="width:34px;height:34px;border-radius:9px;background:var(--green);color:#042018;display:grid;place-items:center;flex:0 0 auto"><i data-lucide="message-circle" style="width:17px;height:17px"></i></span>
+      <p style="font-size:12.5px">Rappel WhatsApp envoyé · <b style="color:var(--green)">Livré</b></p>
+    </div>
+  </div>
+  <div class="drawer-foot"><button class="btn btn-ghost btn-sm" style="flex:1;justify-content:center" onclick="toast('Reprogrammer')"><i data-lucide="calendar-clock"></i> Reprogrammer</button><button class="btn btn-primary btn-sm" style="flex:1;justify-content:center" onclick="closeDrawer();toast('RDV mis à jour ✓')"><i data-lucide="check"></i> Marquer terminé</button></div>
+</aside>
+
+<!-- drawer: nouveau RDV -->
+<div class="drawer-back" id="newBack" onclick="closeNewRdv()"></div>
+<aside class="drawer" id="newDrawer">
+  <div class="drawer-head"><h3>Nouveau rendez-vous</h3><button class="x" onclick="closeNewRdv()"><i data-lucide="x"></i></button></div>
+  <div class="drawer-body">
+    <div class="field" style="margin-bottom:14px"><label>Client</label><input placeholder="Rechercher ou créer un client…"></div>
+    <div class="field" style="margin-bottom:14px"><label>Service</label><select><option>Coupe + Brushing · 40 DT</option><option>Coloration · 80 DT</option><option>Soin du visage · 70 DT</option><option>Manucure · 35 DT</option></select></div>
+    <div class="field" style="margin-bottom:14px"><label>Employé</label><select><option>Sans préférence</option><option>Carla Gómez</option><option>Melina Rojas</option><option>Sofía Díaz</option></select></div>
+    <div class="form-grid" style="gap:12px"><div class="field"><label>Date</label><input type="date" value="2026-05-14"></div><div class="field"><label>Heure</label><input type="time" value="10:00"></div></div>
+    <div class="field full" style="margin-top:14px"><label>Note</label><textarea rows="2" placeholder="Note interne…"></textarea></div>
+    <label class="row" style="margin-top:14px;font-size:13.5px;color:var(--muted);cursor:pointer"><input type="checkbox" checked style="accent-color:var(--teal);width:16px;height:16px"> Envoyer la confirmation WhatsApp</label>
+  </div>
+  <div class="drawer-foot"><button class="btn btn-ghost btn-sm" style="flex:1;justify-content:center" onclick="closeNewRdv()">Annuler</button><button class="btn btn-primary btn-sm" style="flex:1;justify-content:center" onclick="closeNewRdv();toast('Rendez-vous créé ✓')"><i data-lucide="check"></i> Créer le RDV</button></div>
+</aside>
+
+<div id="toast"></div>
+
+<script>
+/* ---------- data ---------- */
+const RDV=[
+  {n:'Valentina Ruiz',i:'VR',s:'Manucure',e:'Agustina López',d:'14 mai · 10:00',st:'ok',price:'35 DT',dur:'40 min'},
+  {n:'Luciana Ferreyra',i:'LF',s:'Épilation laser',e:'Sofía Díaz',d:'14 mai · 11:00',st:'ok',price:'90 DT',dur:'30 min'},
+  {n:'Camila Beltrán',i:'CB',s:'Coloration',e:'Carla Gómez',d:'14 mai · 11:30',st:'ok',price:'80 DT',dur:'90 min'},
+  {n:'Martina Giordano',i:'MG',s:'Coupe + Brushing',e:'Carla Gómez',d:'14 mai · 16:00',st:'wait',price:'40 DT',dur:'45 min'},
+  {n:'Sofía Castro',i:'SC',s:'Soin du visage',e:'Melina Rojas',d:'15 mai · 09:30',st:'ok',price:'70 DT',dur:'60 min'},
+  {n:'Lucía Romero',i:'LR',s:'Manucure',e:'Agustina López',d:'15 mai · 14:00',st:'wait',price:'35 DT',dur:'40 min'},
+  {n:'Emma Navarro',i:'EN',s:'Coloration',e:'Carla Gómez',d:'16 mai · 10:00',st:'no',price:'80 DT',dur:'90 min'},
+  {n:'Yasmine Ammar',i:'YA',s:'Épilation laser',e:'Sofía Díaz',d:'16 mai · 15:30',st:'ok',price:'90 DT',dur:'30 min'},
+];
+const stChip={ok:'<span class="chip ok">Confirmé</span>',wait:'<span class="chip wait">En attente</span>',no:'<span class="chip no">Annulé</span>'};
+const CLIENTS=[
+  {n:'Sofia Martin',i:'SM',p:'50 123 456',t:12,last:'10/05/2026',st:'ok'},
+  {n:'Karim Jebali',i:'KJ',p:'98 887 344',t:7,last:'09/05/2026',st:'ok'},
+  {n:'Amel Ben Ali',i:'AB',p:'22 445 900',t:5,last:'08/05/2026',st:'ok'},
+  {n:'Noura Slim',i:'NS',p:'55 321 987',t:3,last:'06/05/2026',st:'wait'},
+  {n:'Yassine Ammar',i:'YA',p:'29 654 877',t:9,last:'05/05/2026',st:'ok'},
+  {n:'Lina Haddad',i:'LH',p:'27 110 452',t:2,last:'02/05/2026',st:'no'},
+];
+const SERVICES=[
+  {ic:'scissors',n:'Coupe + Brushing',dur:'45 min',price:'40 DT',emp:4},
+  {ic:'palette',n:'Coloration',dur:'90 min',price:'80 DT',emp:2},
+  {ic:'sparkles',n:'Soin du visage',dur:'60 min',price:'70 DT',emp:3},
+  {ic:'zap',n:'Épilation laser',dur:'30 min',price:'90 DT',emp:2},
+  {ic:'hand',n:'Manucure',dur:'40 min',price:'35 DT',emp:2},
+  {ic:'flower-2',n:'Massage relaxant',dur:'60 min',price:'65 DT',emp:1},
+];
+const EMPS=[
+  {n:'Carla Gómez',i:'CG',role:'Coiffure & couleur',rate:'4.9',rdv:92,tags:['Coupe','Coloration']},
+  {n:'Melina Rojas',i:'MR',role:'Soins du visage',rate:'4.8',rdv:74,tags:['Soin','Massage']},
+  {n:'Sofía Díaz',i:'SD',role:'Esthétique',rate:'4.9',rdv:61,tags:['Épilation','Soin']},
+  {n:'Agustina López',i:'AL',role:'Onglerie',rate:'5.0',rdv:47,tags:['Manucure']},
+  {n:'Iván Torres',i:'IT',role:'Coiffure',rate:'4.7',rdv:31,tags:['Coupe']},
+];
+const AVAIL=[
+  {d:'Lundi',on:true,slots:[['09:00–13:00',''],['Pause 13:00–14:00','pause'],['14:00–18:00','']]},
+  {d:'Mardi',on:true,slots:[['09:00–13:00',''],['Pause 13:00–14:00','pause'],['14:00–18:00','']]},
+  {d:'Mercredi',on:true,slots:[['09:00–13:00',''],['Pause 13:00–14:00','pause'],['14:00–18:00','']]},
+  {d:'Jeudi',on:true,slots:[['09:00–18:00','']]},
+  {d:'Vendredi',on:true,slots:[['09:00–18:00','']]},
+  {d:'Samedi',on:true,slots:[['09:00–14:00','']]},
+  {d:'Dimanche',on:false,slots:[['Fermé','closed']]},
+];
+
+/* week events: [day 0-6][ {h, span, cls, title, sub} ] */
+const WEEK_DAYS=[['Lun','11'],['Mar','12'],['Mer','13'],['Jeu','14'],['Ven','15'],['Sam','16'],['Dim','17']];
+const HOURS=['09:00','10:00','11:00','12:00','13:00','14:00','15:00','16:00','17:00'];
+const EVENTS={
+  0:[{h:'09:00',cls:'teal',t:'Coupe + Brushing',s:'Sofia Martin'},{h:'11:00',cls:'green',t:'Coloration',s:'Karim J.'}],
+  1:[{h:'10:00',cls:'blue',t:'Soin du visage',s:'Amel B.'},{h:'15:00',cls:'amber',t:'Manucure',s:'Noura S.'}],
+  2:[{h:'09:00',cls:'violet',t:'Épilation',s:'Yassine A.'},{h:'14:00',cls:'teal',t:'Coupe',s:'Lina H.'},{h:'16:00',cls:'green',t:'Coloration',s:'Emma N.'}],
+  3:[{h:'10:00',cls:'teal',t:'Manucure',s:'Valentina R.'},{h:'11:00',cls:'blue',t:'Épilation',s:'Luciana F.'}],
+  4:[{h:'09:00',cls:'green',t:'Soin visage',s:'Sofía C.'},{h:'14:00',cls:'amber',t:'Manucure',s:'Lucía R.'}],
+  5:[{h:'10:00',cls:'teal',t:'Coupe + Brushing',s:'Martina G.'}],
+  6:[],
+};
+
+/* ---------- navigation ---------- */
+const TITLES={dashboard:['Tableau de bord','Bonjour Sarah 👋 Voici l\'activité du jour.'],calendrier:['Calendrier','Planning de la semaine'],rdv:['Rendez-vous','Gérez tous vos rendez-vous'],clients:['Clients','Votre base de clients'],services:['Services','Catalogue de prestations'],employes:['Employés','Votre équipe'],dispo:['Disponibilités','Horaires et congés'],whatsapp:['WhatsApp','Rappels automatiques'],abonnement:['Abonnement','Formule et facturation'],parametres:['Paramètres','Configuration du compte'],admin:['Administration','Supervision de la plateforme']};
+function nav(v){
+  document.querySelectorAll('.view').forEach(e=>e.classList.remove('active'));
+  document.getElementById('v-'+v).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.toggle('active',n.dataset.v===v));
+  document.getElementById('ptTitle').textContent=TITLES[v][0];
+  document.getElementById('ptSub').textContent=TITLES[v][1];
+  document.getElementById('sidebar').classList.remove('open');
+  document.querySelector('.content').scrollTo?.(0,0);window.scrollTo(0,0);
+  if(window.lucide)lucide.createIcons();
+}
+
+/* ---------- builders ---------- */
+function buildRdv(filter='all'){
+  const rows=RDV.filter(r=>filter==='all'||r.st===filter).map(r=>`
+    <tr onclick='openDrawer(${JSON.stringify(r).replace(/'/g,"&#39;")})' style="cursor:pointer">
+      <td><div class="td-user"><span class="avatar">${r.i}</span><div><b>${r.n}</b></div></div></td>
+      <td>${r.s}</td><td>${r.e}</td><td>${r.d}</td><td>${stChip[r.st]}</td>
+      <td><div class="t-actions"><button class="t-ic" onclick="event.stopPropagation()"><i data-lucide="pencil"></i></button><button class="t-ic" onclick="event.stopPropagation()"><i data-lucide="more-horizontal"></i></button></div></td>
+    </tr>`).join('');
+  document.querySelector('#rdvTable tbody').innerHTML=rows;
+  if(window.lucide)lucide.createIcons();
+}
+function fRdv(btn,f){document.querySelectorAll('#v-rdv .fbtn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');buildRdv(f);}
+function buildClients(){
+  document.getElementById('clientsBody').innerHTML=CLIENTS.map(c=>`
+    <tr>
+      <td><div class="td-user"><span class="avatar">${c.i}</span><div><b>${c.n}</b></div></div></td>
+      <td>+216 ${c.p}</td><td><b>${c.t}</b></td><td>${c.last}</td>
+      <td>${c.st==='ok'?'<span class="chip ok">Fidèle</span>':c.st==='wait'?'<span class="chip wait">Nouveau</span>':'<span class="chip no">Inactif</span>'}</td>
+      <td><div class="t-actions"><button class="t-ic" onclick="toast('Fiche de ${c.n}')"><i data-lucide="eye"></i></button><button class="t-ic"><i data-lucide="message-circle"></i></button></div></td>
+    </tr>`).join('');
+  if(window.lucide)lucide.createIcons();
+}
+function buildServices(){
+  document.getElementById('servicesGrid').innerHTML=SERVICES.map(s=>`
+    <div class="svc">
+      <div class="ic"><i data-lucide="${s.ic}"></i></div>
+      <h3>${s.n}</h3>
+      <div class="m"><span><i data-lucide="clock"></i> ${s.dur}</span><span><i data-lucide="users"></i> ${s.emp} employés</span></div>
+      <div class="foot"><span class="price">${s.price}</span><div class="t-actions"><button class="t-ic" onclick="toast('Modifier ${s.n}')"><i data-lucide="pencil"></i></button><button class="t-ic"><i data-lucide="more-horizontal"></i></button></div></div>
+    </div>`).join('');
+  if(window.lucide)lucide.createIcons();
+}
+function buildEmps(){
+  document.getElementById('empGrid').innerHTML=EMPS.map(e=>`
+    <div class="emp-card">
+      <span class="avatar">${e.i}</span>
+      <h3>${e.n}</h3><div class="role">${e.role}</div>
+      <div class="tags">${e.tags.map(t=>`<span class="tag">${t}</span>`).join('')}</div>
+      <div class="stats"><div><b>${e.rdv}</b><small>RDV / 30j</small></div><div><b>★ ${e.rate}</b><small>Note</small></div></div>
+    </div>`).join('');
+  if(window.lucide)lucide.createIcons();
+}
+function buildAvail(){
+  document.getElementById('availBody').innerHTML=AVAIL.map((a,idx)=>`
+    <div class="avail-row">
+      <span class="day">${a.d}</span>
+      <div class="slots-mini">${a.slots.map(s=>`<span class="slot-pill ${s[1]}">${s[1]==='pause'?'<i data-lucide=\"coffee\" style=\"width:12px;height:12px\"></i>':''}${s[0]}</span>`).join('')}</div>
+      <button class="switch ${a.on?'on':''}" onclick="this.classList.toggle('on')"></button>
+    </div>`).join('');
+  if(window.lucide)lucide.createIcons();
+}
+function buildWeek(){
+  let html='<div class="week-grid"><div class="wh"></div>';
+  WEEK_DAYS.forEach((d,i)=>html+=`<div class="wh ${i===3?'today':''}"><small>${d[0]}</small><b>${d[1]}</b></div>`);
+  HOURS.forEach(h=>{
+    html+=`<div class="hour">${h}</div>`;
+    for(let day=0;day<7;day++){
+      const evs=(EVENTS[day]||[]).filter(e=>e.h===h);
+      html+=`<div class="cell">${evs.map(e=>`<div class="ev ${e.cls}" onclick="openDrawer({n:'${e.s}',i:'${e.s.split(' ').map(x=>x[0]).join('')}',s:'${e.t}',e:'—',d:'${WEEK_DAYS[day][1]} mai · ${e.h}',st:'ok',price:'—',dur:'—'})">${e.t}<small>${e.s}</small></div>`).join('')}</div>`;
+    }
+  });
+  html+='</div>';
+  document.getElementById('calWeek').innerHTML=html;
+  if(window.lucide)lucide.createIcons();
+}
+function buildMonth(){
+  let html='<div class="card pad"><div class="cal-grid" style="display:grid;grid-template-columns:repeat(7,1fr);gap:6px">';
+  ['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'].forEach(d=>html+=`<div style="text-align:center;font-size:11px;color:var(--faint);font-weight:600;padding-bottom:6px">${d}</div>`);
+  for(let i=0;i<4;i++)html+='<div></div>';
+  for(let d=1;d<=31;d++){
+    const count=[3,5,2,4,6,1,0][(d+4)%7];
+    html+=`<div style="border:1px solid var(--border);border-radius:10px;padding:8px;min-height:66px;${d===14?'border-color:var(--teal);box-shadow:0 0 0 2px var(--ring)':''}">
+      <div style="font-size:12px;font-weight:600;${d===14?'color:var(--teal)':''}">${d}</div>
+      ${count?`<div style="margin-top:4px;font-size:10.5px;color:var(--teal);font-weight:600;background:color-mix(in srgb,var(--teal) 12%,transparent);border-radius:6px;padding:2px 6px;display:inline-block">${count} RDV</div>`:''}</div>`;
+  }
+  html+='</div></div>';
+  document.getElementById('calMonth').innerHTML=html;
+}
+function calView(v,btn){
+  document.querySelectorAll('#v-calendrier .seg button').forEach(b=>b.classList.remove('active'));btn.classList.add('active');
+  const week=document.getElementById('calWeek'),month=document.getElementById('calMonth');
+  if(v==='mois'){week.style.display='none';month.style.display='block';}
+  else{week.style.display='block';month.style.display='none';if(v==='jour')toast('Vue jour (démo) — affiche la semaine');}
+}
+
+/* area chart (SVG) */
+function buildArea(){
+  const data=[6,8,5,9,7,11,8,10,13,9,12,15,11,14,10,13,16,12,15,18,14,17,13,16,19,15,18,21,17,20];
+  const w=560,h=170,pad=6;const max=24;
+  const step=(w-pad*2)/(data.length-1);
+  const pts=data.map((v,i)=>[pad+i*step, h-pad-(v/max)*(h-pad*2)]);
+  const line=pts.map((p,i)=>(i?'L':'M')+p[0].toFixed(1)+' '+p[1].toFixed(1)).join(' ');
+  const area=line+` L ${pad+(data.length-1)*step} ${h-pad} L ${pad} ${h-pad} Z`;
+  document.getElementById('areaChart').innerHTML=`
+    <svg viewBox="0 0 ${w} ${h}" width="100%" height="190" preserveAspectRatio="none" style="display:block;overflow:visible">
+      <defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="var(--teal)" stop-opacity=".35"/><stop offset="1" stop-color="var(--teal)" stop-opacity="0"/></linearGradient></defs>
+      ${[0,.5,1].map(f=>`<line x1="0" x2="${w}" y1="${pad+f*(h-pad*2)}" y2="${pad+f*(h-pad*2)}" stroke="var(--border)" stroke-dasharray="4 4"/>`).join('')}
+      <path d="${area}" fill="url(#g)"/>
+      <path d="${line}" fill="none" stroke="var(--teal)" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
+      <circle cx="${pts[pts.length-1][0]}" cy="${pts[pts.length-1][1]}" r="4.5" fill="var(--green)" stroke="var(--card)" stroke-width="2.5"/>
+    </svg>
+    <div style="display:flex;justify-content:space-between;font-size:10.5px;color:var(--faint);margin-top:6px"><span>26 avr</span><span>3 mai</span><span>10 mai</span><span>17 mai</span><span>24 mai</span></div>`;
+}
+
+/* ---------- drawer ---------- */
+function openDrawer(r){
+  document.getElementById('dwName').textContent=r.n;document.getElementById('dwAv').textContent=r.i;
+  document.getElementById('dwService').textContent=r.s;document.getElementById('dwEmp').textContent=r.e;
+  document.getElementById('dwTime').textContent=r.d.split('· ')[1]||r.d;document.getElementById('dwDate').textContent=r.d;
+  document.getElementById('dwDur').textContent=r.dur;document.getElementById('dwPrice').textContent=r.price;
+  const st=document.getElementById('dwStatus');
+  st.className='chip '+r.st;st.innerHTML=r.st==='ok'?'<i data-lucide="check"></i> Confirmé':r.st==='wait'?'<i data-lucide="clock"></i> En attente':'<i data-lucide="x"></i> Annulé';
+  document.getElementById('drawer').classList.add('open');document.getElementById('drawerBack').classList.add('open');
+  if(window.lucide)lucide.createIcons();
+}
+function closeDrawer(){document.getElementById('drawer').classList.remove('open');document.getElementById('drawerBack').classList.remove('open');}
+function openNewRdv(){document.getElementById('newDrawer').classList.add('open');document.getElementById('newBack').classList.add('open');}
+function closeNewRdv(){document.getElementById('newDrawer').classList.remove('open');document.getElementById('newBack').classList.remove('open');}
+
+/* ---------- settings tabs ---------- */
+function setTab(el,t){
+  document.querySelectorAll('#v-parametres .tab').forEach(x=>x.classList.remove('active'));el.classList.add('active');
+  document.querySelectorAll('#v-parametres .tabpane').forEach(p=>p.style.display='none');
+  document.getElementById('tab-'+t).style.display='block';
+}
+
+/* ---------- misc ---------- */
+let toastT;function toast(m){const el=document.getElementById('toast');el.textContent=m;el.style.transform='translateX(-50%) translateY(0)';clearTimeout(toastT);toastT=setTimeout(()=>el.style.transform='translateX(-50%) translateY(140%)',2600);}
+function toggleTheme(){const r=document.documentElement;const dark=r.getAttribute('data-theme')==='dark'||(!r.getAttribute('data-theme')&&matchMedia('(prefers-color-scheme:dark)').matches);r.setAttribute('data-theme',dark?'light':'dark');document.getElementById('themeIcon').setAttribute('data-lucide',dark?'moon':'sun');if(window.lucide)lucide.createIcons();}
+let lang='fr';function toggleLang(){lang=lang==='fr'?'ar':'fr';const r=document.documentElement;r.setAttribute('dir',lang==='ar'?'rtl':'ltr');document.getElementById('langBtn').textContent=lang==='fr'?'AR':'FR';toast(lang==='ar'?'الواجهة بالعربية (عرض)':'Interface en français');}
+
+/* ---------- init ---------- */
+buildRdv();buildClients();buildServices();buildEmps();buildAvail();buildWeek();buildMonth();buildArea();
+if(window.lucide)lucide.createIcons();
+</script>

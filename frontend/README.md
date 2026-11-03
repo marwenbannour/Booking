@@ -25,6 +25,11 @@ Le backend doit tourner sur `http://localhost:3000` (préfixe `/api/v1`) et auto
 | Route | Rôle |
 | --- | --- |
 | `/login` | Connexion à l'espace pro (email ou téléphone + mot de passe). |
+| `/register` | Inscription propriétaire et création atomique d'un établissement. |
+| `/forgot-password` et `/reset-password` | Demande et confirmation de réinitialisation par lien e-mail. |
+| `/accept-invitation` | Acceptation d'une invitation, avec ou sans compte existant. |
+| `/verify-email` | Confirmation d'une nouvelle adresse e-mail. |
+| `/account` | Modification des coordonnées, changement de mot de passe, fermeture du compte. |
 | `/dashboard` | KPIs + prochains rendez-vous (données d'exemple si l'API est injoignable). |
 | `/bookings` | Liste des rendez-vous + actions (confirmer / annuler). |
 | `/book/<slug>` | Parcours public de réservation en 4 étapes (service → créneau → coordonnées → confirmation). |
@@ -45,7 +50,8 @@ src/
 
 ## Notes
 
-- **Stockage des tokens** : `localStorage` (simple pour le scaffold). Pour la production,
-  préférer des cookies `httpOnly` — voir le rapport d'audit (risque XSS).
+- **Sessions Web** : access token conservé en mémoire et refresh token dans un cookie
+  `HttpOnly`/`SameSite`; aucun refresh token n'est accessible à JavaScript. Le client
+  coalesce les refresh simultanés afin de ne faire qu'une rotation à la fois.
 - **Thème** : bascule manuelle via `data-theme`, sinon `prefers-color-scheme`.
 - Ce frontend remplace à terme le prototype vanilla (`../app.js`, `../index.html`).
