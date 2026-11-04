@@ -178,6 +178,26 @@ export default function BookPage({ params }: { params: { slug: string } }) {
   }, [slots]);
 
   const selectedSlot = uniqueSlots.find((s) => s.start === slotStart) ?? null;
+
+  // Créneaux groupés Matin / Après-midi (heure locale de l'établissement).
+  const groupedSlots = useMemo(() => {
+    const tz = establishment?.timezone;
+    const hourOf = (iso: string): number => {
+      const part = new Intl.DateTimeFormat("fr-FR", {
+        hour: "numeric",
+        hourCycle: "h23",
+        timeZone: tz,
+      })
+        .formatToParts(new Date(iso))
+        .find((p) => p.type === "hour");
+      return part ? parseInt(part.value, 10) : 0;
+    };
+    return {
+      morning: uniqueSlots.filter((s) => hourOf(s.start) < 12),
+      afternoon: uniqueSlots.filter((s) => hourOf(s.start) >= 12),
+    };
+  }, [uniqueSlots, establishment?.timezone]);
+
   const uniqueRescheduleSlots = useMemo(() => {
     const seen = new Set<string>();
     return rescheduleSlots
@@ -362,8 +382,28 @@ export default function BookPage({ params }: { params: { slug: string } }) {
                             {s.durationMinutes} {t("book.minuteUnit")}
                           </small>
                         </div>
-                        <span style={{ fontSize: 10, fontWeight: 700 }}>
-                          {formatPrice(s.price, currency, lang)}
+                        <span
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 6,
+                          }}
+                        >
+                          {service?.id === s.id && (
+                            <span
+                              aria-hidden="true"
+                              style={{
+                                color: "var(--success)",
+                                fontWeight: 800,
+                                fontSize: 12,
+                              }}
+                            >
+                              ✓
+                            </span>
+                          )}
+                          <span style={{ fontSize: 10, fontWeight: 700 }}>
+                            {formatPrice(s.price, currency, lang)}
+                          </span>
                         </span>
                       </button>
                     ))
@@ -445,18 +485,47 @@ export default function BookPage({ params }: { params: { slug: string } }) {
                     {t("book.noSlots")}
                   </p>
                 ) : (
-                  <div className="time-grid">
-                    {uniqueSlots.map((s) => (
-                      <button
-                        key={s.start}
-                        type="button"
-                        className={`time-option ${slotStart === s.start ? "selected" : ""}`}
-                        aria-pressed={slotStart === s.start}
-                        onClick={() => setSlotStart(s.start)}
-                      >
-                        {formatTime(s.start, establishment?.timezone, lang)}
-                      </button>
-                    ))}
+                  <div
+                    style={{
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: 14,
+                    }}
+                  >
+                    {(
+                      [
+                        ["book.morning", groupedSlots.morning],
+                        ["book.afternoon", groupedSlots.afternoon],
+                      ] as const
+                    ).map(([labelKey, list]) =>
+                      list.length === 0 ? null : (
+                        <div key={labelKey}>
+                          <p
+                            className="t-label"
+                            style={{ margin: "0 0 8px", opacity: 0.7 }}
+                          >
+                            {t(labelKey)}
+                          </p>
+                          <div className="time-grid">
+                            {list.map((s) => (
+                              <button
+                                key={s.start}
+                                type="button"
+                                className={`time-option ${slotStart === s.start ? "selected" : ""}`}
+                                aria-pressed={slotStart === s.start}
+                                onClick={() => setSlotStart(s.start)}
+                              >
+                                {formatTime(
+                                  s.start,
+                                  establishment?.timezone,
+                                  lang,
+                                )}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      ),
+                    )}
                   </div>
                 )}
 
