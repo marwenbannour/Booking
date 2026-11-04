@@ -10,6 +10,7 @@ import {
   Patch,
   Post,
   Query,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { ApiBody, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
 import {
@@ -17,6 +18,7 @@ import {
   IsDateString,
   IsEmail,
   IsEnum,
+  IsIn,
   IsInt,
   IsOptional,
   IsString,
@@ -65,6 +67,10 @@ class PublicBookingDto {
 
   @IsBoolean()
   consentToReminders!: boolean;
+
+  @IsIn(['fr', 'ar'])
+  @IsOptional()
+  locale?: 'fr' | 'ar';
 }
 
 class BookingStatusTransitionDto {
@@ -149,6 +155,23 @@ class EstablishmentScopeQueryDto {
   establishmentId!: string;
 }
 
+class PublicRescheduleRequestDto {
+  @IsDateString()
+  requestedStartsAt!: string;
+
+  @IsUUID()
+  requestedEmployeeId!: string;
+}
+
+class RescheduleRequestDecisionDto {
+  @IsIn(['ACCEPTED', 'REJECTED'])
+  decision!: 'ACCEPTED' | 'REJECTED';
+
+  @IsString()
+  @IsOptional()
+  reason?: string;
+}
+
 @ApiTags('bookings')
 @Controller('bookings')
 export class BookingsController {
@@ -201,8 +224,67 @@ export class BookingsController {
       customerPhone: body.customerPhone,
       customerEmail: body.customerEmail,
       consentToReminders: body.consentToReminders,
+      locale: body.locale,
       idempotencyKey,
     });
+  }
+
+  @Public()
+  @Throttle({ limit: 10, windowSeconds: 60, name: 'public-reschedule-request' })
+  @Post('public/:bookingId/reschedule-requests')
+  @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({
+    summary: 'Request a new time for a public booking using its access token',
+  })
+  async createPublicRescheduleRequest(
+    @Param('bookingId') bookingId: string,
+    @Body() body: PublicRescheduleRequestDto,
+    @Headers('authorization') authorization?: string,
+  ) {
+    const token = authorization?.match(/^Bearer\s+(.+)$/i)?.[1];
+    if (!token) {
+      throw new UnauthorizedException('A booking access token is required');
+    }
+
+    return this.bookingsService.createPublicRescheduleRequest(
+      bookingId,
+      token,
+      new Date(body.requestedStartsAt),
+      body.requestedEmployeeId,
+    );
+  }
+
+  @Get('reschedule-requests')
+  @ApiOperation({ summary: 'List pending customer reschedule requests' })
+  @ApiQuery({ name: 'establishmentId', required: true, type: String })
+  async listRescheduleRequests(
+    @Query() query: EstablishmentScopeQueryDto,
+    @CurrentActor() actor: AuthenticatedActor,
+  ) {
+    return this.bookingsService.listRescheduleRequests(
+      actor.userId,
+      query.establishmentId,
+    );
+  }
+
+  @Post(':id/reschedule-requests/:requestId/decision')
+  @ApiOperation({ summary: 'Accept or reject a customer reschedule request' })
+  @ApiQuery({ name: 'establishmentId', required: true, type: String })
+  async decideRescheduleRequest(
+    @Param('id') bookingId: string,
+    @Param('requestId') requestId: string,
+    @Body() body: RescheduleRequestDecisionDto,
+    @Query() query: EstablishmentScopeQueryDto,
+    @CurrentActor() actor: AuthenticatedActor,
+  ) {
+    return this.bookingsService.decideRescheduleRequest(
+      actor.userId,
+      query.establishmentId,
+      bookingId,
+      requestId,
+      body.decision,
+      body.reason,
+    );
   }
 
   @Get()

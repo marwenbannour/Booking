@@ -139,4 +139,37 @@ describe('NotificationsSchedulingService', () => {
 
     expect(tx.notificationJob.create).not.toHaveBeenCalled();
   });
+
+  it('cancels old reminder jobs and schedules an update plus reminders for the new version', async () => {
+    const tx = createTx();
+    const startsAt = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000);
+
+    await service.scheduleForRescheduledBooking(tx as any, {
+      id: 'booking-1',
+      establishmentId: 'establishment-1',
+      startsAt,
+      remindersConsent: true,
+      version: 2,
+    });
+
+    expect(tx.notificationJob.updateMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: {
+          bookingId: 'booking-1',
+          status: { in: ['PENDING', 'PROCESSING'] },
+        },
+        data: { status: 'CANCELLED' },
+      }),
+    );
+    expect(tx.notificationJob.create).toHaveBeenCalledTimes(3);
+    expect(tx.notificationJob.create.mock.calls[0][0].data).toEqual(
+      expect.objectContaining({
+        eventType: 'BOOKING_UPDATED',
+        idempotencyKey: 'booking-updated-booking-1-2',
+      }),
+    );
+    expect(
+      tx.notificationJob.create.mock.calls[1][0].data.idempotencyKey,
+    ).toContain('-2');
+  });
 });

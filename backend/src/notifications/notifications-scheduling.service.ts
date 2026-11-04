@@ -49,6 +49,26 @@ export class NotificationsSchedulingService {
     await this.scheduleReminders(tx, booking, settings);
   }
 
+  async scheduleForRescheduledBooking(
+    tx: Prisma.TransactionClient,
+    booking: SchedulableBooking & { version: number },
+  ): Promise<void> {
+    await this.cancelPendingJobs(tx, booking.id);
+    const settings = await this.resolveSettings(tx, booking.establishmentId);
+    if (!settings.whatsappEnabled || !booking.remindersConsent) {
+      return;
+    }
+
+    await this.createJob(
+      tx,
+      booking,
+      'BOOKING_UPDATED',
+      new Date(),
+      `booking-updated-${booking.id}-${booking.version}`,
+    );
+    await this.scheduleReminders(tx, booking, settings, `-${booking.version}`);
+  }
+
   async scheduleStatusChange(
     tx: Prisma.TransactionClient,
     params: {
@@ -102,6 +122,7 @@ export class NotificationsSchedulingService {
     tx: Prisma.TransactionClient,
     booking: SchedulableBooking,
     settings: ResolvedSettings,
+    idempotencySuffix = '',
   ): Promise<void> {
     const now = Date.now();
     const reminders = [
@@ -125,7 +146,7 @@ export class NotificationsSchedulingService {
         booking,
         'BOOKING_REMINDER_DUE',
         scheduledAt,
-        `booking-reminder-${reminder.index}-${booking.id}`,
+        `booking-reminder-${reminder.index}-${booking.id}${idempotencySuffix}`,
       );
     }
   }

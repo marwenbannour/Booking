@@ -13,6 +13,7 @@ import { NotificationsService } from './notifications.service.js';
 import { NotificationsWebhookService } from './notifications-webhook.service.js';
 import { NotificationsController } from './notifications.controller.js';
 import { WhatsAppWebhooksController } from './webhooks.controller.js';
+import { areWorkersEnabled } from '../queues/worker-runtime.js';
 
 const whatsappProvider = {
   provide: WHATSAPP_PROVIDER,
@@ -35,7 +36,7 @@ const whatsappProvider = {
 // Les composants Redis (relais outbox + worker BullMQ) ne sont enregistrés que
 // hors mode serverless. La programmation des notifications (écriture outbox en
 // base) reste disponible car purement SQL — les bookings en dépendent.
-const workersEnabled = process.env.WORKERS_ENABLED !== 'false';
+const workersEnabled = areWorkersEnabled();
 
 @Module({
   imports: [...(workersEnabled ? [QueuesModule] : []), SubscriptionsModule],

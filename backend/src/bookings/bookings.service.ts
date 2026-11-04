@@ -4,8 +4,16 @@ import {
   ForbiddenException,
   Injectable,
   NotFoundException,
+  Optional,
+  UnauthorizedException,
 } from '@nestjs/common';
-import { createHash, randomBytes } from 'node:crypto';
+import { ConfigService } from '@nestjs/config';
+import {
+  createCipheriv,
+  createDecipheriv,
+  createHash,
+  randomBytes,
+} from 'node:crypto';
 import { PrismaService } from '../database/prisma.service.js';
 import { Prisma } from '../generated/prisma/client.js';
 import { NotificationsSchedulingService } from '../notifications/notifications-scheduling.service.js';
@@ -39,7 +47,85 @@ export class BookingsService {
     private readonly prisma: PrismaService,
     private readonly scheduler: NotificationsSchedulingService,
     private readonly subscriptions: SubscriptionsService,
+    @Optional() private readonly config?: ConfigService,
   ) {}
+
+  private getBookingTokenEncryptionKey(): Buffer {
+    const secret = this.config?.get<string>('JWT_ACCESS_SECRET');
+    if (!secret || secret.length < 32) {
+      throw new Error(
+        'JWT_ACCESS_SECRET must contain at least 32 characters to protect booking access tokens',
+      );
+    }
+
+    return createHash('sha256')
+      .update(`booking-access-token:${secret}`, 'utf8')
+      .digest();
+  }
+
+  private encryptBookingAccessToken(token: string): string {
+    const iv = randomBytes(12);
+    const cipher = createCipheriv(
+      'aes-256-gcm',
+      this.getBookingTokenEncryptionKey(),
+      iv,
+    );
+    const ciphertext = Buffer.concat([
+      cipher.update(token, 'utf8'),
+      cipher.final(),
+    ]);
+
+    return [
+      'v1',
+      iv.toString('base64url'),
+      cipher.getAuthTag().toString('base64url'),
+      ciphertext.toString('base64url'),
+    ].join('.');
+  }
+
+  private decryptBookingAccessToken(encryptedToken: string): string {
+    const [version, ivValue, tagValue, ciphertextValue] =
+      encryptedToken.split('.');
+    if (
+      !version ||
+      version !== 'v1' ||
+      !ivValue ||
+      !tagValue ||
+      !ciphertextValue
+    ) {
+      throw new Error('Stored booking access token has an invalid format');
+    }
+    const decipher = createDecipheriv(
+      'aes-256-gcm',
+      this.getBookingTokenEncryptionKey(),
+      Buffer.from(ivValue, 'base64url'),
+    );
+    decipher.setAuthTag(Buffer.from(tagValue, 'base64url'));
+
+    return Buffer.concat([
+      decipher.update(Buffer.from(ciphertextValue, 'base64url')),
+      decipher.final(),
+    ]).toString('utf8');
+  }
+
+  private async createBookingAccessToken(
+    tx: Prisma.TransactionClient,
+    establishmentId: string,
+    bookingId: string,
+  ): Promise<string> {
+    const token = randomBytes(32).toString('base64url');
+    await tx.bookingAccessToken.create({
+      data: {
+        establishmentId,
+        bookingId,
+        tokenHash: createHash('sha256').update(token, 'utf8').digest(),
+        scopes: ['booking:reschedule'],
+        expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+      },
+    });
+
+    return token;
+  }
 
   private getDateParts(date: string): {
     year: number;
@@ -197,6 +283,26 @@ export class BookingsService {
     return (
       this.isSlotConflict(candidate.cause) ||
       this.isSlotConflict(candidate.meta?.driverAdapterError)
+    );
+  }
+
+  private isUniqueConstraintError(error: unknown): boolean {
+    return (
+      typeof error === 'object' &&
+      error !== null &&
+      'code' in error &&
+      (error as { code?: unknown }).code === 'P2002'
+    );
+  }
+
+  private isMissingRecordError(error: unknown): boolean {
+    if (!error || typeof error !== 'object') {
+      return false;
+    }
+
+    const candidate = error as { code?: unknown; cause?: unknown };
+    return (
+      candidate.code === 'P2025' || this.isMissingRecordError(candidate.cause)
     );
   }
 
@@ -542,12 +648,418 @@ export class BookingsService {
     return { ...booking, events };
   }
 
+  async createPublicRescheduleRequest(
+    bookingId: string,
+    accessToken: string,
+    requestedStartsAt: Date,
+    requestedEmployeeId: string,
+  ) {
+    if (Number.isNaN(requestedStartsAt.getTime())) {
+      throw new BadRequestException(
+        'requestedStartsAt must be a valid ISO datetime',
+      );
+    }
+    if (!/^[A-Za-z0-9_-]{40,60}$/.test(accessToken)) {
+      throw new UnauthorizedException(
+        'Booking access token is invalid or expired',
+      );
+    }
+
+    return this.prisma
+      .$transaction(async (tx) => {
+        const tokenHash = createHash('sha256')
+          .update(accessToken, 'utf8')
+          .digest();
+        const access = await tx.bookingAccessToken.findFirst({
+          where: {
+            bookingId,
+            tokenHash,
+            revokedAt: null,
+            expiresAt: { gt: new Date() },
+            scopes: { has: 'booking:reschedule' },
+          },
+          select: { establishmentId: true },
+        });
+        if (!access) {
+          throw new UnauthorizedException(
+            'Booking access token is invalid or expired',
+          );
+        }
+
+        const booking = await tx.booking.findFirst({
+          where: {
+            id: bookingId,
+            establishmentId: access.establishmentId,
+          },
+          select: {
+            id: true,
+            status: true,
+            startsAt: true,
+            employeeId: true,
+            serviceId: true,
+            durationMinutesSnapshot: true,
+          },
+        });
+        if (!booking) {
+          throw new NotFoundException('Booking not found');
+        }
+        if (booking.status !== 'CONFIRMED' || booking.startsAt <= new Date()) {
+          throw new ConflictException(
+            'Only future confirmed bookings can be rescheduled',
+          );
+        }
+
+        const pendingRequest = await tx.bookingRescheduleRequest.findFirst({
+          where: {
+            establishmentId: access.establishmentId,
+            bookingId,
+            status: 'PENDING',
+          },
+          select: { id: true },
+        });
+        if (pendingRequest) {
+          throw new ConflictException(
+            'A reschedule request is already awaiting a decision',
+          );
+        }
+
+        const localDate = this.getLocalDate(
+          requestedStartsAt,
+          (
+            await tx.establishment.findUniqueOrThrow({
+              where: { id: access.establishmentId },
+              select: { timezone: true },
+            })
+          ).timezone,
+        );
+        const availability = await this.getAvailability(
+          booking.serviceId,
+          localDate,
+          requestedEmployeeId,
+          access.establishmentId,
+          tx,
+          booking.durationMinutesSnapshot,
+        );
+        if (
+          !availability.slots.some(
+            (slot) =>
+              slot.employeeId === requestedEmployeeId &&
+              new Date(slot.start).getTime() === requestedStartsAt.getTime(),
+          )
+        ) {
+          throw new SlotUnavailableException();
+        }
+
+        const request = await tx.bookingRescheduleRequest.create({
+          data: {
+            establishmentId: access.establishmentId,
+            bookingId,
+            originalStartsAt: booking.startsAt,
+            originalEmployeeId: booking.employeeId,
+            requestedStartsAt,
+            requestedEmployeeId,
+          },
+          select: {
+            id: true,
+            status: true,
+            originalStartsAt: true,
+            requestedStartsAt: true,
+            createdAt: true,
+          },
+        });
+        await tx.bookingEvent.create({
+          data: {
+            establishmentId: access.establishmentId,
+            bookingId,
+            eventType: 'RESCHEDULE_REQUESTED',
+            data: {
+              rescheduleRequestId: request.id,
+              originalStartsAt: booking.startsAt.toISOString(),
+              requestedStartsAt: requestedStartsAt.toISOString(),
+              requestedEmployeeId,
+            },
+          },
+        });
+
+        return request;
+      })
+      .catch((error: unknown) => {
+        if (this.isUniqueConstraintError(error)) {
+          throw new ConflictException(
+            'A reschedule request is already awaiting a decision',
+          );
+        }
+        throw error;
+      });
+  }
+
+  async listRescheduleRequests(userId: string, establishmentId: string) {
+    const membership = await this.assertEstablishmentMember(
+      userId,
+      establishmentId,
+    );
+    this.assertPermission(membership, 'bookings.read');
+
+    return this.prisma.bookingRescheduleRequest.findMany({
+      where: {
+        establishmentId,
+        status: 'PENDING',
+        ...(membership.role === 'EMPLOYEE' && membership.employee?.id
+          ? { booking: { employeeId: membership.employee.id } }
+          : {}),
+      },
+      take: 100,
+      orderBy: { createdAt: 'asc' },
+      select: {
+        id: true,
+        bookingId: true,
+        originalStartsAt: true,
+        requestedStartsAt: true,
+        requestedEmployeeId: true,
+        createdAt: true,
+        requestedEmployee: { select: { displayName: true } },
+        booking: {
+          select: {
+            publicReference: true,
+            status: true,
+            customerNameSnapshot: true,
+            serviceNameSnapshot: true,
+            employee: { select: { displayName: true } },
+          },
+        },
+      },
+    });
+  }
+
+  async decideRescheduleRequest(
+    userId: string,
+    establishmentId: string,
+    bookingId: string,
+    requestId: string,
+    decision: 'ACCEPTED' | 'REJECTED',
+    reason?: string,
+  ) {
+    const membership = await this.assertEstablishmentMember(
+      userId,
+      establishmentId,
+    );
+    this.assertPermission(membership, 'bookings.write');
+    if (decision === 'REJECTED' && !reason?.trim()) {
+      throw new BadRequestException('A reason is required to reject a request');
+    }
+
+    return this.prisma.$transaction(async (tx) => {
+      const request = await tx.bookingRescheduleRequest.findFirst({
+        where: {
+          id: requestId,
+          bookingId,
+          establishmentId,
+          status: 'PENDING',
+        },
+        include: {
+          booking: {
+            select: {
+              id: true,
+              status: true,
+              startsAt: true,
+              endsAt: true,
+              employeeId: true,
+              serviceId: true,
+              durationMinutesSnapshot: true,
+              version: true,
+              remindersConsent: true,
+            },
+          },
+        },
+      });
+      if (!request) {
+        throw new NotFoundException('Pending reschedule request not found');
+      }
+      if (
+        request.booking.status !== 'CONFIRMED' ||
+        request.booking.startsAt.getTime() !==
+          request.originalStartsAt.getTime() ||
+        request.booking.employeeId !== request.originalEmployeeId
+      ) {
+        throw new ConflictException(
+          'The booking changed after this reschedule request was submitted',
+        );
+      }
+
+      const decidedAt = new Date();
+      if (decision === 'REJECTED') {
+        const updatedRequest = await tx.bookingRescheduleRequest.update({
+          where: { id: requestId },
+          data: {
+            status: 'REJECTED',
+            decisionReason: reason!.trim(),
+            decidedByUserId: userId,
+            decidedAt,
+          },
+        });
+        await tx.bookingEvent.create({
+          data: {
+            establishmentId,
+            bookingId: request.bookingId,
+            eventType: 'RESCHEDULE_REJECTED',
+            actorUserId: userId,
+            data: {
+              rescheduleRequestId: requestId,
+              reason: reason!.trim(),
+              requestedStartsAt: request.requestedStartsAt.toISOString(),
+            },
+          },
+        });
+        await tx.auditLog.create({
+          data: {
+            establishmentId,
+            actorUserId: userId,
+            action: 'booking.reschedule_rejected',
+            targetType: 'BOOKING',
+            targetId: request.bookingId,
+            metadata: { rescheduleRequestId: requestId },
+          },
+        });
+        return updatedRequest;
+      }
+
+      const timezone = await tx.establishment.findUniqueOrThrow({
+        where: { id: establishmentId },
+        select: { timezone: true },
+      });
+      const localDate = this.getLocalDate(
+        request.requestedStartsAt,
+        timezone.timezone,
+      );
+      const availability = await this.getAvailability(
+        request.booking.serviceId,
+        localDate,
+        request.requestedEmployeeId,
+        establishmentId,
+        tx,
+        request.booking.durationMinutesSnapshot,
+      );
+      if (
+        !availability.slots.some(
+          (slot) =>
+            slot.employeeId === request.requestedEmployeeId &&
+            new Date(slot.start).getTime() ===
+              request.requestedStartsAt.getTime(),
+        )
+      ) {
+        throw new SlotUnavailableException();
+      }
+
+      const employeeLock = await tx.$queryRaw<Array<{ id: string }>>`
+        SELECT id FROM employees
+        WHERE id = ${request.requestedEmployeeId}::uuid
+          AND establishment_id = ${establishmentId}::uuid
+        FOR UPDATE
+      `;
+      if (!employeeLock.length) {
+        throw new SlotUnavailableException();
+      }
+      const endsAt = new Date(
+        request.requestedStartsAt.getTime() +
+          request.booking.durationMinutesSnapshot * 60_000,
+      );
+      const conflict = await tx.booking.findFirst({
+        where: {
+          establishmentId,
+          employeeId: request.requestedEmployeeId,
+          id: { not: request.bookingId },
+          status: { in: ['PENDING', 'CONFIRMED'] },
+          startsAt: { lt: endsAt },
+          endsAt: { gt: request.requestedStartsAt },
+        },
+        select: { id: true },
+      });
+      if (conflict) {
+        throw new SlotUnavailableException();
+      }
+
+      const updatedBooking = await tx.booking.update({
+        where: {
+          id: request.bookingId,
+          version: request.booking.version,
+          status: 'CONFIRMED',
+        },
+        data: {
+          startsAt: request.requestedStartsAt,
+          endsAt,
+          employeeId: request.requestedEmployeeId,
+          version: { increment: 1 },
+        },
+        select: { version: true },
+      });
+      const updatedRequest = await tx.bookingRescheduleRequest.update({
+        where: { id: requestId },
+        data: {
+          status: 'ACCEPTED',
+          decisionReason: reason?.trim() || null,
+          decidedByUserId: userId,
+          decidedAt,
+        },
+      });
+      await tx.bookingEvent.create({
+        data: {
+          establishmentId,
+          bookingId: request.bookingId,
+          eventType: 'RESCHEDULED',
+          actorUserId: userId,
+          data: {
+            rescheduleRequestId: requestId,
+            previousStartsAt: request.booking.startsAt.toISOString(),
+            startsAt: request.requestedStartsAt.toISOString(),
+            previousEmployeeId: request.booking.employeeId,
+            employeeId: request.requestedEmployeeId,
+            version: updatedBooking.version,
+          },
+        },
+      });
+      await tx.auditLog.create({
+        data: {
+          establishmentId,
+          actorUserId: userId,
+          action: 'booking.rescheduled',
+          targetType: 'BOOKING',
+          targetId: request.bookingId,
+          metadata: {
+            rescheduleRequestId: requestId,
+            previousStartsAt: request.booking.startsAt.toISOString(),
+            startsAt: request.requestedStartsAt.toISOString(),
+          },
+        },
+      });
+      await this.scheduler.scheduleForRescheduledBooking(tx, {
+        id: request.bookingId,
+        establishmentId,
+        startsAt: request.requestedStartsAt,
+        remindersConsent: request.booking.remindersConsent,
+        version: updatedBooking.version,
+      });
+
+      return updatedRequest;
+    }).catch((error: unknown) => {
+      if (this.isSlotConflict(error)) {
+        throw new SlotUnavailableException();
+      }
+      if (this.isMissingRecordError(error)) {
+        throw new ConflictException(
+          'The booking or reschedule request changed before the decision was saved',
+        );
+      }
+      throw error;
+    });
+  }
+
   async getAvailability(
     serviceId: string,
     date: string,
     employeeId?: string,
     establishmentId?: string,
     database: Prisma.TransactionClient = this.prisma,
+    durationMinutesOverride?: number,
   ) {
     const service = await database.service.findFirst({
       where: {
@@ -572,6 +1084,7 @@ export class BookingsService {
     if (!service) {
       throw new NotFoundException('Service not found');
     }
+    const durationMinutes = durationMinutesOverride ?? service.durationMinutes;
 
     this.getDateParts(date);
     const dayStart = this.dateAtTimeInTimeZone(
@@ -599,7 +1112,7 @@ export class BookingsService {
         date,
         timezone: service.establishment.timezone,
         serviceId,
-        durationMinutes: service.durationMinutes,
+        durationMinutes,
         slots: [],
       };
     }
@@ -711,7 +1224,7 @@ export class BookingsService {
         ) {
           const slotStart = new Date(cursor);
           const slotEnd = new Date(
-            slotStart.getTime() + service.durationMinutes * 60_000,
+            slotStart.getTime() + durationMinutes * 60_000,
           );
           if (slotEnd > businessWindow.end) {
             continue;
@@ -742,7 +1255,7 @@ export class BookingsService {
       date,
       timezone: service.establishment.timezone,
       serviceId,
-      durationMinutes: service.durationMinutes,
+      durationMinutes,
       slots,
     };
   }
@@ -968,6 +1481,23 @@ export class BookingsService {
         newStatus: nextStatus,
       });
 
+      if (
+        ['CANCELLED', 'COMPLETED', 'NO_SHOW', 'REJECTED'].includes(nextStatus)
+      ) {
+        await tx.bookingRescheduleRequest.updateMany({
+          where: { bookingId, status: 'PENDING' },
+          data: {
+            status: 'CANCELLED',
+            decisionReason: `Booking transitioned to ${nextStatus}`,
+            decidedAt: new Date(),
+          },
+        });
+        await tx.bookingAccessToken.updateMany({
+          where: { bookingId, revokedAt: null },
+          data: { revokedAt: new Date() },
+        });
+      }
+
       return updated;
     });
   }
@@ -1038,6 +1568,7 @@ export class BookingsService {
     customerPhone: string;
     customerEmail?: string;
     consentToReminders: boolean;
+    locale?: 'fr' | 'ar';
     idempotencyKey?: string;
   }) {
     const establishment = await this.prisma.establishment.findFirst({
@@ -1089,6 +1620,7 @@ export class BookingsService {
       customerPhone: normalizedPhone,
       customerEmail: payload.customerEmail?.trim() || null,
       consentToReminders: Boolean(payload.consentToReminders),
+      ...(payload.locale ? { locale: payload.locale } : {}),
     });
 
     const scope = `public-bookings:${establishment.id}`;
@@ -1099,6 +1631,7 @@ export class BookingsService {
           select: {
             id: true,
             name: true,
+            locale: true,
             timezone: true,
             currency: true,
             minimumBookingNoticeMinutes: true,
@@ -1130,9 +1663,10 @@ export class BookingsService {
               request_hash: string;
               resource_id: string | null;
               expires_at: Date;
+              response_body: unknown;
             }>
           >`
-            SELECT request_hash, resource_id, expires_at
+            SELECT request_hash, resource_id, expires_at, response_body
             FROM idempotency_records
             WHERE scope = ${scope} AND idempotency_key = ${payload.idempotencyKey}
             FOR UPDATE
@@ -1168,9 +1702,40 @@ export class BookingsService {
                   );
                 }
 
+                const cachedResponse = record.response_body as {
+                  customerAccessTokenEncrypted?: string;
+                } | null;
+                let customerAccessToken =
+                  cachedResponse?.customerAccessTokenEncrypted
+                    ? this.decryptBookingAccessToken(
+                        cachedResponse.customerAccessTokenEncrypted,
+                      )
+                    : null;
+                if (!customerAccessToken) {
+                  customerAccessToken = await this.createBookingAccessToken(
+                    tx,
+                    currentEstablishment.id,
+                    storedBooking.id,
+                  );
+                  const encryptedToken =
+                    this.encryptBookingAccessToken(customerAccessToken);
+                  await tx.$executeRaw`
+                    UPDATE idempotency_records
+                    SET response_body = jsonb_set(
+                      COALESCE(response_body, '{}'::jsonb),
+                      '{customerAccessTokenEncrypted}',
+                      to_jsonb(${encryptedToken}::text),
+                      true
+                    )
+                    WHERE scope = ${scope}
+                      AND idempotency_key = ${payload.idempotencyKey}
+                  `;
+                }
+
                 return {
                   booking: storedBooking,
                   establishment: { name: currentEstablishment.name },
+                  customerAccessToken,
                   idempotent: true,
                 };
               }
@@ -1294,7 +1859,7 @@ export class BookingsService {
             establishmentId: currentEstablishment.id,
             phoneNormalized: normalizedPhone,
           },
-          select: { id: true },
+          select: { id: true, preferredLocale: true },
         });
 
         if (!customer) {
@@ -1304,8 +1869,11 @@ export class BookingsService {
               name: payload.customerName.trim(),
               phoneNormalized: normalizedPhone,
               email: payload.customerEmail?.trim() || null,
+              preferredLocale:
+                payload.locale ??
+                (currentEstablishment.locale === 'ar' ? 'ar' : 'fr'),
             },
-            select: { id: true },
+            select: { id: true, preferredLocale: true },
           });
         } else {
           customer = await tx.customer.update({
@@ -1313,8 +1881,9 @@ export class BookingsService {
             data: {
               name: payload.customerName.trim(),
               email: payload.customerEmail?.trim() || null,
+              preferredLocale: payload.locale ?? customer.preferredLocale,
             },
-            select: { id: true },
+            select: { id: true, preferredLocale: true },
           });
         }
 
@@ -1348,6 +1917,11 @@ export class BookingsService {
             employee: { select: { displayName: true } },
           },
         });
+        const customerAccessToken = await this.createBookingAccessToken(
+          tx,
+          currentEstablishment.id,
+          booking.id,
+        );
 
         // Confirmation + reminder jobs and their outbox events are written in
         // this same transaction so a committed booking always has durable
@@ -1363,6 +1937,8 @@ export class BookingsService {
           const serializedBody = JSON.stringify({
             booking,
             establishment: { name: currentEstablishment.name },
+            customerAccessTokenEncrypted:
+              this.encryptBookingAccessToken(customerAccessToken),
           });
           await tx.$executeRaw`
             UPDATE idempotency_records
@@ -1377,6 +1953,7 @@ export class BookingsService {
         return {
           booking,
           establishment: { name: currentEstablishment.name },
+          customerAccessToken,
         };
       });
     } catch (error) {

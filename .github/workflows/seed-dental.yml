@@ -1,0 +1,44 @@
+name: Seed démo dentaire
+
+# Insère l'établissement démo « clinique-dentaire-demo » dans la base Neon
+# (idempotent). Se déclenche au push de ce fichier sur la branche, ou à la main.
+on:
+  push:
+    branches: [fix/ci-native-deploy]
+    paths: ['.github/workflows/seed-dental.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  seed-dental:
+    name: Seed clinique dentaire (prod Neon)
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install backend dependencies
+        working-directory: backend
+        run: npm ci
+
+      - name: Generate Prisma client
+        working-directory: backend
+        env:
+          DATABASE_URL: ${{ secrets.NEON_MIGRATION_DATABASE_URL }}
+        run: npm run prisma:generate
+
+      - name: Seed clinique dentaire
+        working-directory: backend
+        env:
+          DATABASE_URL: ${{ secrets.NEON_MIGRATION_DATABASE_URL }}
+        run: npx --yes tsx prisma/seed-dental.mts

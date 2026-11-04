@@ -12,10 +12,11 @@ import { NotificationsModule } from './notifications/notifications.module.js';
 import { SubscriptionsModule } from './subscriptions/subscriptions.module.js';
 import { DashboardModule } from './dashboard/dashboard.module.js';
 import { AdminModule } from './admin/admin.module.js';
+import { areWorkersEnabled } from './queues/worker-runtime.js';
 
-// En serverless (Vercel), aucun worker/relais ne peut tourner : on n'initialise
-// pas la connexion BullMQ/Redis. Mettre WORKERS_ENABLED=false pour ce mode.
-const workersEnabled = process.env.WORKERS_ENABLED !== 'false';
+// Les workers BullMQ ne tournent que dans un processus persistant, jamais dans
+// une fonction serverless Vercel.
+const workersEnabled = areWorkersEnabled();
 
 @Module({
   imports: [
